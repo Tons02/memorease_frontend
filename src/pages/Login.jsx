@@ -58,7 +58,7 @@ const LoginForm = () => {
         }, 1000);
       } else {
         setTimeout(() => {
-          navigate("/dashboard");
+          navigate("/admin");
         }, 1000);
       }
     } catch (error) {

@@ -44,7 +44,7 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "/dashboard",
+    path: "/admin",
     element: <Mainlayout />,
     errorElement: <PrivateRoutes />, // Wrap the dashboard route with PrivateRoutes
     children: [
@@ -61,10 +61,7 @@ const router = createBrowserRouter([
         path: "user-management",
         index: true,
         element: (
-          <AccessPermissionContext
-            permission="user-management"
-            context="routing"
-          >
+          <AccessPermissionContext permission="role" context="routing">
             <UserManagement />
           </AccessPermissionContext>
         ),
@@ -74,10 +71,7 @@ const router = createBrowserRouter([
         path: "user-management/user-accounts",
         index: true,
         element: (
-          <AccessPermissionContext
-            permission="user-management"
-            context="routing"
-          >
+          <AccessPermissionContext permission="user" context="routing">
             <User />
           </AccessPermissionContext>
         ),
@@ -86,10 +80,7 @@ const router = createBrowserRouter([
         path: "user-management/role-management",
         index: true,
         element: (
-          <AccessPermissionContext
-            permission="user-accounts:crud"
-            context="routing"
-          >
+          <AccessPermissionContext permission="role" context="routing">
             <Role />
           </AccessPermissionContext>
         ),

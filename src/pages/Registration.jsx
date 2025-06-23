@@ -44,7 +44,7 @@ function Registration() {
     handleSubmit,
     formState: { errors },
     watch,
-    s,
+    setError,
   } = useForm({
     resolver: yupResolver(registrationSchema),
     defaultValues: {
@@ -62,7 +62,7 @@ function Registration() {
     },
   });
 
-  console.log("form state", errors);
+  console.log("form state errors", errors);
 
   const navigate = useNavigate();
   const [snackbar, setSnackbar] = React.useState({
@@ -81,13 +81,13 @@ function Registration() {
       ...data,
       birthday: dayjs(data.birthday).format("DD-MM-YYYY"),
     };
-    console.log(formattedData);
+
     try {
       const response = await registration(formattedData).unwrap();
 
       setSnackbar({
         open: true,
-        message: "Registration successful! Please Check your email",
+        message: "Registration successful! Please check your email",
         severity: "success",
       });
 
@@ -99,6 +99,15 @@ function Registration() {
       }, 2000);
     } catch (error) {
       console.log(error);
+
+      if (error?.data?.errors) {
+        error.data.errors.forEach((e) => {
+          const pointer = e.source?.pointer || "";
+          const key = pointer.split("/").pop();
+          setError(key, { type: "server", message: e.detail });
+        });
+      }
+
       setSnackbar({
         open: true,
         message:

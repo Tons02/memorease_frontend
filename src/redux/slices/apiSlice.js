@@ -14,7 +14,7 @@ export const apiSlice = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Roles"],
+  tagTypes: ["Roles", "Users"],
   endpoints: (builder) => ({
     // Login endpoints
     login: builder.mutation({
@@ -47,6 +47,11 @@ export const apiSlice = createApi({
       method: "GET",
       providesTags: ["Roles"],
     }),
+    GetRoleDropDown: builder.query({
+      query: () => `/role?pagination=none`,
+      method: "GET",
+      providesTags: ["DropdownRegion"],
+    }),
     addRole: builder.mutation({
       query: (role) => ({
         url: `/role`,
@@ -71,6 +76,36 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ["Roles"],
     }),
+    getUser: builder.query({
+      query: ({ search, page, per_page, status }) =>
+        `/user?search=${search}&page=${page}&per_page=${per_page}&status=${status}`,
+      method: "GET",
+      providesTags: ["Users"],
+    }),
+    addUser: builder.mutation({
+      query: (user) => ({
+        url: `/user`,
+        method: "POST",
+        body: user,
+      }),
+      invalidatesTags: ["Users"],
+    }),
+    updateUser: builder.mutation({
+      query: (user) => ({
+        url: `/user/${user.id}`,
+        method: "PATCH",
+        body: user,
+      }),
+      invalidatesTags: ["Users"],
+    }),
+    archivedUser: builder.mutation({
+      query: ({ id }) => ({
+        url: `/user-archived/${id}`,
+        method: "PUT",
+        body: id,
+      }),
+      invalidatesTags: ["Users"],
+    }),
     logout: builder.mutation({
       query: () => ({
         url: "/logout",
@@ -87,8 +122,13 @@ export const {
   useVerifyEmailQuery,
   useResendVerificationMutation,
   useGetRoleQuery,
+  useLazyGetRoleDropDownQuery,
   useAddRoleMutation,
   useUpdateRoleMutation,
   useArchivedRoleMutation,
+  useGetUserQuery,
+  useAddUserMutation,
+  useUpdateUserMutation,
+  useArchivedUserMutation,
   useLogoutMutation,
 } = apiSlice;

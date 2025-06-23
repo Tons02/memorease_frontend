@@ -195,31 +195,38 @@ const Role = () => {
 
   const handleEdit = (row) => {
     setSelectedID(row.id);
-    // Map row.access_permission to checked state
-    const newChecked = Array(11).fill(false); // Assuming you have 11 checkboxes
 
+    // Initialize all checkboxes to false for the update dialog
+    // The length should be based on the permissionsMap.
+    const newChecked = Array(Object.keys(permissionsMap).length).fill(false);
+
+    // Iterate through the permissions received from the API (row.access_permission)
+    // and set the corresponding checkboxes to true
     row.access_permission.forEach((permission) => {
-      const index = Object.values(permissionsMap).indexOf(permission);
-      if (index > -1) {
-        newChecked[index] = true;
+      // Find the index in permissionsMap for the current permission string
+      const index = Object.keys(permissionsMap).find(
+        (key) => permissionsMap[key] === permission
+      );
+      if (index !== undefined) {
+        newChecked[parseInt(index)] = true;
       }
     });
 
-    setChecked(newChecked);
-    setValue("access_permission", row.access_permission);
+    setChecked(newChecked); // Update the state that controls the checkboxes
+    setValue("access_permission", row.access_permission); // Set the form value for react-hook-form
 
-    reset(row); // Reset the form with new data
-    console.log(row);
+    // Only reset if row is not null or undefined
+    if (row) {
+      reset(row); // Reset the form with other row data (like 'name')
+    }
+
+    console.log(row); // Keep this for debugging if needed
     setOpenUpdateDialog(true);
   };
 
   const handleDeleteClick = (row) => {
     setSelectedID(row.id);
     setOpenDeleteDialog(true);
-  };
-
-  const handleSearchChange = (event) => {
-    setSearch(event.target.value); // Update the search state when typing
   };
 
   const handleChangePage = (event, newPage) => {
@@ -272,15 +279,10 @@ const Role = () => {
   const permissionsMap = {
     0: "dashboard",
     1: "masterlist",
-    2: "masterlist:companies:sync",
-    3: "masterlist:business-units:sync",
-    4: "masterlist:departments:sync",
-    5: "masterlist:units:sync",
-    6: "masterlist:subunits:sync",
-    7: "masterlist:locations:sync",
-    8: "user-management",
-    9: "user-accounts:crud",
-    10: "role-management:crud",
+    2: "cemeteries",
+    3: "user-management",
+    4: "user",
+    5: "role",
   };
 
   const handleCheckboxChange = (index, parentIndex) => (event) => {
@@ -341,7 +343,7 @@ const Role = () => {
             alignItems: "center",
           }}
           color="inherit"
-          href="/dashboard/masterlist"
+          href="/Admin/user-management"
         >
           <AssignmentIndIcon sx={{ mr: 0.5 }} fontSize="inherit" />
           User Management
@@ -579,6 +581,19 @@ const Role = () => {
               fullWidth
               error={!!errors.name}
               helperText={errors.name?.message}
+              sx={{
+                mb: 1,
+                "& .MuiInput-underline:after": {
+                  borderBottomColor: "#000000", // For the underline
+                },
+                "& .MuiInputLabel-root.Mui-focused": {
+                  color: "#000000", // For the floating label
+                },
+                "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+                  {
+                    borderColor: "#000000",
+                  },
+              }}
             />
 
             {errors.access_permission && (
@@ -655,56 +670,11 @@ const Role = () => {
                       }}
                     >
                       <FormControlLabel
-                        label="Companies"
+                        label="Cemeteries"
                         control={
                           <Checkbox
                             checked={checked[2]}
                             onChange={handleCheckboxChange(2, 1)}
-                          />
-                        }
-                      />
-                      <FormControlLabel
-                        label="Business Units"
-                        control={
-                          <Checkbox
-                            checked={checked[3]}
-                            onChange={handleCheckboxChange(3, 1)}
-                          />
-                        }
-                      />
-                      <FormControlLabel
-                        label="Department"
-                        control={
-                          <Checkbox
-                            checked={checked[4]}
-                            onChange={handleCheckboxChange(4, 1)}
-                          />
-                        }
-                      />
-                      <FormControlLabel
-                        label="Units"
-                        control={
-                          <Checkbox
-                            checked={checked[5]}
-                            onChange={handleCheckboxChange(5, 1)}
-                          />
-                        }
-                      />
-                      <FormControlLabel
-                        label="Sub Units"
-                        control={
-                          <Checkbox
-                            checked={checked[6]}
-                            onChange={handleCheckboxChange(6, 1)}
-                          />
-                        }
-                      />
-                      <FormControlLabel
-                        label="Locations"
-                        control={
-                          <Checkbox
-                            checked={checked[7]}
-                            onChange={handleCheckboxChange(7, 1)}
                           />
                         }
                       />
@@ -717,13 +687,13 @@ const Role = () => {
                   label="User Management"
                   control={
                     <Checkbox
-                      checked={checked[8]}
-                      onChange={handleCheckboxChange(8)}
+                      checked={checked[3]}
+                      onChange={handleCheckboxChange(3)}
                     />
                   }
                 />
                 {renderChild(
-                  8,
+                  3,
                   <>
                     <Box
                       sx={{
@@ -746,8 +716,8 @@ const Role = () => {
                         label="User Accounts"
                         control={
                           <Checkbox
-                            checked={checked[9]}
-                            onChange={handleCheckboxChange(9, 8)}
+                            checked={checked[4]}
+                            onChange={handleCheckboxChange(4, 3)}
                           />
                         }
                       />
@@ -755,8 +725,8 @@ const Role = () => {
                         label="Role Management"
                         control={
                           <Checkbox
-                            checked={checked[10]}
-                            onChange={handleCheckboxChange(10, 8)}
+                            checked={checked[5]}
+                            onChange={handleCheckboxChange(5, 3)}
                           />
                         }
                       />
@@ -881,7 +851,7 @@ const Role = () => {
                       }}
                     >
                       <FormControlLabel
-                        label="Companies"
+                        label="Cemeteries"
                         control={
                           <Checkbox
                             disabled={viewAccessPermission}
@@ -890,73 +860,22 @@ const Role = () => {
                           />
                         }
                       />
-                      <FormControlLabel
-                        label="Business Units"
-                        control={
-                          <Checkbox
-                            disabled={viewAccessPermission}
-                            checked={checked[3]}
-                            onChange={handleCheckboxChange(3, 1)}
-                          />
-                        }
-                      />
-                      <FormControlLabel
-                        label="Department"
-                        control={
-                          <Checkbox
-                            disabled={viewAccessPermission}
-                            checked={checked[4]}
-                            onChange={handleCheckboxChange(4, 1)}
-                          />
-                        }
-                      />
-                      <FormControlLabel
-                        label="Units"
-                        control={
-                          <Checkbox
-                            disabled={viewAccessPermission}
-                            checked={checked[5]}
-                            onChange={handleCheckboxChange(5, 1)}
-                          />
-                        }
-                      />
-                      <FormControlLabel
-                        label="Sub Units"
-                        control={
-                          <Checkbox
-                            disabled={viewAccessPermission}
-                            checked={checked[6]}
-                            onChange={handleCheckboxChange(6, 1)}
-                          />
-                        }
-                      />
-                      <FormControlLabel
-                        label="Locations"
-                        control={
-                          <Checkbox
-                            disabled={viewAccessPermission}
-                            checked={checked[7]}
-                            onChange={handleCheckboxChange(7, 1)}
-                          />
-                        }
-                      />
                     </Box>
                   </>
                 )}
-
                 {/* User Management */}
                 <FormControlLabel
                   label="User Management"
                   control={
                     <Checkbox
                       disabled={viewAccessPermission}
-                      checked={checked[8]}
-                      onChange={handleCheckboxChange(8)}
+                      checked={checked[3]}
+                      onChange={handleCheckboxChange(3)}
                     />
                   }
                 />
                 {renderChild(
-                  8,
+                  3,
                   <>
                     <Box
                       sx={{
@@ -980,8 +899,8 @@ const Role = () => {
                         control={
                           <Checkbox
                             disabled={viewAccessPermission}
-                            checked={checked[9]}
-                            onChange={handleCheckboxChange(9, 8)}
+                            checked={checked[4]}
+                            onChange={handleCheckboxChange(4, 3)}
                           />
                         }
                       />
@@ -990,8 +909,8 @@ const Role = () => {
                         control={
                           <Checkbox
                             disabled={viewAccessPermission}
-                            checked={checked[10]}
-                            onChange={handleCheckboxChange(10, 8)}
+                            checked={checked[5]}
+                            onChange={handleCheckboxChange(5, 3)}
                           />
                         }
                       />

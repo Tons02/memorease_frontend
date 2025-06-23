@@ -20,8 +20,8 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
-import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import LogoutIcon from "@mui/icons-material/Logout";
+import pmpd_logo from "../assets/pmpd_logo.png";
 import {
   Button,
   Collapse,
@@ -30,7 +30,12 @@ import {
   DialogContent,
   DialogTitle,
 } from "@mui/material";
-import { Dashboard, ExpandLess, ExpandMore } from "@mui/icons-material";
+import {
+  AccountCircle,
+  Dashboard,
+  ExpandLess,
+  ExpandMore,
+} from "@mui/icons-material";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
@@ -196,7 +201,11 @@ export default function MiniDrawer() {
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" noWrap component="div">
-              Locus
+              <img
+                src={pmpd_logo}
+                alt="Providence Memorial Park Logo"
+                style={{ width: "80px", paddingTop: "10px" }}
+              />
             </Typography>
           </Toolbar>
         </AppBar>
@@ -227,7 +236,7 @@ export default function MiniDrawer() {
                         justifyContent: "center",
                       },
                 ]}
-                onClick={() => handleNavigation("/dashboard")}
+                onClick={() => handleNavigation("/admin")}
               >
                 <ListItemIcon
                   sx={[
@@ -260,7 +269,7 @@ export default function MiniDrawer() {
                 />
               </ListItemButton>
             </ListItem>
-            {accessPermissions.includes("masterlist") && (
+            {accessPermissions.includes("role") && (
               <ListItem disablePadding sx={{ display: "block" }}>
                 <ListItemButton
                   sx={[
@@ -277,7 +286,7 @@ export default function MiniDrawer() {
                         },
                   ]}
                   onClick={() => {
-                    handleNavigation("/dashboard/masterlist");
+                    handleNavigation("/admin/masterlist");
                     toggleExpand();
                   }}
                 >
@@ -318,14 +327,12 @@ export default function MiniDrawer() {
             )}
             {/* Child Items */}
             <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-              {accessPermissions.includes("masterlist:companies:sync") && (
+              {accessPermissions.includes("role") && (
                 <ListItemButton
                   sx={{
                     pl: open ? 5 : 2.5,
                   }}
-                  onClick={() =>
-                    handleNavigation("/dashboard/masterlist/company")
-                  }
+                  onClick={() => handleNavigation("/admin/masterlist/role")}
                 >
                   <ListItemIcon
                     sx={[
@@ -342,10 +349,10 @@ export default function MiniDrawer() {
                           },
                     ]}
                   >
-                    <ApartmentIcon />
+                    <AccountCircle />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Company"
+                    primary="User"
                     sx={{
                       opacity: open ? 1 : 0,
                     }}
@@ -497,7 +504,7 @@ export default function MiniDrawer() {
                     pl: open ? 5 : 2.5,
                   }}
                   onClick={() =>
-                    handleNavigation("/dashboard/masterlist/locations")
+                    handleNavigation("/admin/masterlist/locations")
                   }
                 >
                   <ListItemIcon
@@ -528,7 +535,7 @@ export default function MiniDrawer() {
             </Collapse>
 
             {/* user management */}
-            {accessPermissions.includes("user-management") && (
+            {accessPermissions.includes("role") && (
               <ListItem disablePadding sx={{ display: "block" }}>
                 <ListItemButton
                   sx={[
@@ -545,7 +552,7 @@ export default function MiniDrawer() {
                         },
                   ]}
                   onClick={() => {
-                    handleNavigation("/dashboard/user-management");
+                    handleNavigation("/admin/user-management");
                     toggleExpandUserManagement();
                   }}
                 >
@@ -596,13 +603,13 @@ export default function MiniDrawer() {
               timeout="auto"
               unmountOnExit
             >
-              {accessPermissions.includes("user-accounts:crud") && (
+              {accessPermissions.includes("user") && (
                 <ListItemButton
                   sx={{
                     pl: open ? 5 : 2.5,
                   }}
                   onClick={() =>
-                    handleNavigation("/dashboard/user-management/user-accounts")
+                    handleNavigation("/admin/user-management/user-accounts")
                   }
                 >
                   <ListItemIcon
@@ -631,15 +638,13 @@ export default function MiniDrawer() {
                 </ListItemButton>
               )}
 
-              {accessPermissions.includes("role-management:crud") && (
+              {accessPermissions.includes("role") && (
                 <ListItemButton
                   sx={{
                     pl: open ? 5 : 2.5,
                   }}
                   onClick={() =>
-                    handleNavigation(
-                      "/dashboard/user-management/role-management"
-                    )
+                    handleNavigation("/admin/user-management/role-management")
                   }
                 >
                   <ListItemIcon

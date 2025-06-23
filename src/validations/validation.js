@@ -13,7 +13,10 @@ export const registrationSchema = yup
   .object({
     fname: yup.string().required("First Name is required"),
     lname: yup.string().required("Last Name is required"),
-    gender: yup.string().required("Gender is required"),
+    gender: yup
+      .string()
+      .oneOf(["male", "female"], "Select a valid gender")
+      .required("Gender is required"),
     mobile_number: yup
       .string()
       .required("Mobile number is required")
@@ -42,4 +45,26 @@ export const RoleSchema = yup.object({
     .of(yup.string()) // Ensure it's an array of strings
     .min(1, "At least one permission must be selected") // Ensure at least one permission is selected
     .required("Access Permission is required"),
+});
+
+export const UserSchema = yup.object({
+  fname: yup.string().required("First Name is required"),
+  lname: yup.string().required("Last Name is required"),
+  gender: yup
+    .string()
+    .oneOf(["male", "female"], "Select a valid gender")
+    .required("Gender is required"),
+  mobile_number: yup
+    .string()
+    .required("Mobile number is required")
+    .matches(
+      /^\+63\d{10}$/,
+      "Mobile number must start with +63 and be 13 digits"
+    ),
+  email: yup
+    .string()
+    .email("Invalid email format")
+    .required("Email is required"),
+  address: yup.string().required("Address is required"),
+  username: yup.string().required("Username is required"),
 });

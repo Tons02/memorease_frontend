@@ -46,12 +46,12 @@ const Masterlist = () => {
           justifyContent: "center", // Adjust alignment
         }}
       >
-        {accessPermissions.includes("masterlist:companies:sync") && (
+        {accessPermissions.includes("cemeteries") && (
           <Card
-            destination="company"
+            destination="cemeteries"
             icon={<ApartmentIcon />}
-            title="Company"
-            subtitle="Synching of Company Masterlist from Ymir to Lotus"
+            title="Cemeteries"
+            subtitle="Manage cemetery records and information "
           />
         )}
         {accessPermissions.includes("masterlist:business-units:sync") && (
