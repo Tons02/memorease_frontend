@@ -292,21 +292,6 @@ const User = () => {
     setOpenDialog(true);
   };
 
-  const commonTextFieldSx = {
-    mb: 2, // Consistent margin bottom for all fields
-    "& .MuiInputLabel-root.Mui-focused": {
-      color: "#000000", // Label color when focused
-    },
-    // For OutlinedInput variant, this is how you style the border on focus
-    "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
-      borderColor: "#000000",
-    },
-    // For Filled or Standard variant (if you change variant)
-    "& .MuiInput-underline:after": {
-      borderBottomColor: "#000000",
-    },
-  };
-
   const handleClose = () => {
     reset({
       fname: "",
@@ -655,7 +640,6 @@ const User = () => {
               fullWidth
               error={!!errors.fname}
               helperText={errors.fname?.message}
-              sx={commonTextFieldSx}
             />
             <TextField
               {...register("mi")}
@@ -664,7 +648,6 @@ const User = () => {
               fullWidth
               error={!!errors.mi}
               helperText={errors.mi?.message}
-              sx={commonTextFieldSx}
             />
             <TextField
               {...register("lname")}
@@ -673,7 +656,6 @@ const User = () => {
               fullWidth
               error={!!errors.lname}
               helperText={errors.lname?.message}
-              sx={commonTextFieldSx}
             />
             <Controller
               name="suffix"
@@ -681,7 +663,7 @@ const User = () => {
               render={({ field }) => (
                 <FormControl
                   fullWidth
-                  sx={{ ...commonTextFieldSx, width: 535, paddingBottom: 1 }}
+                  sx={{ width: 535, paddingBottom: 1 }}
                   error={!!errors.suffix}
                 >
                   <InputLabel id="suffix-label">Suffix</InputLabel>
@@ -724,16 +706,12 @@ const User = () => {
                   </InputAdornment>
                 ),
               }}
-              sx={{ ...commonTextFieldSx }}
             />
             <Controller
               name="gender"
               control={control}
               render={({ field }) => (
-                <FormControl
-                  sx={{ ...commonTextFieldSx, width: 535 }}
-                  error={!!errors.gender}
-                >
+                <FormControl sx={{ width: 535 }} error={!!errors.gender}>
                   <InputLabel id="gender-label">Gender</InputLabel>
                   <Select
                     labelId="gender-label"
@@ -772,7 +750,6 @@ const User = () => {
               fullWidth
               error={!!errors.mobile_number}
               helperText={errors.mobile_number?.message}
-              sx={commonTextFieldSx}
             />
             <TextField
               {...register("address")}
@@ -781,7 +758,6 @@ const User = () => {
               fullWidth
               error={!!errors.address}
               helperText={errors.address?.message}
-              sx={commonTextFieldSx}
             />
             <TextField
               {...register("username")}
@@ -790,7 +766,6 @@ const User = () => {
               fullWidth
               error={!!errors.username}
               helperText={errors.username?.message}
-              sx={commonTextFieldSx}
             />
             <TextField
               {...register("email")}
@@ -799,16 +774,12 @@ const User = () => {
               fullWidth
               error={!!errors.email}
               helperText={errors.email?.message}
-              sx={commonTextFieldSx}
             />
             <Controller
               name="role_id"
               control={control}
               render={({ field }) => (
-                <FormControl
-                  sx={{ ...commonTextFieldSx, width: 535 }}
-                  error={!!errors.role_id}
-                >
+                <FormControl sx={{ width: 535 }} error={!!errors.role_id}>
                   <InputLabel id="role-label">Role</InputLabel>
                   <Select
                     labelId="role-label"

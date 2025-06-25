@@ -581,19 +581,6 @@ const Role = () => {
               fullWidth
               error={!!errors.name}
               helperText={errors.name?.message}
-              sx={{
-                mb: 1,
-                "& .MuiInput-underline:after": {
-                  borderBottomColor: "#000000", // For the underline
-                },
-                "& .MuiInputLabel-root.Mui-focused": {
-                  color: "#000000", // For the floating label
-                },
-                "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-                  {
-                    borderColor: "#000000",
-                  },
-              }}
             />
 
             {errors.access_permission && (

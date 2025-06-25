@@ -190,12 +190,11 @@ const LoginForm = () => {
               </Button>
             </form>
 
-            {/* Your new Sign Up link section */}
             <Box sx={{ mt: 2, textAlign: "center" }}>
               <Typography variant="body2">
                 Don't have an account?{" "}
                 <Link
-                  component="button" // Use 'button' for accessibility or 'router-link' if using react-router-dom Link directly
+                  component="button"
                   onClick={() => navigate("/registration")}
                   color="secondary"
                 >

@@ -60,7 +60,7 @@ function HomePageLayOut(props) {
 
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "About", path: "/about" },
+    { name: "Maps", path: "/maps" },
     { name: "Contact", path: "/contact" },
     isLoggedIn
       ? { name: "Logout", path: "" }

@@ -12,9 +12,10 @@ import UserManagement from "../../pages/UserManagement";
 import User from "../../pages/User";
 import Role from "../../pages/Role";
 import HomePageLayOut from "../../layout/HomePageLayout";
-import Homepage from "../../pages/Homepage";
-import Registration from "../../pages/Registration";
+import Homepage from "../../pages/Homepage/Homepage";
+import Registration from "../../pages/Registration/Registration";
 import VerifyEmail from "../../pages/VerifyEmail";
+import Maps from "../../pages/Maps/Maps";
 
 const router = createBrowserRouter([
   {
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
       {
         path: "/registration",
         element: <Registration />,
+      },
+      {
+        path: "/maps",
+        element: <Maps />,
       },
       {
         path: "/login",
