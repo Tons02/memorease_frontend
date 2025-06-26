@@ -68,3 +68,16 @@ export const UserSchema = yup.object({
   address: yup.string().required("Address is required"),
   username: yup.string().required("Username is required"),
 });
+
+export const lotSchema = yup.object({
+  lot_number: yup.string().required("Lot Number is required"),
+  price: yup
+    .number()
+    .typeError("Price must be a number")
+    .required("Price is required")
+    .positive("Price must be greater than 0"),
+  status: yup
+    .string()
+    .oneOf(["available", "reserved", "sold"], "Select a valid status")
+    .required("Status is required"),
+});

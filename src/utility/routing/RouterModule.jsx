@@ -16,6 +16,7 @@ import Homepage from "../../pages/Homepage/Homepage";
 import Registration from "../../pages/Registration/Registration";
 import VerifyEmail from "../../pages/VerifyEmail";
 import Maps from "../../pages/Maps/Maps";
+import Cemeteries from "../../pages/Cemeteries/Cemeteries";
 
 const router = createBrowserRouter([
   {
@@ -61,6 +62,16 @@ const router = createBrowserRouter([
         path: "masterlist",
         index: true,
         element: <Masterlist />,
+      },
+
+      {
+        path: "masterlist/cemeteries",
+        index: true,
+        element: (
+          <AccessPermissionContext permission="cemeteries" context="routing">
+            <Cemeteries />
+          </AccessPermissionContext>
+        ),
       },
       {
         path: "user-management",

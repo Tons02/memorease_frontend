@@ -134,7 +134,7 @@ const Role = () => {
       );
       setSnackbar({
         open: true,
-        message: "Please Double Check your input",
+        message: error?.data?.errors[0].detail,
         severity: "error",
       });
     }

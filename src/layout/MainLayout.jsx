@@ -35,6 +35,7 @@ import {
   Dashboard,
   ExpandLess,
   ExpandMore,
+  Map,
 } from "@mui/icons-material";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
@@ -269,7 +270,7 @@ export default function MiniDrawer() {
                 />
               </ListItemButton>
             </ListItem>
-            {accessPermissions.includes("role") && (
+            {accessPermissions.includes("masterlist") && (
               <ListItem disablePadding sx={{ display: "block" }}>
                 <ListItemButton
                   sx={[
@@ -327,46 +328,13 @@ export default function MiniDrawer() {
             )}
             {/* Child Items */}
             <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-              {accessPermissions.includes("role") && (
-                <ListItemButton
-                  sx={{
-                    pl: open ? 5 : 2.5,
-                  }}
-                  onClick={() => handleNavigation("/admin/masterlist/role")}
-                >
-                  <ListItemIcon
-                    sx={[
-                      {
-                        minWidth: 0,
-                        justifyContent: "center",
-                      },
-                      open
-                        ? {
-                            mr: 2,
-                          }
-                        : {
-                            mr: "auto",
-                          },
-                    ]}
-                  >
-                    <AccountCircle />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="User"
-                    sx={{
-                      opacity: open ? 1 : 0,
-                    }}
-                  />
-                </ListItemButton>
-              )}
-
-              {accessPermissions.includes("masterlist:business-units:sync") && (
+              {accessPermissions.includes("cemeteries") && (
                 <ListItemButton
                   sx={{
                     pl: open ? 5 : 2.5,
                   }}
                   onClick={() =>
-                    handleNavigation("/dashboard/masterlist/business_unit")
+                    handleNavigation("/admin/masterlist/cemeteries")
                   }
                 >
                   <ListItemIcon
@@ -384,113 +352,10 @@ export default function MiniDrawer() {
                           },
                     ]}
                   >
-                    <BusinessCenterIcon />
+                    <Map />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Business Unit"
-                    sx={{
-                      opacity: open ? 1 : 0,
-                    }}
-                  />
-                </ListItemButton>
-              )}
-
-              {accessPermissions.includes("masterlist:departments:sync") && (
-                <ListItemButton
-                  sx={{
-                    pl: open ? 5 : 2.5,
-                  }}
-                  onClick={() =>
-                    handleNavigation("/dashboard/masterlist/department")
-                  }
-                >
-                  <ListItemIcon
-                    sx={[
-                      {
-                        minWidth: 0,
-                        justifyContent: "center",
-                      },
-                      open
-                        ? {
-                            mr: 2,
-                          }
-                        : {
-                            mr: "auto",
-                          },
-                    ]}
-                  >
-                    <AccountTreeIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Department"
-                    sx={{
-                      opacity: open ? 1 : 0,
-                    }}
-                  />
-                </ListItemButton>
-              )}
-
-              {accessPermissions.includes("masterlist:units:sync") && (
-                <ListItemButton
-                  sx={{
-                    pl: open ? 5 : 2.5,
-                  }}
-                  onClick={() => handleNavigation("/dashboard/masterlist/unit")}
-                >
-                  <ListItemIcon
-                    sx={[
-                      {
-                        minWidth: 0,
-                        justifyContent: "center",
-                      },
-                      open
-                        ? {
-                            mr: 2,
-                          }
-                        : {
-                            mr: "auto",
-                          },
-                    ]}
-                  >
-                    <BallotIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Units"
-                    sx={{
-                      opacity: open ? 1 : 0,
-                    }}
-                  />
-                </ListItemButton>
-              )}
-
-              {accessPermissions.includes("masterlist:subunits:sync") && (
-                <ListItemButton
-                  sx={{
-                    pl: open ? 5 : 2.5,
-                  }}
-                  onClick={() =>
-                    handleNavigation("/dashboard/masterlist/sub_unit")
-                  }
-                >
-                  <ListItemIcon
-                    sx={[
-                      {
-                        minWidth: 0,
-                        justifyContent: "center",
-                      },
-                      open
-                        ? {
-                            mr: 2,
-                          }
-                        : {
-                            mr: "auto",
-                          },
-                    ]}
-                  >
-                    <ViewHeadlineIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Sub Unit"
+                    primary="Cemetery"
                     sx={{
                       opacity: open ? 1 : 0,
                     }}

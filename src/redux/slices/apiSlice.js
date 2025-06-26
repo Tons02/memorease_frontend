@@ -106,6 +106,41 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ["Users"],
     }),
+    getCemetery: builder.query({
+      query: () => `/cemeteries?status=active&pagination=none`,
+      method: "GET",
+      providesTags: ["Cemetery"],
+    }),
+    getLot: builder.query({
+      query: ({ search }) =>
+        `/lot?search=${search}&status=active&pagination=none`,
+      method: "GET",
+      providesTags: ["Lot"],
+    }),
+    addLot: builder.mutation({
+      query: (lot) => ({
+        url: `/lot`,
+        method: "POST",
+        body: lot,
+      }),
+      invalidatesTags: ["Lots"],
+    }),
+    updateLot: builder.mutation({
+      query: (lot) => ({
+        url: `/lot/${lot.id}`,
+        method: "PATCH",
+        body: lot,
+      }),
+      invalidatesTags: ["Lots"],
+    }),
+    archivedLot: builder.mutation({
+      query: ({ id }) => ({
+        url: `/lot-archived/${id}`,
+        method: "PUT",
+        body: id,
+      }),
+      invalidatesTags: ["Lots"],
+    }),
     logout: builder.mutation({
       query: () => ({
         url: "/logout",
@@ -130,5 +165,10 @@ export const {
   useAddUserMutation,
   useUpdateUserMutation,
   useArchivedUserMutation,
+  useGetCemeteryQuery,
+  useGetLotQuery,
+  useUpdateLotMutation,
+  useArchivedLotMutation,
+  useAddLotMutation,
   useLogoutMutation,
 } = apiSlice;
