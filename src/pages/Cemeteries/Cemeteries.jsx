@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -6,6 +6,7 @@ import {
   Popup,
   useMapEvents,
   FeatureGroup,
+  useMap,
 } from "react-leaflet";
 import "leaflet-draw/dist/leaflet.draw.css";
 import {
@@ -13,6 +14,7 @@ import {
   useAddLotMutation,
   useGetLotQuery,
   useGetCemeteryQuery,
+  useArchivedLotMutation,
 } from "../../redux/slices/apiSlice";
 import {
   Dialog,
@@ -27,12 +29,19 @@ import {
   Alert,
   FormControl,
   InputLabel,
+  Divider,
+  Typography,
+  Breadcrumbs,
+  Link,
+  Autocomplete,
 } from "@mui/material";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { lotSchema } from "../../validations/validation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as turf from "@turf/turf";
 import { EditControl } from "react-leaflet-draw";
+import { Dashboard, Map } from "@mui/icons-material";
+import ListAltIcon from "@mui/icons-material/ListAlt";
 
 const DrawingTool = ({ onDrawComplete, isDrawing, existingLots }) => {
   const [drawingCoords, setDrawingCoords] = useState([]);
@@ -85,9 +94,30 @@ const DrawingTool = ({ onDrawComplete, isDrawing, existingLots }) => {
 const Cemeteries = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [coords, setCoords] = useState([]);
+  const mapRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formType, setFormType] = useState("create"); // 'create' or 'edit'
   const [selectedLot, setSelectedLot] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedID, setSelectedID] = useState(null);
+  const cemeteryBoundaryLatLng = [
+    [14.292776, 120.971491],
+    [14.292266, 120.971781],
+    [14.291476, 120.97162],
+    [14.289574, 120.971824],
+    [14.28921, 120.971609],
+    [14.285103, 120.971974],
+    [14.284999, 120.970676],
+    [14.289584, 120.968186],
+    [14.292776, 120.971427],
+    [14.292776, 120.971491],
+  ];
+
+  const cemeteryPolygon = turf.polygon([
+    cemeteryBoundaryLatLng.map(([lat, lng]) => [lng, lat]),
+  ]);
+
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -99,9 +129,13 @@ const Cemeteries = () => {
     handleSubmit,
     reset,
     setValue,
+    watch,
     setError,
+    control,
     formState: { errors },
   } = useForm({ resolver: yupResolver(lotSchema) });
+
+  const isFeatured = watch("is_featured") === 1;
 
   const { data: lotData, refetch: refetchLots } = useGetLotQuery({
     search: "",
@@ -110,6 +144,7 @@ const Cemeteries = () => {
   const { data: cemeteryData } = useGetCemeteryQuery();
   const [addLot] = useAddLotMutation();
   const [updateLot] = useUpdateLotMutation();
+  const [deleteLot] = useArchivedLotMutation();
 
   function cleanPointer(pointer) {
     return pointer?.replace(/^\//, ""); // Removes the leading '/'
@@ -120,6 +155,7 @@ const Cemeteries = () => {
   ];
 
   const openForm = (type, data = null, coordinates = []) => {
+    console.log(data?.is_featured);
     setFormType(type);
     setCoords(coordinates);
 
@@ -131,7 +167,7 @@ const Cemeteries = () => {
       setValue("reserved_until", data.reserved_until || "");
       setValue("promo_price", data.promo_price || "");
       setValue("promo_until", data.promo_until || "");
-      setValue("is_featured", data.is_featured || 0);
+      setValue("is_featured", data.is_featured ? 1 : 0);
     } else {
       reset({
         lot_number: "",
@@ -157,7 +193,6 @@ const Cemeteries = () => {
       price: parseFloat(formData.price),
       promo_price: formData.promo_price || "",
       promo_until: formData.promo_until || "",
-      reserved_until: formData.reserved_until || "",
       is_featured: parseInt(formData.is_featured),
       coordinates: coords,
     };
@@ -196,19 +231,137 @@ const Cemeteries = () => {
     }
   };
 
+  const handleDeleteLot = async () => {
+    try {
+      const response = await deleteLot({ id: selectedID }).unwrap();
+      setOpenDeleteDialog(false);
+      setSelectedID(null);
+      refetchLots();
+      setSnackbar({
+        open: true,
+        message: response?.message,
+        severity: "success",
+      });
+    } catch (errors) {
+      refetchLots();
+      setSnackbar({
+        open: true,
+        message:
+          errors?.data?.errors?.[0]?.detail || "An unexpected error occurred",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleDeleteClick = (lot) => {
+    setSelectedID(lot.id);
+    setOpenDeleteDialog(true);
+  };
+
+  const flyToLot = (lot) => {
+    const map = mapRef.current;
+    if (!map || !lot?.coordinates?.length) return;
+
+    // Flip [lat, lng] to [lng, lat] for turf
+    const reversedCoords = lot.coordinates.map(([lat, lng]) => [lng, lat]);
+
+    const lotPolygon = turf.polygon([[...reversedCoords, reversedCoords[0]]]);
+    const center = turf.center(lotPolygon).geometry.coordinates; // [lng, lat]
+    const [lng, lat] = center;
+
+    map.flyTo([lat, lng], 18, {
+      animate: true,
+      duration: 2,
+    });
+
+    const marker = L.circleMarker([lat, lng], {
+      radius: 10,
+      color: "blue",
+      fillColor: "#00f",
+      fillOpacity: 0.6,
+    }).addTo(map);
+
+    setTimeout(() => map.removeLayer(marker), 3000);
+  };
+
+  const MapRefHandler = ({ setMap }) => {
+    const map = useMap();
+
+    useEffect(() => {
+      setMap(map);
+    }, [map]);
+
+    return null;
+  };
+
   return (
     <>
-      <div style={{ height: "80vh", width: "100%" }}>
+      <Breadcrumbs aria-label="breadcrumb" sx={{ marginBottom: 1 }}>
+        <Link
+          underline="hover"
+          sx={{ display: "flex", alignItems: "center" }}
+          color="inherit"
+          href="/"
+        >
+          <Dashboard sx={{ mr: 0.5 }} fontSize="inherit" />
+          Dashboard
+        </Link>
+        <Link
+          underline="hover"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+          }}
+          color="inherit"
+          href="/Admin/masterlist"
+        >
+          <ListAltIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+          Masterlist
+        </Link>
+        <Typography
+          sx={{ color: "text.primary", display: "flex", alignItems: "center" }}
+        >
+          <Map sx={{ mr: 0.5 }} fontSize="inherit" />
+          Map
+        </Typography>
+      </Breadcrumbs>
+      <Typography variant="h4">Cemeteries</Typography>
+      <div style={{ height: "70vh", width: "100%" }}>
         <MapContainer center={center} zoom={50} style={{ height: "100%" }}>
+          <Autocomplete
+            options={lotData?.data || []}
+            getOptionLabel={(option) => option.lot_number || ""}
+            onChange={(event, selectedLot) => {
+              console.log("Selected Lot:", selectedLot);
+              if (selectedLot) {
+                flyToLot(selectedLot);
+              }
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Search Lot"
+                variant="outlined"
+                size="small"
+              />
+            )}
+            sx={{
+              position: "absolute",
+              top: 10,
+              left: 50,
+              zIndex: 1000,
+              backgroundColor: "#fff",
+              width: 150,
+            }}
+          />
+          <MapRefHandler
+            setMap={(mapInstance) => (mapRef.current = mapInstance)}
+          />
           <TileLayer
             attribution="&copy; OpenStreetMap"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {/* <DrawingTool
-            onDrawComplete={onDrawComplete}
-            isDrawing={isDrawing}
-            existingLots={lotData?.data}
-          /> */}
+
           <FeatureGroup>
             <EditControl
               position="topright"
@@ -222,12 +375,58 @@ const Cemeteries = () => {
               }}
               onCreated={(e) => {
                 const layer = e.layer;
-                const latlngs = layer.getLatLngs()[0]; // assuming a single polygon
+                const latlngs = layer.getLatLngs()[0]; // Only first ring for simple polygon
                 const coords = latlngs.map((latlng) => [
                   latlng.lat,
                   latlng.lng,
                 ]);
-                onDrawComplete(coords); // your existing function to open the form dialog
+
+                // Convert to [lng, lat] and close loop
+                const lotPolygon = turf.polygon([
+                  coords
+                    .map(([lat, lng]) => [lng, lat])
+                    .concat([[coords[0][1], coords[0][0]]]),
+                ]);
+
+                // Cemetery polygon defined globally or above
+                const isInside = turf.booleanWithin(
+                  lotPolygon,
+                  cemeteryPolygon
+                );
+
+                if (!isInside) {
+                  setSnackbar({
+                    open: true,
+                    message:
+                      "❌ You can only draw lots within the cemetery area.",
+                    severity: "error",
+                  });
+                  return;
+                }
+
+                // Check if overlapping with any existing lot
+                const isOverlapping = lotData?.data?.some((lot) => {
+                  if (!lot?.coordinates?.length) return false;
+
+                  const lotPoly = turf.polygon([
+                    lot.coordinates
+                      .map(([lat, lng]) => [lng, lat])
+                      .concat([[lot.coordinates[0][1], lot.coordinates[0][0]]]),
+                  ]);
+                  return turf.booleanIntersects(lotPolygon, lotPoly);
+                });
+
+                if (isOverlapping) {
+                  setSnackbar({
+                    open: true,
+                    message: "❌ Cannot draw on top of an existing lot.",
+                    severity: "error",
+                  });
+                  return;
+                }
+
+                // ✅ Lot is valid, proceed
+                onDrawComplete(coords);
               }}
             />
           </FeatureGroup>
@@ -250,6 +449,7 @@ const Cemeteries = () => {
                 <Button
                   size="small"
                   variant="contained"
+                  color="success"
                   onClick={() => openForm("edit", lot, lot.coordinates)}
                   style={{ marginTop: 8, marginRight: 5 }}
                 >
@@ -258,7 +458,8 @@ const Cemeteries = () => {
                 <Button
                   size="small"
                   variant="contained"
-                  onClick={() => openForm("edit", lot, lot.coordinates)}
+                  color="error"
+                  onClick={() => handleDeleteClick(lot)}
                   style={{ marginTop: 8 }}
                 >
                   Delete
@@ -295,6 +496,7 @@ const Cemeteries = () => {
               error={!!errors.lot_number}
               helperText={errors.lot_number?.message}
             />
+
             <TextField
               label="Price"
               type="number"
@@ -304,60 +506,97 @@ const Cemeteries = () => {
               error={!!errors.price}
               helperText={errors.price?.message}
             />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Status</InputLabel>
-              <Select
-                {...register("status")}
-                defaultValue="available"
-                label="Status"
-              >
-                <MenuItem value="available">Available</MenuItem>
-                <MenuItem value="reserved">Reserved</MenuItem>
-                <MenuItem value="sold">Sold</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              label="Reserved Until"
-              type="date"
-              fullWidth
-              margin="normal"
-              InputLabelProps={{ shrink: true }}
-              {...register("reserved_until")}
+
+            <Controller
+              name="status"
+              control={control}
+              defaultValue="available"
+              render={({ field }) => (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Status</InputLabel>
+                  <Select {...field} label="Status">
+                    <MenuItem value="available">Available</MenuItem>
+                    <MenuItem value="reserved">Reserved</MenuItem>
+                    <MenuItem value="sold">Sold</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
             />
-            <TextField
-              label="Promo Price"
-              type="number"
-              fullWidth
-              margin="normal"
-              {...register("promo_price")}
+
+            {isFeatured && (
+              <>
+                <TextField
+                  label="Promo Price"
+                  type="number"
+                  fullWidth
+                  margin="normal"
+                  {...register("promo_price")}
+                />
+                <TextField
+                  label="Promo Until"
+                  type="date"
+                  fullWidth
+                  margin="normal"
+                  InputLabelProps={{ shrink: true }}
+                  {...register("promo_until")}
+                />
+              </>
+            )}
+            <Controller
+              name="is_featured"
+              control={control}
+              defaultValue={0}
+              render={({ field }) => (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Is Featured</InputLabel>
+                  <Select
+                    {...field}
+                    label="Is Featured"
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  >
+                    <MenuItem value={0}>No</MenuItem>
+                    <MenuItem value={1}>Yes</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
             />
-            <TextField
-              label="Promo Until"
-              type="date"
-              fullWidth
-              margin="normal"
-              InputLabelProps={{ shrink: true }}
-              {...register("promo_until")}
-            />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Is Featured</InputLabel>
-              <Select
-                {...register("is_featured")}
-                defaultValue={0}
-                label="Is Featured"
-              >
-                <MenuItem value={0}>No</MenuItem>
-                <MenuItem value={1}>Yes</MenuItem>
-              </Select>
-            </FormControl>
           </DialogContent>
+
           <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-            <Button type="submit" variant="contained">
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => setOpenDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" variant="contained" color="success">
               {formType === "edit" ? "Update" : "Create"}
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+
+      {/* Confirmation Dialog for Delete */}
+      <Dialog open={openDeleteDialog}>
+        <DialogTitle>Delete</DialogTitle>
+        <Divider />
+        <DialogContent>
+          <Typography>Are you sure you want to detele this record?</Typography>
+        </DialogContent>
+        <Divider />
+        <DialogActions>
+          <Button
+            onClick={() => setOpenDeleteDialog(false)}
+            variant="contained"
+            color="error"
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteLot} variant="contained" color="success">
+            Yes
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* Snackbar */}
