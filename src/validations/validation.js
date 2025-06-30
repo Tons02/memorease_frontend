@@ -9,6 +9,14 @@ export const loginSchema = yup
   })
   .required();
 
+export const changePasswordSchema = yup
+  .object({
+    old_password: yup.string().required("Username is required"),
+    new_password: yup.string().required("Password is required"),
+    new_password_confirmation: yup.string().required("Password is required"),
+  })
+  .required();
+
 export const registrationSchema = yup
   .object({
     fname: yup.string().required("First Name is required"),

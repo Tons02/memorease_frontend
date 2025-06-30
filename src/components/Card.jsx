@@ -33,7 +33,7 @@ export default function BasicCard({ icon, title, subtitle, destination }) {
         cursor: "pointer",
         transition: "all 0.3s ease", // Smooth transition for color change
         "&:hover": {
-          backgroundColor: theme.palette.primary.main, // Change the background color on hover
+          backgroundColor: theme.palette.secondary.main, // Change the background color on hover
           color: "white", // Change the text color when hovered
         },
       }}

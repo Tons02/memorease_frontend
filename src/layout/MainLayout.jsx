@@ -19,16 +19,24 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
+import LockIcon from "@mui/icons-material/Lock";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import LogoutIcon from "@mui/icons-material/Logout";
 import pmpd_logo from "../assets/pmpd_logo.png";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import {
   Button,
   Collapse,
+  Menu,
+  Avatar,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
+  Snackbar,
+  Alert,
+  TextField,
 } from "@mui/material";
 import {
   AccountCircle,
@@ -37,15 +45,15 @@ import {
   ExpandMore,
   Map,
 } from "@mui/icons-material";
-import ApartmentIcon from "@mui/icons-material/Apartment";
-import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import BallotIcon from "@mui/icons-material/Ballot";
-import ViewHeadlineIcon from "@mui/icons-material/ViewHeadline";
+import LockResetIcon from "@mui/icons-material/LockReset";
 import ShareLocationIcon from "@mui/icons-material/ShareLocation";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import GroupIcon from "@mui/icons-material/Group";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import { useChangePasswordMutation } from "../redux/slices/apiSlice";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { changePasswordSchema } from "../validations/validation";
 
 const drawerWidth = 240;
 
@@ -129,9 +137,61 @@ const Drawer = styled(MuiDrawer, {
 
 export default function MiniDrawer() {
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
-  const [openModal, setOpenModal] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [openModalChangePassword, setOpenModalChangePassword] = useState(false);
   const storedData = JSON.parse(localStorage.getItem("user"));
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setError,
+    watch,
+    inputError,
+    setValue,
+  } = useForm({
+    defaultValues: {
+      old_password: "",
+      new_password: "",
+      new_password_confirmation: "",
+    },
+    resolver: yupResolver(changePasswordSchema),
+  });
+
+  const [changePassword] = useChangePasswordMutation();
+
+  // Handle changePassword Role
+  const handleChangePassword = async (data) => {
+    try {
+      const response = await changePassword({
+        ...data,
+      }).unwrap();
+      setOpenModalChangePassword(false);
+      setSnackbar({
+        open: true,
+        message: response?.message,
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Error updating role:", error);
+      setSnackbar({
+        open: true,
+        message: error?.message || "An unexpected error occurred",
+        severity: "error",
+      });
+    }
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
   let accessPermissions = storedData?.role?.access_permission;
 
@@ -147,16 +207,6 @@ export default function MiniDrawer() {
 
   const handleNavigation = (path) => {
     navigate(path);
-  };
-
-  // Handle open modal (triggered when the user clicks the logout button)
-  const handleOpenModal = () => {
-    setOpenModal(true);
-  };
-
-  // Handle close modal without logging out
-  const handleCloseModal = () => {
-    setOpenModal(false);
   };
 
   // Handle logout functionality
@@ -181,33 +231,81 @@ export default function MiniDrawer() {
     setIsExpandedUserManagement(!isExpandedUserManagement);
   };
 
+  const handleAvatarClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
   return (
     <>
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
         <AppBar position="fixed" open={open}>
-          <Toolbar>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              onClick={handleDrawerOpen}
-              edge="start"
-              sx={[
-                {
-                  marginRight: 5,
-                },
-                open && { display: "none" },
-              ]}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography variant="h6" noWrap component="div">
-              <img
-                src={pmpd_logo}
-                alt="Providence Memorial Park Logo"
-                style={{ width: "80px", paddingTop: "10px" }}
-              />
-            </Typography>
+          <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+            {/* Left side: Menu Icon and Logo */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                onClick={handleDrawerOpen}
+                edge="start"
+                sx={[{ marginRight: 5 }, open && { display: "none" }]}
+              >
+                <MenuIcon sx={{ color: "secondary.main" }} />
+              </IconButton>
+
+              <Typography variant="h6" noWrap component="div">
+                <img
+                  src={pmpd_logo}
+                  alt="Providence Memorial Park Logo"
+                  style={{ width: "80px", paddingTop: "10px" }}
+                />
+              </Typography>
+            </Box>
+
+            {/* Right side: Avatar */}
+            <Box>
+              <IconButton onClick={handleAvatarClick}>
+                <Avatar
+                  src="https://i.pravatar.cc/150?img=3" // your avatar image here
+                  alt="Profile"
+                  sx={{ width: 40, height: 40 }}
+                />
+              </IconButton>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                anchorOrigin={{
+                  vertical: "bottom",
+                  horizontal: "right",
+                }}
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+              >
+                <MenuItem>
+                  <ListItemIcon>
+                    <PersonIcon fontSize="small" />
+                  </ListItemIcon>
+                  Change Profile
+                </MenuItem>
+
+                <MenuItem onClick={() => setOpenModalChangePassword(true)}>
+                  <ListItemIcon>
+                    <LockIcon fontSize="small" />
+                  </ListItemIcon>
+                  Change Password
+                </MenuItem>
+
+                <MenuItem onClick={() => setOpenModal(true)}>
+                  <ListItemIcon>
+                    <LogoutIcon fontSize="small" />
+                  </ListItemIcon>
+                  Logout
+                </MenuItem>
+              </Menu>
+            </Box>
           </Toolbar>
         </AppBar>
         <Drawer variant="permanent" open={open}>
@@ -254,7 +352,13 @@ export default function MiniDrawer() {
                         },
                   ]}
                 >
-                  <DashboardIcon />
+                  <DashboardIcon
+                    sx={{
+                      maxWidth: 275,
+                      cursor: "pointer",
+                      color: theme.palette.secondary.main,
+                    }}
+                  />
                 </ListItemIcon>
                 <ListItemText
                   primary="Dashboard"
@@ -306,7 +410,13 @@ export default function MiniDrawer() {
                           },
                     ]}
                   >
-                    <ListAltIcon />
+                    <ListAltIcon
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
                   </ListItemIcon>
                   <ListItemText
                     primary="Masterlist"
@@ -352,7 +462,13 @@ export default function MiniDrawer() {
                           },
                     ]}
                   >
-                    <Map />
+                    <Map
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
                   </ListItemIcon>
                   <ListItemText
                     primary="Cemetery"
@@ -387,7 +503,13 @@ export default function MiniDrawer() {
                           },
                     ]}
                   >
-                    <ShareLocationIcon />
+                    <ShareLocationIcon
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
                   </ListItemIcon>
                   <ListItemText
                     primary="Locations"
@@ -436,7 +558,13 @@ export default function MiniDrawer() {
                           },
                     ]}
                   >
-                    <AssignmentIndIcon />
+                    <AssignmentIndIcon
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
                   </ListItemIcon>
                   <ListItemText
                     primary="User Management"
@@ -492,7 +620,13 @@ export default function MiniDrawer() {
                           },
                     ]}
                   >
-                    <GroupIcon />
+                    <GroupIcon
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
                   </ListItemIcon>
                   <ListItemText
                     primary="User Accounts"
@@ -527,7 +661,13 @@ export default function MiniDrawer() {
                           },
                     ]}
                   >
-                    <ManageAccountsIcon />
+                    <ManageAccountsIcon
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
                   </ListItemIcon>
                   <ListItemText
                     primary="Role Management"
@@ -540,61 +680,166 @@ export default function MiniDrawer() {
             </Collapse>
           </List>
           <Divider />
-          <List>
-            <ListItem disablePadding sx={{ display: "block" }}>
-              <ListItemButton
-                sx={{
-                  minHeight: 48,
-                  px: 2.5,
-                  justifyContent: open ? "initial" : "center",
-                }}
-                onClick={handleOpenModal}
-              >
-                <ListItemIcon
-                  sx={{
-                    minWidth: 0,
-                    justifyContent: "center",
-                    mr: open ? 2 : "auto", // Align icon based on open state
-                  }}
-                >
-                  <LogoutIcon />
-                </ListItemIcon>
-                <ListItemText
-                  primary="Logout"
-                  sx={{
-                    opacity: open ? 1 : 0,
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          </List>
+          <List></List>
         </Drawer>
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
           <DrawerHeader />
           <Outlet />
-
-          {/* Confirmation Modal */}
         </Box>
       </Box>
-      <Dialog open={openModal} onClose={handleCloseModal}>
-        <DialogTitle>Are you sure you want to log out?</DialogTitle>
+
+      {/* dialog for change password  */}
+      <Dialog
+        open={openModalChangePassword}
+        onClose={() => setOpenModalChangePassword(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <LockResetIcon color="secondary" />
+            <Typography variant="h6" fontWeight="bold">
+              Change Password
+            </Typography>
+          </Box>
+        </DialogTitle>
+
         <Divider />
+
         <DialogContent>
-          <p>
-            If you log out, you will need to log in again to access your
-            account.
-          </p>
+          <form onSubmit={handleSubmit(handleChangePassword)}>
+            <TextField
+              {...register("old_password")}
+              label="Old Password"
+              margin="dense"
+              type="password"
+              fullWidth
+              error={!!errors.old_password}
+              helperText={errors.old_password?.message}
+            />
+
+            {errors.old_password && (
+              <Typography color="error">
+                {errors.old_password.message}
+              </Typography>
+            )}
+            <TextField
+              {...register("new_password")}
+              label="New password"
+              type="password"
+              margin="dense"
+              fullWidth
+              error={!!errors.new_password}
+              helperText={errors.new_password?.message}
+            />
+
+            {errors.new_password && (
+              <Typography color="error">
+                {errors.new_password.message}
+              </Typography>
+            )}
+            <TextField
+              {...register("new_password_confirmation")}
+              label="Confirm New Password"
+              margin="dense"
+              type="password"
+              fullWidth
+              error={!!errors.new_password_confirmation}
+              helperText={errors.name?.message}
+            />
+
+            {errors.new_password_confirmation && (
+              <Typography color="error">
+                {errors.new_password_confirmation.message}
+              </Typography>
+            )}
+          </form>
         </DialogContent>
+
         <Divider />
-        <DialogActions>
-          <Button onClick={handleCloseModal} variant="contained" color="error">
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setOpenModalChangePassword(false)}
+            variant="outlined"
+            color="error"
+            fullWidth
+          >
             Cancel
           </Button>
-          <Button onClick={handleLogout} variant="contained" color="success">
+          <Button
+            type="submit"
+            variant="outlined"
+            color="success"
+            fullWidth
+            startIcon={<LogoutIcon />}
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* dialog for logout  */}
+      <Dialog
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <WarningAmberRoundedIcon color="warning" />
+            <Typography variant="h6" fontWeight="bold">
+              Confirm Logout
+            </Typography>
+          </Box>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent>
+          <Typography variant="body1" sx={{ mt: 1 }}>
+            Are you sure you want to log out?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            If you log out, you will need to log in again to access your
+            account.
+          </Typography>
+        </DialogContent>
+
+        <Divider />
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setOpenModal(false)}
+            variant="outlined"
+            color="error"
+            fullWidth
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleLogout}
+            variant="outlined"
+            color="success"
+            fullWidth
+            startIcon={<LogoutIcon />}
+          >
             Log Out
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert severity={snackbar.severity} sx={{ width: "100%" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

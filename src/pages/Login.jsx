@@ -55,11 +55,11 @@ const LoginForm = () => {
       if (response?.data?.role?.name == "customer") {
         setTimeout(() => {
           navigate("/");
-        }, 1000);
+        }, 500);
       } else {
         setTimeout(() => {
           navigate("/admin");
-        }, 1000);
+        }, 500);
       }
     } catch (error) {
       setSnackbar({

@@ -147,6 +147,13 @@ export const apiSlice = createApi({
         method: "POST",
       }),
     }),
+    changePassword: builder.mutation({
+      query: (body) => ({
+        url: `/changepassword`,
+        method: "PATCH",
+        body: body,
+      }),
+    }),
   }),
 });
 
@@ -171,4 +178,5 @@ export const {
   useArchivedLotMutation,
   useAddLotMutation,
   useLogoutMutation,
+  useChangePasswordMutation,
 } = apiSlice;
