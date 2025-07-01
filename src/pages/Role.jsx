@@ -5,6 +5,7 @@ import {
   Breadcrumbs,
   Button,
   Checkbox,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -101,8 +102,8 @@ const Role = () => {
     status,
   });
 
-  const [addRole] = useAddRoleMutation();
-  const [updateRole] = useUpdateRoleMutation();
+  const [addRole, { isLoading: isAdding }] = useAddRoleMutation();
+  const [updateRole, { isLoading: isUpdating }] = useUpdateRoleMutation();
   const [archiveRole] = useArchivedRoleMutation();
 
   function cleanPointer(pointer) {
@@ -733,7 +734,7 @@ const Role = () => {
               Cancel
             </Button>
             <Button type="submit" color="success" variant="contained">
-              Create
+              {isAdding ? <CircularProgress size={20} /> : "Create"}
             </Button>
           </DialogActions>
         </form>
@@ -920,7 +921,7 @@ const Role = () => {
               ""
             ) : (
               <Button type="submit" color="success" variant="contained">
-                Update
+                {isUpdating ? <CircularProgress size={20} /> : "Update"}
               </Button>
             )}
           </DialogActions>

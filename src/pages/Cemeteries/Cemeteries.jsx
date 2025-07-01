@@ -34,6 +34,7 @@ import {
   Breadcrumbs,
   Link,
   Autocomplete,
+  Box,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { lotSchema } from "../../validations/validation";
@@ -100,6 +101,7 @@ const Cemeteries = () => {
   const [selectedLot, setSelectedLot] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openCemeteryInformation, setOpenCemeteryInformation] = useState(false);
   const [selectedID, setSelectedID] = useState(null);
   const cemeteryBoundaryLatLng = [
     [14.292776, 120.971491],
@@ -325,7 +327,27 @@ const Cemeteries = () => {
           Map
         </Typography>
       </Breadcrumbs>
-      <Typography variant="h4">Cemeteries</Typography>
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="space-between"
+        mb={2}
+      >
+        <Typography variant="h4" sx={{ mr: 2 }}>
+          Cemetery Map
+        </Typography>
+
+        {/* <Button
+          size="small"
+          variant="contained"
+          color="success"
+          onClick={() => setOpenCemeteryInformation(true)}
+          sx={{ mt: 1 }}
+        >
+          Edit Information
+        </Button> */}
+      </Box>
+
       <div style={{ height: "70vh", width: "100%" }}>
         <MapContainer center={center} zoom={50} style={{ height: "100%" }}>
           <Autocomplete
@@ -343,6 +365,9 @@ const Cemeteries = () => {
                 label="Search Lot"
                 variant="outlined"
                 size="small"
+                sx={{
+                  backgroundColor: "transparent", // input field background
+                }}
               />
             )}
             sx={{
@@ -350,7 +375,7 @@ const Cemeteries = () => {
               top: 10,
               left: 50,
               zIndex: 1000,
-              backgroundColor: "#fff",
+              backgroundColor: "#ffff", // for Autocomplete container
               width: 150,
             }}
           />

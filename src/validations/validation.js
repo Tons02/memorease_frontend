@@ -11,9 +11,12 @@ export const loginSchema = yup
 
 export const changePasswordSchema = yup
   .object({
-    old_password: yup.string().required("Username is required"),
-    new_password: yup.string().required("Password is required"),
-    new_password_confirmation: yup.string().required("Password is required"),
+    old_password: yup.string().required("Old password is required"),
+    new_password: yup.string().required("New password is required"),
+    new_password_confirmation: yup
+      .string()
+      .required("Please confirm your password")
+      .oneOf([yup.ref("new_password")], "New Passwords must match"),
   })
   .required();
 

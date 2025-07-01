@@ -19,9 +19,12 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogActions from "@mui/material/DialogActions";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import pmpd_logo from "../assets/pmpd_logo.png";
+import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 // Import the logout mutation
 import { useLogoutMutation } from "../redux/slices/apiSlice";
+import { DialogContent } from "@mui/material";
 
 const drawerWidth = 240;
 
@@ -31,7 +34,6 @@ function HomePageLayOut(props) {
   const [openLogoutDialog, setOpenLogoutDialog] = React.useState(false);
   const navigate = useNavigate();
 
-  const isLoggedIn = !!localStorage.getItem("token");
   const [logout] = useLogoutMutation(); // Redux Toolkit mutation
 
   const handleDrawerToggle = () => {
@@ -54,18 +56,35 @@ function HomePageLayOut(props) {
     }
 
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setOpenLogoutDialog(false);
     navigate("/login");
   };
+
+  const isLoggedIn = !!localStorage.getItem("token");
+
+  let storedData = null;
+  let roleName = null;
+
+  try {
+    const userData = localStorage.getItem("user");
+    storedData = userData ? JSON.parse(userData) : null;
+    roleName = storedData?.role?.name || null;
+  } catch (error) {
+    console.error("Invalid user data in localStorage", error);
+  }
+
+  console.log("roleName:", roleName);
 
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Maps", path: "/maps" },
     { name: "Contact", path: "/contact" },
+    roleName === "admin" && { name: "Admin", path: "/admin" },
     isLoggedIn
       ? { name: "Logout", path: "" }
       : { name: "Login", path: "/login" },
-  ];
+  ].filter(Boolean);
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
@@ -159,7 +178,6 @@ function HomePageLayOut(props) {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
           width: "100%",
         }}
       >
@@ -168,12 +186,52 @@ function HomePageLayOut(props) {
       </Box>
 
       {/* Logout Confirmation Modal */}
-      <Dialog open={openLogoutDialog} onClose={handleLogoutCancel}>
-        <DialogTitle>{"Are you sure you want to logout?"}</DialogTitle>
-        <DialogActions>
-          <Button onClick={handleLogoutCancel}>Cancel</Button>
-          <Button onClick={handleLogoutConfirm} color="error" autoFocus>
-            Logout
+      <Dialog
+        open={openLogoutDialog}
+        onClose={handleLogoutCancel}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <WarningAmberRoundedIcon color="warning" />
+            <Typography variant="h6" fontWeight="bold">
+              Confirm Logout
+            </Typography>
+          </Box>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent>
+          <Typography variant="body1" sx={{ mt: 1 }}>
+            Are you sure you want to log out?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            If you log out, you will need to log in again to access your
+            account.
+          </Typography>
+        </DialogContent>
+
+        <Divider />
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={handleLogoutCancel}
+            variant="contained"
+            color="error"
+            fullWidth
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleLogoutConfirm}
+            variant="contained"
+            color="success"
+            fullWidth
+            startIcon={<LogoutIcon />}
+          >
+            Log Out
           </Button>
         </DialogActions>
       </Dialog>

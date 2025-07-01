@@ -37,6 +37,7 @@ import {
   Snackbar,
   Alert,
   TextField,
+  CircularProgress,
 } from "@mui/material";
 import {
   AccountCircle,
@@ -149,13 +150,11 @@ export default function MiniDrawer() {
   });
   const {
     register,
-    handleSubmit,
-    formState: { errors },
     reset,
-    setError,
-    watch,
+    handleSubmit,
     inputError,
-    setValue,
+    setError,
+    formState: { errors },
   } = useForm({
     defaultValues: {
       old_password: "",
@@ -165,27 +164,32 @@ export default function MiniDrawer() {
     resolver: yupResolver(changePasswordSchema),
   });
 
-  const [changePassword] = useChangePasswordMutation();
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
 
-  // Handle changePassword Role
+  function cleanPointer(pointer) {
+    return pointer?.replace(/^\//, ""); // Removes the leading '/'
+  }
+
+  // Handle changePassword
   const handleChangePassword = async (data) => {
     try {
       const response = await changePassword({
         ...data,
       }).unwrap();
       setOpenModalChangePassword(false);
+      reset();
       setSnackbar({
         open: true,
         message: response?.message,
         severity: "success",
       });
     } catch (error) {
-      console.error("Error updating role:", error);
-      setSnackbar({
-        open: true,
-        message: error?.message || "An unexpected error occurred",
-        severity: "error",
-      });
+      error?.data?.errors.map((inputError, index) =>
+        setError(cleanPointer(inputError?.source?.pointer), {
+          type: "message",
+          message: inputError?.detail,
+        })
+      );
     }
   };
 
@@ -291,14 +295,22 @@ export default function MiniDrawer() {
                   Change Profile
                 </MenuItem>
 
-                <MenuItem onClick={() => setOpenModalChangePassword(true)}>
+                <MenuItem
+                  onClick={() => {
+                    setOpenModalChangePassword(true), handleClose();
+                  }}
+                >
                   <ListItemIcon>
                     <LockIcon fontSize="small" />
                   </ListItemIcon>
                   Change Password
                 </MenuItem>
 
-                <MenuItem onClick={() => setOpenModal(true)}>
+                <MenuItem
+                  onClick={() => {
+                    setOpenModal(true), handleClose();
+                  }}
+                >
                   <ListItemIcon>
                     <LogoutIcon fontSize="small" />
                   </ListItemIcon>
@@ -703,11 +715,9 @@ export default function MiniDrawer() {
             </Typography>
           </Box>
         </DialogTitle>
-
-        <Divider />
-
-        <DialogContent>
-          <form onSubmit={handleSubmit(handleChangePassword)}>
+        <form onSubmit={handleSubmit(handleChangePassword)}>
+          <Divider />
+          <DialogContent>
             <TextField
               {...register("old_password")}
               label="Old Password"
@@ -717,12 +727,6 @@ export default function MiniDrawer() {
               error={!!errors.old_password}
               helperText={errors.old_password?.message}
             />
-
-            {errors.old_password && (
-              <Typography color="error">
-                {errors.old_password.message}
-              </Typography>
-            )}
             <TextField
               {...register("new_password")}
               label="New password"
@@ -732,12 +736,6 @@ export default function MiniDrawer() {
               error={!!errors.new_password}
               helperText={errors.new_password?.message}
             />
-
-            {errors.new_password && (
-              <Typography color="error">
-                {errors.new_password.message}
-              </Typography>
-            )}
             <TextField
               {...register("new_password_confirmation")}
               label="Confirm New Password"
@@ -745,38 +743,40 @@ export default function MiniDrawer() {
               type="password"
               fullWidth
               error={!!errors.new_password_confirmation}
-              helperText={errors.name?.message}
+              helperText={errors.new_password_confirmation?.message}
             />
+          </DialogContent>
 
-            {errors.new_password_confirmation && (
-              <Typography color="error">
-                {errors.new_password_confirmation.message}
-              </Typography>
-            )}
-          </form>
-        </DialogContent>
+          <Divider />
 
-        <Divider />
-
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setOpenModalChangePassword(false)}
-            variant="outlined"
-            color="error"
-            fullWidth
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="outlined"
-            color="success"
-            fullWidth
-            startIcon={<LogoutIcon />}
-          >
-            Confirm
-          </Button>
-        </DialogActions>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button
+              onClick={() => {
+                reset();
+                setOpenModalChangePassword(false);
+              }}
+              variant="contained"
+              color="error"
+              fullWidth
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="success"
+              fullWidth
+              startIcon={!isLoading && <LogoutIcon />}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                "Confirm"
+              )}
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
 
       {/* dialog for logout  */}
@@ -812,7 +812,7 @@ export default function MiniDrawer() {
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
             onClick={() => setOpenModal(false)}
-            variant="outlined"
+            variant="contained"
             color="error"
             fullWidth
           >
@@ -820,7 +820,7 @@ export default function MiniDrawer() {
           </Button>
           <Button
             onClick={handleLogout}
-            variant="outlined"
+            variant="contained"
             color="success"
             fullWidth
             startIcon={<LogoutIcon />}
@@ -835,6 +835,7 @@ export default function MiniDrawer() {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert severity={snackbar.severity} sx={{ width: "100%" }}>
           {snackbar.message}

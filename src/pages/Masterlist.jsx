@@ -50,48 +50,8 @@ const Masterlist = () => {
           <Card
             destination="cemeteries"
             icon={<ApartmentIcon />}
-            title="Cemeteries"
+            title="Cemetery"
             subtitle="Manage cemetery records and information "
-          />
-        )}
-        {accessPermissions.includes("masterlist:business-units:sync") && (
-          <Card
-            destination="business_unit"
-            icon={<BusinessCenterIcon />}
-            title="Business Unit"
-            subtitle="Synching of Business Unit Masterlist from Ymir to Lotus"
-          />
-        )}
-        {accessPermissions.includes("masterlist:departments:sync") && (
-          <Card
-            destination="department"
-            icon={<AccountTreeIcon />}
-            title="Departments"
-            subtitle="Synching of Departments Masterlist from Ymir to Lotus"
-          />
-        )}
-        {accessPermissions.includes("masterlist:units:sync") && (
-          <Card
-            destination="unit"
-            icon={<BallotIcon />}
-            title="Units"
-            subtitle="Synching of Units Masterlist from Ymir to Lotus"
-          />
-        )}
-        {accessPermissions.includes("masterlist:subunits:sync") && (
-          <Card
-            destination="sub_unit"
-            icon={<ViewHeadlineIcon />}
-            title="Sub Units"
-            subtitle="Synching of Sub Units Masterlist from Ymir to Lotus"
-          />
-        )}
-        {accessPermissions.includes("masterlist:locations:sync") && (
-          <Card
-            destination="locations"
-            icon={<ShareLocationIcon />}
-            title="Locations"
-            subtitle="Synching of Locations Masterlist from Ymir to Lotus"
           />
         )}
       </Box>
