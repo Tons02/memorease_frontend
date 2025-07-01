@@ -10,7 +10,7 @@ export const apiSlice = createApi({
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
       }
-      headers.set("Accept", "application/json"); // JSON content type
+      headers.set("Accept", "application/json");
       return headers;
     },
   }),
@@ -111,6 +111,14 @@ export const apiSlice = createApi({
       method: "GET",
       providesTags: ["Cemetery"],
     }),
+    updateCemetery: builder.mutation({
+      query: ({ id, formData }) => ({
+        url: `/cemeteries/${id}`,
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: ["Cemetery"],
+    }),
     getLot: builder.query({
       query: ({ search }) =>
         `/lot?search=${search}&status=active&pagination=none`,
@@ -173,6 +181,7 @@ export const {
   useUpdateUserMutation,
   useArchivedUserMutation,
   useGetCemeteryQuery,
+  useUpdateCemeteryMutation,
   useGetLotQuery,
   useUpdateLotMutation,
   useArchivedLotMutation,

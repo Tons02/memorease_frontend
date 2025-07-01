@@ -15,6 +15,7 @@ import {
   useGetLotQuery,
   useGetCemeteryQuery,
   useArchivedLotMutation,
+  useUpdateCemeteryMutation,
 } from "../../redux/slices/apiSlice";
 import {
   Dialog,
@@ -35,65 +36,21 @@ import {
   Link,
   Autocomplete,
   Box,
+  CircularProgress,
+  Input,
+  FormHelperText,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
-import { lotSchema } from "../../validations/validation";
+import { cemeterySchema, lotSchema } from "../../validations/validation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as turf from "@turf/turf";
 import { EditControl } from "react-leaflet-draw";
 import { Dashboard, Map } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
-
-const DrawingTool = ({ onDrawComplete, isDrawing, existingLots }) => {
-  const [drawingCoords, setDrawingCoords] = useState([]);
-
-  useMapEvents({
-    click: (e) => {
-      if (!isDrawing) return;
-
-      const nextCoords = [...drawingCoords, [e.latlng.lat, e.latlng.lng]];
-
-      if (nextCoords.length >= 3) {
-        const drawnPolygon = turf.polygon([[...nextCoords, nextCoords[0]]]);
-
-        const isOverlapping = existingLots.some((lot) => {
-          const lotPoly = turf.polygon([
-            [...lot.coordinates, lot.coordinates[0]],
-          ]);
-          return turf.booleanIntersects(drawnPolygon, lotPoly);
-        });
-
-        if (isOverlapping) {
-          alert("❌ Cannot draw on top of an existing lot.");
-          return;
-        }
-      }
-
-      setDrawingCoords(nextCoords);
-    },
-  });
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Enter" && drawingCoords.length >= 3 && isDrawing) {
-        onDrawComplete(drawingCoords);
-        setDrawingCoords([]);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [drawingCoords, isDrawing]);
-
-  return drawingCoords.length > 0 ? (
-    <Polygon
-      positions={drawingCoords}
-      pathOptions={{ color: "purple", dashArray: "4", fillOpacity: 0.2 }}
-    />
-  ) : null;
-};
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import FileUploadInput from "./components/FileUploadInput";
 
 const Cemeteries = () => {
-  const [isDrawing, setIsDrawing] = useState(false);
   const [coords, setCoords] = useState([]);
   const mapRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,14 +96,40 @@ const Cemeteries = () => {
 
   const isFeatured = watch("is_featured") === 1;
 
-  const { data: lotData, refetch: refetchLots } = useGetLotQuery({
+  const {
+    data: lotData,
+    refetch: refetchLots,
+    isLoading: isLotLoading,
+  } = useGetLotQuery({
     search: "",
   });
 
-  const { data: cemeteryData } = useGetCemeteryQuery();
-  const [addLot] = useAddLotMutation();
-  const [updateLot] = useUpdateLotMutation();
-  const [deleteLot] = useArchivedLotMutation();
+  const {
+    register: cemeteryRegister,
+    handleSubmit: handleCemeterySubmit,
+    reset: resetCemeteryForm,
+    setValue: cemeterySetValue,
+    formState: { errors: cemeteryErrors },
+  } = useForm({ resolver: yupResolver(cemeterySchema) });
+
+  const { data: cemeteryData, isLoading: isGetLoadingCemetery } =
+    useGetCemeteryQuery();
+  const [updateCemetery, { isLoading: isUpdateCemetery }] =
+    useUpdateCemeteryMutation();
+  const [addLot, { isLoading: isAddLot }] = useAddLotMutation();
+  const [updateLot, { isLoading: isUpdateLot }] = useUpdateLotMutation();
+  const [deleteLot, { isLoading: isDeleteLot }] = useArchivedLotMutation();
+
+  useEffect(() => {
+    if (cemeteryData?.data?.[0]) {
+      resetCemeteryForm({
+        profile_picture: cemeteryData.data[0].profile_picture || "",
+        name: cemeteryData.data[0].name || "",
+        description: cemeteryData.data[0].description || "",
+        location: cemeteryData.data[0].location || "",
+      });
+    }
+  }, [cemeteryData, resetCemeteryForm]);
 
   function cleanPointer(pointer) {
     return pointer?.replace(/^\//, ""); // Removes the leading '/'
@@ -296,6 +279,43 @@ const Cemeteries = () => {
     return null;
   };
 
+  const onSubmitCemeteryUpdate = async (data) => {
+    try {
+      const cemeteryId = cemeteryData?.data?.[0]?.id;
+
+      console.log("data", data);
+      if (!cemeteryId) return;
+
+      const formData = new FormData();
+      formData.append("_method", "PATCH");
+      formData.append("name", data?.name || "");
+      formData.append("description", data?.description || "");
+      formData.append("location", data?.location || "");
+      // ✅ Only append file if it exists
+      if (data.profile_picture) {
+        formData.append("profile_picture", data.profile_picture);
+      }
+
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+      await updateCemetery({ id: cemeteryId, formData }).unwrap();
+
+      setSnackbar({
+        open: true,
+        message: "Cemetery info updated successfully",
+        severity: "success",
+      });
+      setOpenCemeteryInformation(false);
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: "Failed to update cemetery info",
+        severity: "error",
+      });
+    }
+  };
+
   return (
     <>
       <Breadcrumbs aria-label="breadcrumb" sx={{ marginBottom: 1 }}>
@@ -337,174 +357,199 @@ const Cemeteries = () => {
           Cemetery Map
         </Typography>
 
-        {/* <Button
+        <Button
           size="small"
           variant="contained"
           color="success"
           onClick={() => setOpenCemeteryInformation(true)}
           sx={{ mt: 1 }}
+          disabled={isGetLoadingCemetery}
         >
-          Edit Information
-        </Button> */}
+          {isGetLoadingCemetery ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            "Edit Information"
+          )}
+        </Button>
       </Box>
 
-      <div style={{ height: "70vh", width: "100%" }}>
-        <MapContainer center={center} zoom={50} style={{ height: "100%" }}>
-          <Autocomplete
-            options={lotData?.data || []}
-            getOptionLabel={(option) => option.lot_number || ""}
-            onChange={(event, selectedLot) => {
-              console.log("Selected Lot:", selectedLot);
-              if (selectedLot) {
-                flyToLot(selectedLot);
-              }
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Search Lot"
-                variant="outlined"
-                size="small"
+      <Box height="100%" position="relative">
+        {isLotLoading ? (
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            height="100%"
+          >
+            <CircularProgress color="success" />
+          </Box>
+        ) : (
+          <div style={{ height: "70vh", width: "100%" }}>
+            <MapContainer center={center} zoom={50} style={{ height: "100%" }}>
+              <Autocomplete
+                options={lotData?.data || []}
+                getOptionLabel={(option) => option.lot_number || ""}
+                onChange={(event, selectedLot) => {
+                  console.log("Selected Lot:", selectedLot);
+                  if (selectedLot) {
+                    flyToLot(selectedLot);
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Search Lot"
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      backgroundColor: "transparent", // input field background
+                    }}
+                  />
+                )}
                 sx={{
-                  backgroundColor: "transparent", // input field background
+                  position: "absolute",
+                  top: 10,
+                  left: 50,
+                  zIndex: 1000,
+                  backgroundColor: "#ffff", // for Autocomplete container
+                  width: 150,
                 }}
               />
-            )}
-            sx={{
-              position: "absolute",
-              top: 10,
-              left: 50,
-              zIndex: 1000,
-              backgroundColor: "#ffff", // for Autocomplete container
-              width: 150,
-            }}
-          />
-          <MapRefHandler
-            setMap={(mapInstance) => (mapRef.current = mapInstance)}
-          />
-          <TileLayer
-            attribution="&copy; OpenStreetMap"
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+              <MapRefHandler
+                setMap={(mapInstance) => (mapRef.current = mapInstance)}
+              />
+              <TileLayer
+                attribution="&copy; OpenStreetMap"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
 
-          <FeatureGroup>
-            <EditControl
-              position="topright"
-              draw={{
-                rectangle: false,
-                circle: false,
-                circlemarker: false,
-                marker: false,
-                polyline: false,
-                polygon: true,
-              }}
-              onCreated={(e) => {
-                const layer = e.layer;
-                const latlngs = layer.getLatLngs()[0]; // Only first ring for simple polygon
-                const coords = latlngs.map((latlng) => [
-                  latlng.lat,
-                  latlng.lng,
-                ]);
+              <FeatureGroup>
+                <EditControl
+                  position="topright"
+                  draw={{
+                    rectangle: false,
+                    circle: false,
+                    circlemarker: false,
+                    marker: false,
+                    polyline: false,
+                    polygon: true,
+                  }}
+                  onCreated={(e) => {
+                    const layer = e.layer;
+                    const latlngs = layer.getLatLngs()[0]; // Only first ring for simple polygon
+                    const coords = latlngs.map((latlng) => [
+                      latlng.lat,
+                      latlng.lng,
+                    ]);
 
-                // Convert to [lng, lat] and close loop
-                const lotPolygon = turf.polygon([
-                  coords
-                    .map(([lat, lng]) => [lng, lat])
-                    .concat([[coords[0][1], coords[0][0]]]),
-                ]);
+                    // Convert to [lng, lat] and close loop
+                    const lotPolygon = turf.polygon([
+                      coords
+                        .map(([lat, lng]) => [lng, lat])
+                        .concat([[coords[0][1], coords[0][0]]]),
+                    ]);
 
-                // Cemetery polygon defined globally or above
-                const isInside = turf.booleanWithin(
-                  lotPolygon,
-                  cemeteryPolygon
-                );
+                    // Cemetery polygon defined globally or above
+                    const isInside = turf.booleanWithin(
+                      lotPolygon,
+                      cemeteryPolygon
+                    );
 
-                if (!isInside) {
-                  setSnackbar({
-                    open: true,
-                    message:
-                      "❌ You can only draw lots within the cemetery area.",
-                    severity: "error",
-                  });
-                  return;
-                }
+                    if (!isInside) {
+                      setSnackbar({
+                        open: true,
+                        message:
+                          "You can only draw within the cemetery and not over existing lots.",
+                        severity: "error",
+                      });
+                      return;
+                    }
 
-                // Check if overlapping with any existing lot
-                const isOverlapping = lotData?.data?.some((lot) => {
-                  if (!lot?.coordinates?.length) return false;
+                    // Check if overlapping with any existing lot
+                    const isOverlapping = lotData?.data?.some((lot) => {
+                      if (!lot?.coordinates?.length) return false;
 
-                  const lotPoly = turf.polygon([
-                    lot.coordinates
-                      .map(([lat, lng]) => [lng, lat])
-                      .concat([[lot.coordinates[0][1], lot.coordinates[0][0]]]),
-                  ]);
-                  return turf.booleanIntersects(lotPolygon, lotPoly);
-                });
+                      const lotPoly = turf.polygon([
+                        lot.coordinates
+                          .map(([lat, lng]) => [lng, lat])
+                          .concat([
+                            [lot.coordinates[0][1], lot.coordinates[0][0]],
+                          ]),
+                      ]);
+                      return turf.booleanIntersects(lotPolygon, lotPoly);
+                    });
 
-                if (isOverlapping) {
-                  setSnackbar({
-                    open: true,
-                    message: "❌ Cannot draw on top of an existing lot.",
-                    severity: "error",
-                  });
-                  return;
-                }
+                    if (isOverlapping) {
+                      setSnackbar({
+                        open: true,
+                        message: "❌ Cannot draw on top of an existing lot.",
+                        severity: "error",
+                      });
+                      return;
+                    }
 
-                // ✅ Lot is valid, proceed
-                onDrawComplete(coords);
-              }}
-            />
-          </FeatureGroup>
+                    // ✅ Lot is valid, proceed
+                    onDrawComplete(coords);
+                  }}
+                />
+              </FeatureGroup>
 
-          {lotData?.data?.map((lot) => (
-            <Polygon
-              key={lot.id}
-              positions={lot.coordinates}
-              pathOptions={{
-                color: lot.status === "available" ? "#15803d" : "red",
-                fillOpacity: 0.5,
+              {lotData?.data?.map((lot) => (
+                <Polygon
+                  key={lot.id}
+                  positions={lot.coordinates}
+                  pathOptions={{
+                    color: lot.status === "available" ? "#15803d" : "red",
+                    fillOpacity: 0.5,
+                  }}
+                >
+                  <Popup>
+                    <strong>{lot.lot_number}</strong>
+                    <br />
+                    Status: {lot.status}
+                    <br />₱{lot.price}
+                    <br />
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="success"
+                      onClick={() => openForm("edit", lot, lot.coordinates)}
+                      style={{ marginTop: 8, marginRight: 5 }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="error"
+                      onClick={() => handleDeleteClick(lot)}
+                      style={{ marginTop: 8 }}
+                    >
+                      Delete
+                    </Button>
+                  </Popup>
+                </Polygon>
+              ))}
+            </MapContainer>
+            <div
+              style={{
+                position: "absolute",
+                top: 100,
+                left: 150,
+                zIndex: 1000,
               }}
             >
-              <Popup>
-                <strong>{lot.lot_number}</strong>
-                <br />
-                Status: {lot.status}
-                <br />₱{lot.price}
-                <br />
-                <Button
-                  size="small"
-                  variant="contained"
-                  color="success"
-                  onClick={() => openForm("edit", lot, lot.coordinates)}
-                  style={{ marginTop: 8, marginRight: 5 }}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="small"
-                  variant="contained"
-                  color="error"
-                  onClick={() => handleDeleteClick(lot)}
-                  style={{ marginTop: 8 }}
-                >
-                  Delete
-                </Button>
-              </Popup>
-            </Polygon>
-          ))}
-        </MapContainer>
-        <div
-          style={{ position: "absolute", top: 100, left: 150, zIndex: 1000 }}
-        >
-          {/* <Button
+              {/* <Button
             variant="contained"
             color={isDrawing ? "error" : "success"}
             onClick={() => setIsDrawing((prev) => !prev)}
           >
             {isDrawing ? "Cancel Drawing" : "Start Plotting"}
           </Button> */}
-        </div>
-      </div>
+            </div>
+          </div>
+        )}
+      </Box>
 
       {/* Form Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
@@ -595,8 +640,14 @@ const Cemeteries = () => {
             >
               Cancel
             </Button>
-            <Button type="submit" variant="contained" color="success">
-              {formType === "edit" ? "Update" : "Create"}
+            <Button type="submit" color="success" variant="contained">
+              {isAddLot || isUpdateLot ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : formType === "edit" ? (
+                "Update"
+              ) : (
+                "Create"
+              )}
             </Button>
           </DialogActions>
         </form>
@@ -618,10 +669,84 @@ const Cemeteries = () => {
           >
             Cancel
           </Button>
-          <Button onClick={handleDeleteLot} variant="contained" color="success">
-            Yes
+          <Button onClick={handleDeleteLot} color="success" variant="contained">
+            {isDeleteLot ? <CircularProgress size={20} /> : "Yes"}
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Edit Information Dialog*/}
+      <Dialog
+        open={openCemeteryInformation}
+        onClose={() => setOpenCemeteryInformation(false)}
+      >
+        <form onSubmit={handleCemeterySubmit(onSubmitCemeteryUpdate)} formData>
+          <DialogTitle>Cemetery Information</DialogTitle>
+          <Divider />
+          <DialogContent>
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              flexDirection="column"
+            >
+              <FileUploadInput
+                cemeteryRegister={cemeteryRegister}
+                cemeterySetValue={cemeterySetValue}
+                previousImageUrl={cemeteryData?.data?.[0]?.profile_picture}
+              />
+            </Box>
+
+            <FormHelperText error>
+              {cemeteryErrors.profile_picture?.message}
+            </FormHelperText>
+            <TextField
+              label="Name"
+              type="text"
+              fullWidth
+              margin="normal"
+              {...cemeteryRegister("name")}
+              error={!!cemeteryErrors.name}
+              helperText={cemeteryErrors.name?.message}
+            />
+            <TextField
+              label="Description"
+              type="text"
+              fullWidth
+              margin="normal"
+              {...cemeteryRegister("description")}
+              error={!!cemeteryErrors.description}
+              helperText={cemeteryErrors.description?.message}
+            />
+            <TextField
+              label="Location"
+              type="text"
+              fullWidth
+              margin="normal"
+              {...cemeteryRegister("location")}
+              error={!!cemeteryErrors.location}
+              helperText={cemeteryErrors.location?.message}
+            />
+          </DialogContent>
+          <Divider />
+          <DialogActions>
+            <Button
+              onClick={() => setOpenCemeteryInformation(false)}
+              variant="contained"
+              color="error"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="success"
+              disabled={isUpdateCemetery}
+            >
+              {isUpdateCemetery ? <CircularProgress size={20} /> : "Update"}
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
 
       {/* Snackbar */}

@@ -80,6 +80,11 @@ export const UserSchema = yup.object({
   username: yup.string().required("Username is required"),
 });
 
+export const cemeterySchema = yup.object({
+  name: yup.string().required("Name is required"),
+  location: yup.string().required("Location is required"),
+});
+
 export const lotSchema = yup.object({
   lot_number: yup.string().required("Lot Number is required"),
   price: yup
