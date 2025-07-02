@@ -45,15 +45,15 @@ import SearchIcon from "@mui/icons-material/Search";
 import Link from "@mui/material/Link";
 import GroupIcon from "@mui/icons-material/Group";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
+import { Controller, useForm } from "react-hook-form";
+import dayjs from "dayjs";
+import { useLazyGetRoleDropDownQuery } from "../redux/slices/roleSlice";
 import {
   useAddUserMutation,
   useArchivedUserMutation,
   useGetUserQuery,
-  useLazyGetRoleDropDownQuery,
   useUpdateUserMutation,
-} from "../redux/slices/apiSlice";
-import { Controller, useForm } from "react-hook-form";
-import dayjs from "dayjs";
+} from "../redux/slices/userSlice";
 
 const User = () => {
   const [page, setPage] = useState(0);
@@ -343,26 +343,29 @@ const User = () => {
           User
         </Typography>
       </Breadcrumbs>
-      <Typography variant="h4">User</Typography>
       <Box
         display="flex"
-        justifyContent="space-between"
         alignItems="center"
-        sx={{ marginBottom: 2 }}
+        justifyContent="space-between"
+        mb={2}
       >
+        <Typography variant="h4" sx={{ mr: 2 }}>
+          User
+        </Typography>
+
         <Button
+          size="small"
           variant="contained"
-          color="success"
           onClick={() => {
             handleCreate();
             handleFocus();
           }}
-          sx={{ marginLeft: "auto", borderRadius: "10px" }}
+          color="success"
+          sx={{ mt: 1 }}
         >
-          ADD
+          Add
         </Button>
       </Box>
-
       <TableContainer
         component={Paper}
         sx={{

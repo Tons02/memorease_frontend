@@ -9,14 +9,7 @@ import {
   useMap,
 } from "react-leaflet";
 import "leaflet-draw/dist/leaflet.draw.css";
-import {
-  useUpdateLotMutation,
-  useAddLotMutation,
-  useGetLotQuery,
-  useGetCemeteryQuery,
-  useArchivedLotMutation,
-  useUpdateCemeteryMutation,
-} from "../../redux/slices/apiSlice";
+
 import {
   Dialog,
   DialogTitle,
@@ -47,8 +40,18 @@ import * as turf from "@turf/turf";
 import { EditControl } from "react-leaflet-draw";
 import { Dashboard, Map } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
-import FileUploadInput from "./components/FileUploadInput";
+import FileUploadInput from "../../components/FileUploadInput";
+import { toast } from "sonner";
+import {
+  useGetCemeteryQuery,
+  useUpdateCemeteryMutation,
+} from "../../redux/slices/cemeterySlice";
+import {
+  useAddLotMutation,
+  useArchivedLotMutation,
+  useGetLotQuery,
+  useUpdateLotMutation,
+} from "../../redux/slices/apiLot";
 
 const Cemeteries = () => {
   const [coords, setCoords] = useState([]);
@@ -77,12 +80,6 @@ const Cemeteries = () => {
     cemeteryBoundaryLatLng.map(([lat, lng]) => [lng, lat]),
   ]);
 
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
-
   const {
     register,
     handleSubmit,
@@ -102,6 +99,8 @@ const Cemeteries = () => {
     isLoading: isLotLoading,
   } = useGetLotQuery({
     search: "",
+    pagination: "none",
+    status: "active",
   });
 
   const {
@@ -185,18 +184,10 @@ const Cemeteries = () => {
     try {
       if (formType === "edit") {
         await updateLot({ id: selectedLot.id, ...payload }).unwrap();
-        setSnackbar({
-          open: true,
-          message: "Lot updated successfully",
-          severity: "success",
-        });
+        toast.success("Lot updated successfully");
       } else {
         await addLot(payload).unwrap();
-        setSnackbar({
-          open: true,
-          message: "Lot added successfully",
-          severity: "success",
-        });
+        toast.success("Lot added successfully");
       }
 
       refetchLots();
@@ -208,11 +199,7 @@ const Cemeteries = () => {
           message: inputError?.detail,
         })
       );
-      setSnackbar({
-        open: true,
-        message: error?.data?.errors?.[0]?.detail,
-        severity: "error",
-      });
+      toast.error(error?.data?.errors?.[0]?.detail);
     }
   };
 
@@ -222,19 +209,10 @@ const Cemeteries = () => {
       setOpenDeleteDialog(false);
       setSelectedID(null);
       refetchLots();
-      setSnackbar({
-        open: true,
-        message: response?.message,
-        severity: "success",
-      });
+      toast.success(response?.message);
     } catch (errors) {
       refetchLots();
-      setSnackbar({
-        open: true,
-        message:
-          errors?.data?.errors?.[0]?.detail || "An unexpected error occurred",
-        severity: "error",
-      });
+      toast.error(error?.data?.errors?.[0]?.detail);
     }
   };
 
@@ -300,19 +278,10 @@ const Cemeteries = () => {
         console.log(`${key}:`, value);
       }
       await updateCemetery({ id: cemeteryId, formData }).unwrap();
-
-      setSnackbar({
-        open: true,
-        message: "Cemetery info updated successfully",
-        severity: "success",
-      });
+      toast.success("Cemetery info updated successfully");
       setOpenCemeteryInformation(false);
     } catch (err) {
-      setSnackbar({
-        open: true,
-        message: "Failed to update cemetery info",
-        severity: "error",
-      });
+      toast.error("Failed to update cemetery info");
     }
   };
 
@@ -456,12 +425,9 @@ const Cemeteries = () => {
                     );
 
                     if (!isInside) {
-                      setSnackbar({
-                        open: true,
-                        message:
-                          "You can only draw within the cemetery and not over existing lots.",
-                        severity: "error",
-                      });
+                      toast.error(
+                        "You can only draw within the cemetery and not over existing lots."
+                      );
                       return;
                     }
 
@@ -480,15 +446,10 @@ const Cemeteries = () => {
                     });
 
                     if (isOverlapping) {
-                      setSnackbar({
-                        open: true,
-                        message: "❌ Cannot draw on top of an existing lot.",
-                        severity: "error",
-                      });
+                      toast.error("Cannot draw on top of an existing lot.");
                       return;
                     }
 
-                    // ✅ Lot is valid, proceed
                     onDrawComplete(coords);
                   }}
                 />
@@ -691,8 +652,8 @@ const Cemeteries = () => {
               flexDirection="column"
             >
               <FileUploadInput
-                cemeteryRegister={cemeteryRegister}
-                cemeterySetValue={cemeterySetValue}
+                title={"Cemetery"}
+                imageSetValue={cemeterySetValue}
                 previousImageUrl={cemeteryData?.data?.[0]?.profile_picture}
               />
             </Box>
@@ -748,23 +709,6 @@ const Cemeteries = () => {
           </DialogActions>
         </form>
       </Dialog>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 };

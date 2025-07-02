@@ -22,7 +22,6 @@ import {
   Paper,
   Select,
   Skeleton,
-  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -37,12 +36,6 @@ import React, { useState } from "react";
 import Link from "@mui/material/Link";
 import { useForm } from "react-hook-form";
 import { RoleSchema } from "../validations/validation";
-import {
-  useAddRoleMutation,
-  useArchivedRoleMutation,
-  useGetRoleQuery,
-  useUpdateRoleMutation,
-} from "../redux/slices/apiSlice";
 import dayjs from "dayjs";
 import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -50,6 +43,13 @@ import { Dashboard } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import {
+  useAddRoleMutation,
+  useArchivedRoleMutation,
+  useGetRoleQuery,
+  useUpdateRoleMutation,
+} from "../redux/slices/roleSlice";
+import { toast } from "sonner";
 
 const Role = () => {
   const [page, setPage] = useState(0);
@@ -64,12 +64,6 @@ const Role = () => {
   const [restoreRole, setRestoreRole] = useState(false);
   const [activeMenuRow, setActiveMenuRow] = useState(null);
   const [localSearch, setLocalSearch] = useState("");
-
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "info",
-  });
 
   const {
     register,
@@ -120,11 +114,7 @@ const Role = () => {
       setOpenDialog(false);
       refetch();
       reset();
-      setSnackbar({
-        open: true,
-        message: response?.message,
-        severity: "success",
-      });
+      toast.success(response?.message);
     } catch (error) {
       console.log(error?.data?.errors);
       error?.data?.errors.map((inputError, index) =>
@@ -133,11 +123,7 @@ const Role = () => {
           message: inputError?.detail,
         })
       );
-      setSnackbar({
-        open: true,
-        message: error?.data?.errors[0].detail,
-        severity: "error",
-      });
+      toast.error(error?.data?.errors[0].detail);
     }
   };
 
@@ -148,18 +134,10 @@ const Role = () => {
       console.log("role updated:", response);
       refetch();
       setOpenUpdateDialog(false);
-      setSnackbar({
-        open: true,
-        message: response?.message,
-        severity: "success",
-      });
+      toast.success(response?.message);
     } catch (error) {
       console.error("Error updating role:", error);
-      setSnackbar({
-        open: true,
-        message: error?.message || "An unexpected error occurred",
-        severity: "error",
-      });
+      toast.error(error?.data?.errors[0].detail);
     }
   };
 
@@ -170,19 +148,10 @@ const Role = () => {
       console.log("Role archived:", response);
       setOpenDeleteDialog(false);
       refetch();
-      setSnackbar({
-        open: true,
-        message: response?.message,
-        severity: "success",
-      });
+      toast.success(response?.message);
     } catch (errors) {
       console.error("Error archiving role:", errors?.data?.errors?.[0]?.detail);
-      setSnackbar({
-        open: true,
-        message:
-          errors?.data?.errors?.[0]?.detail || "An unexpected error occurred",
-        severity: "error",
-      });
+      toast.error(error?.data?.errors[0].detail);
     }
   };
 
@@ -216,7 +185,6 @@ const Role = () => {
     setChecked(newChecked); // Update the state that controls the checkboxes
     setValue("access_permission", row.access_permission); // Set the form value for react-hook-form
 
-    // Only reset if row is not null or undefined
     if (row) {
       reset(row); // Reset the form with other row data (like 'name')
     }
@@ -356,20 +324,24 @@ const Role = () => {
           Role
         </Typography>
       </Breadcrumbs>
-      <Typography variant="h4">Role</Typography>
       <Box
         display="flex"
-        justifyContent="space-between"
         alignItems="center"
-        sx={{ marginBottom: 2 }}
+        justifyContent="space-between"
+        mb={2}
       >
+        <Typography variant="h4" sx={{ mr: 2 }}>
+          Role
+        </Typography>
+
         <Button
+          size="small"
           variant="contained"
-          color="success"
           onClick={() => handleCreate()}
-          sx={{ marginLeft: "auto", borderRadius: "10px" }}
+          color="success"
+          sx={{ mt: 1 }}
         >
-          ADD
+          Add
         </Button>
       </Box>
 
@@ -956,17 +928,6 @@ const Role = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert severity={snackbar.severity} sx={{ width: "100%" }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 };

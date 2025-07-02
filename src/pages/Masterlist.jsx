@@ -3,11 +3,7 @@ import React from "react";
 import Link from "@mui/material/Link";
 import Card from "../components/Card";
 import ApartmentIcon from "@mui/icons-material/Apartment";
-import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import BallotIcon from "@mui/icons-material/Ballot";
-import ViewHeadlineIcon from "@mui/icons-material/ViewHeadline";
-import ShareLocationIcon from "@mui/icons-material/ShareLocation";
+import PersonOffIcon from "@mui/icons-material/PersonOff";
 import { Dashboard } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 
@@ -51,6 +47,14 @@ const Masterlist = () => {
             destination="cemeteries"
             icon={<ApartmentIcon />}
             title="Cemetery"
+            subtitle="Manage cemetery records and information "
+          />
+        )}
+        {accessPermissions.includes("deceased") && (
+          <Card
+            destination="deceased"
+            icon={<PersonOffIcon />}
+            title="Deceased"
             subtitle="Manage cemetery records and information "
           />
         )}

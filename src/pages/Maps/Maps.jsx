@@ -5,17 +5,9 @@ import {
   Polygon,
   Popup,
   useMapEvents,
-  FeatureGroup,
   useMap,
 } from "react-leaflet";
 import "leaflet-draw/dist/leaflet.draw.css";
-import {
-  useUpdateLotMutation,
-  useAddLotMutation,
-  useGetLotQuery,
-  useGetCemeteryQuery,
-  useArchivedLotMutation,
-} from "../../redux/slices/apiSlice";
 import {
   Dialog,
   DialogTitle,
@@ -29,10 +21,7 @@ import {
   Alert,
   FormControl,
   InputLabel,
-  Divider,
   Typography,
-  Breadcrumbs,
-  Link,
   Autocomplete,
   Box,
 } from "@mui/material";
@@ -40,57 +29,13 @@ import { Controller, useForm } from "react-hook-form";
 import { lotSchema } from "../../validations/validation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as turf from "@turf/turf";
-import { EditControl } from "react-leaflet-draw";
-import { Dashboard, Map } from "@mui/icons-material";
-import ListAltIcon from "@mui/icons-material/ListAlt";
-
-const DrawingTool = ({ onDrawComplete, isDrawing, existingLots }) => {
-  const [drawingCoords, setDrawingCoords] = useState([]);
-
-  useMapEvents({
-    click: (e) => {
-      if (!isDrawing) return;
-
-      const nextCoords = [...drawingCoords, [e.latlng.lat, e.latlng.lng]];
-
-      if (nextCoords.length >= 3) {
-        const drawnPolygon = turf.polygon([[...nextCoords, nextCoords[0]]]);
-
-        const isOverlapping = existingLots.some((lot) => {
-          const lotPoly = turf.polygon([
-            [...lot.coordinates, lot.coordinates[0]],
-          ]);
-          return turf.booleanIntersects(drawnPolygon, lotPoly);
-        });
-
-        if (isOverlapping) {
-          alert("❌ Cannot draw on top of an existing lot.");
-          return;
-        }
-      }
-
-      setDrawingCoords(nextCoords);
-    },
-  });
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Enter" && drawingCoords.length >= 3 && isDrawing) {
-        onDrawComplete(drawingCoords);
-        setDrawingCoords([]);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [drawingCoords, isDrawing]);
-
-  return drawingCoords.length > 0 ? (
-    <Polygon
-      positions={drawingCoords}
-      pathOptions={{ color: "purple", dashArray: "4", fillOpacity: 0.2 }}
-    />
-  ) : null;
-};
+import { useGetCemeteryQuery } from "../../redux/slices/cemeterySlice";
+import {
+  useAddLotMutation,
+  useArchivedLotMutation,
+  useGetLotQuery,
+  useUpdateLotMutation,
+} from "../../redux/slices/apiLot";
 
 const Cemeteries = () => {
   const [isDrawing, setIsDrawing] = useState(false);
@@ -99,8 +44,6 @@ const Cemeteries = () => {
   const [formType, setFormType] = useState("create"); // 'create' or 'edit'
   const [selectedLot, setSelectedLot] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [openCemeteryInformation, setOpenCemeteryInformation] = useState(false);
   const [selectedID, setSelectedID] = useState(null);
   const cemeteryBoundaryLatLng = [
     [14.292776, 120.971491],
@@ -232,33 +175,6 @@ const Cemeteries = () => {
     }
   };
 
-  const handleDeleteLot = async () => {
-    try {
-      const response = await deleteLot({ id: selectedID }).unwrap();
-      setOpenDeleteDialog(false);
-      setSelectedID(null);
-      refetchLots();
-      setSnackbar({
-        open: true,
-        message: response?.message,
-        severity: "success",
-      });
-    } catch (errors) {
-      refetchLots();
-      setSnackbar({
-        open: true,
-        message:
-          errors?.data?.errors?.[0]?.detail || "An unexpected error occurred",
-        severity: "error",
-      });
-    }
-  };
-
-  const handleDeleteClick = (lot) => {
-    setSelectedID(lot.id);
-    setOpenDeleteDialog(true);
-  };
-
   const flyToLot = (lot) => {
     const map = mapRef.current;
     if (!map || !lot?.coordinates?.length) return;
@@ -335,6 +251,53 @@ const Cemeteries = () => {
                 width: 150,
               }}
             />
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: 16,
+                right: 16,
+                zIndex: 1000,
+                backgroundColor: "#fff",
+                padding: 2,
+                borderRadius: 2,
+                boxShadow: 3,
+                fontSize: 14,
+              }}
+            >
+              <Typography variant="subtitle2" gutterBottom>
+                MAP LEGENDS
+              </Typography>
+              <Box display="flex" alignItems="center" mb={0.5}>
+                <Box
+                  width={16}
+                  height={16}
+                  bgcolor="#15803d"
+                  borderRadius="50%"
+                  mr={1}
+                />
+                Available Lot
+              </Box>
+              <Box display="flex" alignItems="center" mb={0.5}>
+                <Box
+                  width={16}
+                  height={16}
+                  bgcolor="yellow"
+                  borderRadius="50%"
+                  mr={1}
+                />
+                Reserved Lot
+              </Box>
+              <Box display="flex" alignItems="center" mb={0.5}>
+                <Box
+                  width={16}
+                  height={16}
+                  bgcolor="red"
+                  borderRadius="50%"
+                  mr={1}
+                />
+                Sold Lot
+              </Box>
+            </Box>
             <MapRefHandler
               setMap={(mapInstance) => (mapRef.current = mapInstance)}
             />
@@ -365,16 +328,7 @@ const Cemeteries = () => {
                     onClick={() => openForm("edit", lot, lot.coordinates)}
                     style={{ marginTop: 8, marginRight: 5 }}
                   >
-                    Edit
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="contained"
-                    color="error"
-                    onClick={() => handleDeleteClick(lot)}
-                    style={{ marginTop: 8 }}
-                  >
-                    Delete
+                    View
                   </Button>
                 </Popup>
               </Polygon>
@@ -382,15 +336,7 @@ const Cemeteries = () => {
           </MapContainer>
           <div
             style={{ position: "absolute", top: 100, left: 150, zIndex: 1000 }}
-          >
-            {/* <Button
-            variant="contained"
-            color={isDrawing ? "error" : "success"}
-            onClick={() => setIsDrawing((prev) => !prev)}
-          >
-            {isDrawing ? "Cancel Drawing" : "Start Plotting"}
-          </Button> */}
-          </div>
+          ></div>
         </div>
       </Box>
 
@@ -488,28 +434,6 @@ const Cemeteries = () => {
             </Button>
           </DialogActions>
         </form>
-      </Dialog>
-
-      {/* Confirmation Dialog for Delete */}
-      <Dialog open={openDeleteDialog}>
-        <DialogTitle>Delete</DialogTitle>
-        <Divider />
-        <DialogContent>
-          <Typography>Are you sure you want to detele this record?</Typography>
-        </DialogContent>
-        <Divider />
-        <DialogActions>
-          <Button
-            onClick={() => setOpenDeleteDialog(false)}
-            variant="contained"
-            color="error"
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleDeleteLot} variant="contained" color="success">
-            Yes
-          </Button>
-        </DialogActions>
       </Dialog>
 
       {/* Snackbar */}

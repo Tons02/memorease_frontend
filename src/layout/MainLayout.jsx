@@ -24,6 +24,7 @@ import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import LogoutIcon from "@mui/icons-material/Logout";
 import pmpd_logo from "../assets/pmpd_logo.png";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Button,
   Collapse,
@@ -45,6 +46,7 @@ import {
   ExpandLess,
   ExpandMore,
   Map,
+  PersonOff,
 } from "@mui/icons-material";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import ShareLocationIcon from "@mui/icons-material/ShareLocation";
@@ -55,6 +57,7 @@ import { useChangePasswordMutation } from "../redux/slices/apiSlice";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { changePasswordSchema } from "../validations/validation";
+import DialogComponent from "../components/DialogComponent";
 
 const drawerWidth = 240;
 
@@ -491,14 +494,12 @@ export default function MiniDrawer() {
                 </ListItemButton>
               )}
 
-              {accessPermissions.includes("masterlist:locations:sync") && (
+              {accessPermissions.includes("cemeteries") && (
                 <ListItemButton
                   sx={{
                     pl: open ? 5 : 2.5,
                   }}
-                  onClick={() =>
-                    handleNavigation("/admin/masterlist/locations")
-                  }
+                  onClick={() => handleNavigation("/admin/masterlist/deceased")}
                 >
                   <ListItemIcon
                     sx={[
@@ -515,7 +516,7 @@ export default function MiniDrawer() {
                           },
                     ]}
                   >
-                    <ShareLocationIcon
+                    <PersonOff
                       sx={{
                         maxWidth: 275,
                         cursor: "pointer",
@@ -524,7 +525,7 @@ export default function MiniDrawer() {
                     />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Locations"
+                    primary="Deceased"
                     sx={{
                       opacity: open ? 1 : 0,
                     }}
@@ -701,83 +702,46 @@ export default function MiniDrawer() {
       </Box>
 
       {/* dialog for change password  */}
-      <Dialog
+      <DialogComponent
         open={openModalChangePassword}
         onClose={() => setOpenModalChangePassword(false)}
-        maxWidth="xs"
-        fullWidth
+        onSubmit={handleChangePassword}
+        title="Change Password"
+        icon={<LockResetIcon color="secondary" />}
+        isLoading={isLoading}
+        submitIcon={<LogoutIcon />}
+        submitLabel="Confirm"
+        formMethods={{ handleSubmit, reset }}
       >
-        <DialogTitle>
-          <Box display="flex" alignItems="center" gap={1}>
-            <LockResetIcon color="secondary" />
-            <Typography variant="h6" fontWeight="bold">
-              Change Password
-            </Typography>
-          </Box>
-        </DialogTitle>
-        <form onSubmit={handleSubmit(handleChangePassword)}>
-          <Divider />
-          <DialogContent>
-            <TextField
-              {...register("old_password")}
-              label="Old Password"
-              margin="dense"
-              type="password"
-              fullWidth
-              error={!!errors.old_password}
-              helperText={errors.old_password?.message}
-            />
-            <TextField
-              {...register("new_password")}
-              label="New password"
-              type="password"
-              margin="dense"
-              fullWidth
-              error={!!errors.new_password}
-              helperText={errors.new_password?.message}
-            />
-            <TextField
-              {...register("new_password_confirmation")}
-              label="Confirm New Password"
-              margin="dense"
-              type="password"
-              fullWidth
-              error={!!errors.new_password_confirmation}
-              helperText={errors.new_password_confirmation?.message}
-            />
-          </DialogContent>
-
-          <Divider />
-
-          <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button
-              onClick={() => {
-                reset();
-                setOpenModalChangePassword(false);
-              }}
-              variant="contained"
-              color="error"
-              fullWidth
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              color="success"
-              fullWidth
-              startIcon={!isLoading && <LogoutIcon />}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                "Confirm"
-              )}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+        <Divider />
+        <TextField
+          {...register("old_password")}
+          label="Old Password"
+          margin="dense"
+          type="password"
+          fullWidth
+          error={!!errors.old_password}
+          helperText={errors.old_password?.message}
+        />
+        <TextField
+          {...register("new_password")}
+          label="New Password"
+          type="password"
+          margin="dense"
+          fullWidth
+          error={!!errors.new_password}
+          helperText={errors.new_password?.message}
+        />
+        <TextField
+          {...register("new_password_confirmation")}
+          label="Confirm New Password"
+          margin="dense"
+          type="password"
+          fullWidth
+          error={!!errors.new_password_confirmation}
+          helperText={errors.new_password_confirmation?.message}
+        />
+      </DialogComponent>
 
       {/* dialog for logout  */}
       <Dialog

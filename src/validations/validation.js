@@ -2,6 +2,14 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import dayjs from "dayjs";
 import * as yup from "yup";
 
+const SUPPORTED_FORMATS = [
+  "image/jpg",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
 export const loginSchema = yup
   .object({
     username: yup.string().required("Username is required"),
@@ -96,4 +104,44 @@ export const lotSchema = yup.object({
     .string()
     .oneOf(["available", "reserved", "sold"], "Select a valid status")
     .required("Status is required"),
+});
+
+export const deceasedSchema = yup.object({
+  lot_image: yup
+    .mixed()
+    .required("Lot Image is required")
+    .test(
+      "fileExists",
+      "Lot Image is required",
+      (value) => value instanceof File
+    ),
+
+  lot_id: yup.string().required("Lot ID is required"),
+  fname: yup.string().required("First Name is required"),
+  lname: yup.string().required("Last Name is required"),
+  gender: yup
+    .string()
+    .oneOf(["male", "female"], "Select a valid gender")
+    .required("Gender is required"),
+
+  death_certificate: yup
+    .mixed()
+    .required("Death certificate is required")
+    .test("fileType", "Only JPG, PNG, or WEBP images are allowed", (value) =>
+      value ? SUPPORTED_FORMATS.includes(value.type) : false
+    )
+    .test("fileSize", "Image must be less than 2MB", (value) =>
+      value ? value.size <= MAX_FILE_SIZE : false
+    ),
+  birthday: yup.string().required("Birthday is required"),
+  death_date: yup.string().required("Death Date is required"),
+  burial_date: yup.string().required("Burial Date is required"),
+  death_certificate: yup
+    .mixed()
+    .required("Death Certificate is required")
+    .test(
+      "fileExists",
+      "Death Certificate is required",
+      (value) => value instanceof File
+    ),
 });

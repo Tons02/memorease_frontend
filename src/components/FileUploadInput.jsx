@@ -2,11 +2,7 @@ import React, { useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 
-const FileUploadInput = ({
-  cemeteryRegister,
-  cemeterySetValue,
-  previousImageUrl,
-}) => {
+const FileUploadInput = ({ title, imageSetValue, previousImageUrl }) => {
   const [preview, setPreview] = useState(null);
 
   const handleFileChange = (e) => {
@@ -15,8 +11,7 @@ const FileUploadInput = ({
 
     setPreview(URL.createObjectURL(file));
 
-    // ✅ This line is very important
-    cemeterySetValue("profile_picture", file);
+    imageSetValue(name, file);
   };
 
   return (
@@ -27,22 +22,24 @@ const FileUploadInput = ({
         type="file"
         id="profile-picture-upload"
         style={{ display: "none" }}
-        onChange={handleFileChange} // ✅ Must set value manually
+        onChange={handleFileChange}
       />
 
       {/* Preview Image */}
       <Typography variant="caption" display="block" color="text.secondary">
-        {preview ? "New Preview" : "Current Photo"}
+        {title}
+        {preview ? " New Preview" : " Current Photo"}
       </Typography>
       <img
         src={preview || previousImageUrl}
         alt="Profile Preview"
         style={{
-          width: 150,
+          width: 200,
           height: 150,
-          objectFit: "cover",
+          objectFit: "contain",
           border: "1px solid #ccc",
           borderRadius: 8,
+          backgroundColor: "#f5f5f5",
         }}
       />
 

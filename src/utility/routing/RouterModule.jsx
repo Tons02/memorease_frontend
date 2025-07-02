@@ -17,6 +17,7 @@ import Registration from "../../pages/Registration/Registration";
 import VerifyEmail from "../../pages/VerifyEmail";
 import Maps from "../../pages/Maps/Maps";
 import Cemeteries from "../../pages/Cemeteries/Cemeteries";
+import Deceased from "../../pages/Deceased/Deceased";
 
 const router = createBrowserRouter([
   {
@@ -32,8 +33,8 @@ const router = createBrowserRouter([
         element: <Registration />,
       },
       {
-        // path: "/maps",
-        // element: <Maps />,
+        path: "/maps",
+        element: <Maps />,
       },
       {
         path: "/login",
@@ -63,13 +64,21 @@ const router = createBrowserRouter([
         index: true,
         element: <Masterlist />,
       },
-
       {
         path: "masterlist/cemeteries",
         index: true,
         element: (
           <AccessPermissionContext permission="cemeteries" context="routing">
             <Cemeteries />
+          </AccessPermissionContext>
+        ),
+      },
+      {
+        path: "masterlist/deceased",
+        index: true,
+        element: (
+          <AccessPermissionContext permission="deceased" context="routing">
+            <Deceased />
           </AccessPermissionContext>
         ),
       },
