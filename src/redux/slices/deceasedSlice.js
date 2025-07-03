@@ -16,7 +16,7 @@ export const apiDeceased = apiSlice
       }),
       addDeceased: builder.mutation({
         query: (body) => ({
-          url: `/role`,
+          url: `/deceased`,
           method: "POST",
           body: body,
         }),

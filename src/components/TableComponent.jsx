@@ -12,8 +12,11 @@ import {
   TextField,
   Skeleton,
   Box,
+  MenuItem,
+  Menu,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import { useState } from "react";
 
 const TableComponent = ({
   columns = [],
@@ -28,6 +31,7 @@ const TableComponent = ({
   search,
   setSearch,
   setStatus,
+  status,
   actionsRender = () => null,
 }) => {
   return (
@@ -104,7 +108,6 @@ const TableComponent = ({
                   {col.headerName}
                 </TableCell>
               ))}
-              <TableCell align="center">Action</TableCell>
             </TableRow>
           </TableHead>
 
@@ -133,11 +136,14 @@ const TableComponent = ({
                 <TableRow key={row.id}>
                   {columns.map((col) => (
                     <TableCell key={col.field} align={col.align || "left"}>
-                      {typeof col.valueGetter === "function"
+                      {typeof col.renderCell === "function"
+                        ? col.renderCell({ row })
+                        : typeof col.valueGetter === "function"
                         ? col.valueGetter(row)
-                        : row[col.field]}
+                        : row[col.field]}{" "}
                     </TableCell>
                   ))}
+
                   <TableCell align="center">{actionsRender(row)}</TableCell>
                 </TableRow>
               ))

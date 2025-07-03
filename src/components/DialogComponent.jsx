@@ -25,6 +25,8 @@ const DialogComponent = ({
   maxWidth = "xs",
   fullWidth = true,
   formMethods = {},
+  isValid,
+  isDirty,
 }) => {
   const { handleSubmit, reset } = formMethods;
 
@@ -68,7 +70,7 @@ const DialogComponent = ({
             variant="contained"
             color="success"
             fullWidth
-            disabled={isLoading}
+            disabled={isLoading || !isValid || !isDirty}
             startIcon={!isLoading && submitIcon}
             sx={{ py: 1.5 }}
           >

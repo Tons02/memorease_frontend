@@ -189,7 +189,6 @@ const Role = () => {
       reset(row); // Reset the form with other row data (like 'name')
     }
 
-    console.log(row); // Keep this for debugging if needed
     setOpenUpdateDialog(true);
   };
 
