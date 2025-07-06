@@ -6,7 +6,7 @@ const AccessPermissionContext = ({ permission, children }) => {
   const storedData = JSON.parse(localStorage.getItem("user"));
 
   // Declare accessPermissions outside the block
-  let accessPermissions = storedData?.role?.access_permission;
+  let accessPermissions = storedData?.role_type;
 
   if (!accessPermissions?.includes(permission)) {
     return (

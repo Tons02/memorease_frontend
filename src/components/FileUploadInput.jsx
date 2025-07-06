@@ -10,6 +10,7 @@ const FileUploadInput = ({
   previousImageUrl,
   error,
   helperText,
+  setValue,
 }) => {
   const [preview, setPreview] = useState(null);
 
@@ -25,8 +26,14 @@ const FileUploadInput = ({
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    onChange(file); // this will trigger react-hook-form
+
+    if (file) {
+      onChange(file); // ✅ still tell Controller
+      setValue(name, file); // ✅ force RHF to store the file
+    } else {
+      onChange(null);
+      setValue(name, null); // ✅ clear file
+    }
   };
 
   return (

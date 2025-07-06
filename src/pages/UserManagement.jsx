@@ -3,14 +3,12 @@ import React from "react";
 import Link from "@mui/material/Link";
 import Card from "../components/Card";
 import GroupIcon from "@mui/icons-material/Group";
-import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import { Dashboard } from "@mui/icons-material";
-import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 
 const UserManagement = () => {
   const storedData = JSON.parse(localStorage.getItem("user"));
 
-  let accessPermissions = storedData?.role?.access_permission;
+  let accessPermissions = storedData?.role_type;
 
   return (
     <>
@@ -39,20 +37,12 @@ const UserManagement = () => {
           justifyContent: "center", // Adjust alignment
         }}
       >
-        {accessPermissions.includes("user") && (
+        {accessPermissions.includes("admin") && (
           <Card
             destination="user-accounts"
             icon={<GroupIcon />}
             title="Users"
             subtitle="User registration and access control"
-          />
-        )}
-        {accessPermissions.includes("role") && (
-          <Card
-            destination="role-management"
-            icon={<ManageAccountsIcon />}
-            title="Role Management"
-            subtitle="Used for adding roles and permissions to users"
           />
         )}
       </Box>

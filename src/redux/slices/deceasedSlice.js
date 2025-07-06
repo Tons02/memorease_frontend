@@ -23,16 +23,16 @@ export const apiDeceased = apiSlice
         invalidatesTags: ["Deceased"],
       }),
       updateDeceased: builder.mutation({
-        query: (body) => ({
-          url: `/deceased/${body.id}`,
-          method: "PATCH",
-          body: body,
+        query: ({ id, formData }) => ({
+          url: `/deceased/${id}`,
+          method: "POST",
+          body: formData,
         }),
         invalidatesTags: ["Deceased"],
       }),
       archivedDeceased: builder.mutation({
         query: ({ id }) => ({
-          url: `/role-archived/${id}`,
+          url: `/deceased-archived/${id}`,
           method: "PUT",
           body: id,
         }),

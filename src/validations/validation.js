@@ -129,7 +129,6 @@ export const deceasedSchema = yup.object({
     .string()
     .oneOf(["male", "female"], "Select a valid gender")
     .required("Gender is required"),
-
   death_certificate: yup
     .mixed()
     .required("Death certificate is required")

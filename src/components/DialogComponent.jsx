@@ -27,6 +27,7 @@ const DialogComponent = ({
   formMethods = {},
   isValid,
   isDirty,
+  isArchived,
 }) => {
   const { handleSubmit, reset } = formMethods;
 
@@ -60,7 +61,16 @@ const DialogComponent = ({
         </IconButton>
       </DialogTitle>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form
+        onSubmit={
+          isArchived
+            ? (e) => {
+                e.preventDefault();
+                onSubmit();
+              }
+            : handleSubmit(onSubmit)
+        }
+      >
         <Divider />
         <DialogContent>{children}</DialogContent>
         <Divider />
@@ -70,7 +80,7 @@ const DialogComponent = ({
             variant="contained"
             color="success"
             fullWidth
-            disabled={isLoading || !isValid || !isDirty}
+            disabled={isLoading || (!isArchived && (!isValid || !isDirty))}
             startIcon={!isLoading && submitIcon}
             sx={{ py: 1.5 }}
           >

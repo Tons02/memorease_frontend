@@ -10,7 +10,7 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 const Masterlist = () => {
   const storedData = JSON.parse(localStorage.getItem("user"));
 
-  let accessPermissions = storedData?.role?.access_permission;
+  let accessPermissions = storedData?.role_type;
 
   return (
     <>
@@ -42,20 +42,28 @@ const Masterlist = () => {
           justifyContent: "center", // Adjust alignment
         }}
       >
-        {accessPermissions.includes("cemeteries") && (
+        {accessPermissions.includes("admin") && (
           <Card
             destination="cemeteries"
             icon={<ApartmentIcon />}
-            title="Cemetery"
-            subtitle="Manage cemetery records and information "
+            title="Cemetery Mapping"
+            subtitle="Manage cemetery map and lot information "
           />
         )}
-        {accessPermissions.includes("deceased") && (
+        {accessPermissions.includes("admin") && (
+          <Card
+            destination="cemetery-deceased"
+            icon={<ApartmentIcon />}
+            title="Cemetery Deceased"
+            subtitle="View and navigate cemetery map of deceased"
+          />
+        )}
+        {accessPermissions.includes("admin") && (
           <Card
             destination="deceased"
             icon={<PersonOffIcon />}
             title="Deceased"
-            subtitle="Manage cemetery records and information "
+            subtitle="Manage cemetery deceased records and information "
           />
         )}
       </Box>

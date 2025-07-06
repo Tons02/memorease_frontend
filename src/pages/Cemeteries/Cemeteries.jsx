@@ -38,7 +38,7 @@ import { cemeterySchema, lotSchema } from "../../validations/validation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as turf from "@turf/turf";
 import { EditControl } from "react-leaflet-draw";
-import { Dashboard, Map } from "@mui/icons-material";
+import { Add, Check, Dashboard, Map } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import FileUploadInput from "../../components/FileUploadInput";
 import { toast } from "sonner";
@@ -52,6 +52,7 @@ import {
   useGetLotQuery,
   useUpdateLotMutation,
 } from "../../redux/slices/apiLot";
+import DialogComponent from "../../components/DialogComponent";
 
 const Cemeteries = () => {
   const [coords, setCoords] = useState([]);
@@ -88,6 +89,8 @@ const Cemeteries = () => {
     watch,
     setError,
     control,
+    isValid,
+    isDirty,
     formState: { errors },
   } = useForm({ resolver: yupResolver(lotSchema) });
 
@@ -171,7 +174,7 @@ const Cemeteries = () => {
     openForm("create", null, coords);
   };
 
-  const onSubmit = async (formData) => {
+  const handleSubmitUpdateCreate = async (formData) => {
     const payload = {
       ...formData,
       price: parseFloat(formData.price),
@@ -225,11 +228,20 @@ const Cemeteries = () => {
     const map = mapRef.current;
     if (!map || !lot?.coordinates?.length) return;
 
-    // Flip [lat, lng] to [lng, lat] for turf
+    // Disable map interactions
+    map.dragging.disable();
+    map.touchZoom.disable();
+    map.doubleClickZoom.disable();
+    map.scrollWheelZoom.disable();
+    map.boxZoom.disable();
+    map.keyboard.disable();
+
+    if (map.tap) map.tap.disable(); // only if tap is available (for touch devices)
+
     const reversedCoords = lot.coordinates.map(([lat, lng]) => [lng, lat]);
 
     const lotPolygon = turf.polygon([[...reversedCoords, reversedCoords[0]]]);
-    const center = turf.center(lotPolygon).geometry.coordinates; // [lng, lat]
+    const center = turf.center(lotPolygon).geometry.coordinates;
     const [lng, lat] = center;
 
     map.flyTo([lat, lng], 18, {
@@ -244,7 +256,18 @@ const Cemeteries = () => {
       fillOpacity: 0.6,
     }).addTo(map);
 
-    setTimeout(() => map.removeLayer(marker), 3000);
+    // Re-enable map interactions after 3 seconds
+    setTimeout(() => {
+      map.removeLayer(marker);
+
+      map.dragging.enable();
+      map.touchZoom.enable();
+      map.doubleClickZoom.enable();
+      map.scrollWheelZoom.enable();
+      map.boxZoom.enable();
+      map.keyboard.enable();
+      if (map.tap) map.tap.enable();
+    }, 3000);
   };
 
   const MapRefHandler = ({ setMap }) => {
@@ -262,6 +285,9 @@ const Cemeteries = () => {
       const cemeteryId = cemeteryData?.data?.[0]?.id;
 
       console.log("data", data);
+
+      console.log("Submitted profile_picture:", data.profile_picture);
+      console.log("Is File:", data.profile_picture instanceof File);
       if (!cemeteryId) return;
 
       const formData = new FormData();
@@ -277,6 +303,7 @@ const Cemeteries = () => {
       for (let [key, value] of formData.entries()) {
         console.log(`${key}:`, value);
       }
+
       await updateCemetery({ id: cemeteryId, formData }).unwrap();
       toast.success("Cemetery info updated successfully");
       setOpenCemeteryInformation(false);
@@ -460,7 +487,12 @@ const Cemeteries = () => {
                   key={lot.id}
                   positions={lot.coordinates}
                   pathOptions={{
-                    color: lot.status === "available" ? "#15803d" : "red",
+                    color:
+                      lot.status === "available"
+                        ? "#15803d"
+                        : lot.status === "reserved"
+                        ? "orange"
+                        : "red",
                     fillOpacity: 0.5,
                   }}
                 >
@@ -513,106 +545,101 @@ const Cemeteries = () => {
       </Box>
 
       {/* Form Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>
-          {formType === "edit" ? "Edit Lot" : "Create Lot"}
-        </DialogTitle>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogContent dividers>
-            <TextField
-              label="Lot Number"
-              fullWidth
-              margin="normal"
-              {...register("lot_number")}
-              error={!!errors.lot_number}
-              helperText={errors.lot_number?.message}
-            />
+      <DialogComponent
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        onSubmit={handleSubmitUpdateCreate}
+        title={formType === "edit" ? "Edit Lot" : "Create Lot"}
+        icon={<Add color="secondary" />}
+        isLoading={formType === "edit" ? isAddLot : isUpdateLot}
+        submitIcon={<Check />}
+        submitLabel={formType === "edit" ? "Update" : "Confirm"}
+        formMethods={{ handleSubmit, reset }}
+        isValid={true}
+        isDirty={true}
+      >
+        <TextField
+          label="Lot Number"
+          fullWidth
+          margin="normal"
+          {...register("lot_number")}
+          error={!!errors.lot_number}
+          helperText={errors.lot_number?.message}
+        />
 
+        <TextField
+          label="Price"
+          type="number"
+          fullWidth
+          margin="normal"
+          {...register("price")}
+          error={!!errors.price}
+          helperText={errors.price?.message}
+        />
+        <TextField
+          label="Down Payment Price"
+          type="number"
+          fullWidth
+          margin="normal"
+          {...register("downpayment_price")}
+          error={!!errors.downpayment_price}
+          helperText={errors.downpayment_price?.message}
+        />
+
+        <Controller
+          name="status"
+          control={control}
+          defaultValue="available"
+          render={({ field }) => (
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Status</InputLabel>
+              <Select {...field} label="Status">
+                <MenuItem value="available">Available</MenuItem>
+                <MenuItem value="reserved">Reserved</MenuItem>
+                <MenuItem value="sold">Sold</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+        />
+
+        {isFeatured && (
+          <>
             <TextField
-              label="Price"
+              label="Promo Price"
               type="number"
               fullWidth
               margin="normal"
-              {...register("price")}
-              error={!!errors.price}
-              helperText={errors.price?.message}
+              {...register("promo_price")}
             />
-
-            <Controller
-              name="status"
-              control={control}
-              defaultValue="available"
-              render={({ field }) => (
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Status</InputLabel>
-                  <Select {...field} label="Status">
-                    <MenuItem value="available">Available</MenuItem>
-                    <MenuItem value="reserved">Reserved</MenuItem>
-                    <MenuItem value="sold">Sold</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
+            <TextField
+              label="Promo Until"
+              type="date"
+              fullWidth
+              margin="normal"
+              InputLabelProps={{ shrink: true }}
+              {...register("promo_until")}
             />
-
-            {isFeatured && (
-              <>
-                <TextField
-                  label="Promo Price"
-                  type="number"
-                  fullWidth
-                  margin="normal"
-                  {...register("promo_price")}
-                />
-                <TextField
-                  label="Promo Until"
-                  type="date"
-                  fullWidth
-                  margin="normal"
-                  InputLabelProps={{ shrink: true }}
-                  {...register("promo_until")}
-                />
-              </>
-            )}
-            <Controller
-              name="is_featured"
-              control={control}
-              defaultValue={0}
-              render={({ field }) => (
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Is Featured</InputLabel>
-                  <Select
-                    {...field}
-                    label="Is Featured"
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  >
-                    <MenuItem value={0}>No</MenuItem>
-                    <MenuItem value={1}>Yes</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
-            />
-          </DialogContent>
-
-          <DialogActions>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => setOpenDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" color="success" variant="contained">
-              {isAddLot || isUpdateLot ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : formType === "edit" ? (
-                "Update"
-              ) : (
-                "Create"
-              )}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+          </>
+        )}
+        <Controller
+          name="is_featured"
+          control={control}
+          defaultValue={0}
+          render={({ field }) => (
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Is Featured</InputLabel>
+              <Select
+                {...field}
+                label="Is Featured"
+                onChange={(e) => field.onChange(Number(e.target.value))}
+              >
+                <MenuItem value={0}>No</MenuItem>
+                <MenuItem value={1}>Yes</MenuItem>
+              </Select>
+            </FormControl>
+          )}
+        />
+      </DialogComponent>
 
       {/* Confirmation Dialog for Delete */}
       <Dialog open={openDeleteDialog}>
@@ -637,78 +664,69 @@ const Cemeteries = () => {
       </Dialog>
 
       {/* Edit Information Dialog*/}
-      <Dialog
+      <DialogComponent
         open={openCemeteryInformation}
         onClose={() => setOpenCemeteryInformation(false)}
+        onSubmit={onSubmitCemeteryUpdate}
+        title={"Cemetery Information"}
+        icon={<Add color="secondary" />}
+        isLoading={isUpdateCemetery}
+        submitIcon={<Check />}
+        submitLabel={"Update"}
+        formMethods={{ handleSubmit: handleCemeterySubmit, reset }}
+        isValid={true}
+        isDirty={true}
+        reset
       >
-        <form onSubmit={handleCemeterySubmit(onSubmitCemeteryUpdate)} formData>
-          <DialogTitle>Cemetery Information</DialogTitle>
-          <Divider />
-          <DialogContent>
-            <Box
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              flexDirection="column"
-            >
-              <FileUploadInput
-                title={"Cemetery"}
-                imageSetValue={cemeterySetValue}
-                previousImageUrl={cemeteryData?.data?.[0]?.profile_picture}
-              />
-            </Box>
+        <Controller
+          name="profile_picture" // ✅ Match backend expected key
+          control={control}
+          defaultValue={null}
+          render={({ field }) => (
+            <FileUploadInput
+              title="Cemetery"
+              name={field.name}
+              value={field.value}
+              setValue={cemeterySetValue}
+              onChange={field.onChange}
+              previousImageUrl={cemeteryData?.data?.[0]?.profile_picture}
+              error={!!errors.profile_picture}
+              helperText={errors.profile_picture?.message}
+            />
+          )}
+        />
 
-            <FormHelperText error>
-              {cemeteryErrors.profile_picture?.message}
-            </FormHelperText>
-            <TextField
-              label="Name"
-              type="text"
-              fullWidth
-              margin="normal"
-              {...cemeteryRegister("name")}
-              error={!!cemeteryErrors.name}
-              helperText={cemeteryErrors.name?.message}
-            />
-            <TextField
-              label="Description"
-              type="text"
-              fullWidth
-              margin="normal"
-              {...cemeteryRegister("description")}
-              error={!!cemeteryErrors.description}
-              helperText={cemeteryErrors.description?.message}
-            />
-            <TextField
-              label="Location"
-              type="text"
-              fullWidth
-              margin="normal"
-              {...cemeteryRegister("location")}
-              error={!!cemeteryErrors.location}
-              helperText={cemeteryErrors.location?.message}
-            />
-          </DialogContent>
-          <Divider />
-          <DialogActions>
-            <Button
-              onClick={() => setOpenCemeteryInformation(false)}
-              variant="contained"
-              color="error"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              color="success"
-              disabled={isUpdateCemetery}
-            >
-              {isUpdateCemetery ? <CircularProgress size={20} /> : "Update"}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+        <FormHelperText error>
+          {cemeteryErrors.profile_picture?.message}
+        </FormHelperText>
+        <TextField
+          label="Name"
+          type="text"
+          fullWidth
+          margin="normal"
+          {...cemeteryRegister("name")}
+          error={!!cemeteryErrors.name}
+          helperText={cemeteryErrors.name?.message}
+        />
+        <TextField
+          label="Description"
+          type="text"
+          fullWidth
+          margin="normal"
+          {...cemeteryRegister("description")}
+          error={!!cemeteryErrors.description}
+          helperText={cemeteryErrors.description?.message}
+        />
+        <TextField
+          label="Location"
+          type="text"
+          fullWidth
+          margin="normal"
+          {...cemeteryRegister("location")}
+          error={!!cemeteryErrors.location}
+          helperText={cemeteryErrors.location?.message}
+        />
+      </DialogComponent>
     </>
   );
 };

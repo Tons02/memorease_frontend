@@ -10,7 +10,6 @@ import Masterlist from "../../pages/Masterlist";
 import AccessPermissionContext from "./AccessPermissionContext";
 import UserManagement from "../../pages/UserManagement";
 import User from "../../pages/User";
-import Role from "../../pages/Role";
 import HomePageLayOut from "../../layout/HomePageLayout";
 import Homepage from "../../pages/Homepage/Homepage";
 import Registration from "../../pages/Registration/Registration";
@@ -18,6 +17,7 @@ import VerifyEmail from "../../pages/VerifyEmail";
 import Maps from "../../pages/Maps/Maps";
 import Cemeteries from "../../pages/Cemeteries/Cemeteries";
 import Deceased from "../../pages/Deceased/Deceased";
+import MapDeceased from "../../pages/MapDeceased/MapDeceased";
 
 const router = createBrowserRouter([
   {
@@ -68,8 +68,17 @@ const router = createBrowserRouter([
         path: "masterlist/cemeteries",
         index: true,
         element: (
-          <AccessPermissionContext permission="cemeteries" context="routing">
+          <AccessPermissionContext permission="admin" context="routing">
             <Cemeteries />
+          </AccessPermissionContext>
+        ),
+      },
+      {
+        path: "masterlist/cemetery-deceased",
+        index: true,
+        element: (
+          <AccessPermissionContext permission="admin" context="routing">
+            <MapDeceased />
           </AccessPermissionContext>
         ),
       },
@@ -77,7 +86,7 @@ const router = createBrowserRouter([
         path: "masterlist/deceased",
         index: true,
         element: (
-          <AccessPermissionContext permission="deceased" context="routing">
+          <AccessPermissionContext permission="admin" context="routing">
             <Deceased />
           </AccessPermissionContext>
         ),
@@ -86,7 +95,7 @@ const router = createBrowserRouter([
         path: "user-management",
         index: true,
         element: (
-          <AccessPermissionContext permission="role" context="routing">
+          <AccessPermissionContext permission="admin" context="routing">
             <UserManagement />
           </AccessPermissionContext>
         ),
@@ -96,17 +105,8 @@ const router = createBrowserRouter([
         path: "user-management/user-accounts",
         index: true,
         element: (
-          <AccessPermissionContext permission="user" context="routing">
+          <AccessPermissionContext permission="admin" context="routing">
             <User />
-          </AccessPermissionContext>
-        ),
-      },
-      {
-        path: "user-management/role-management",
-        index: true,
-        element: (
-          <AccessPermissionContext permission="role" context="routing">
-            <Role />
           </AccessPermissionContext>
         ),
       },

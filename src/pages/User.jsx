@@ -1,9 +1,12 @@
 import {
   CalendarMonth,
   CalendarMonthRounded,
+  Check,
   Dashboard,
   Female,
   Male,
+  SupervisedUserCircle,
+  VerifiedUser,
 } from "@mui/icons-material";
 import { yupResolver } from "@hookform/resolvers/yup";
 import {
@@ -20,6 +23,7 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
+  IconButton,
   InputAdornment,
   InputLabel,
   Menu,
@@ -47,13 +51,15 @@ import GroupIcon from "@mui/icons-material/Group";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import { Controller, useForm } from "react-hook-form";
 import dayjs from "dayjs";
-import { useLazyGetRoleDropDownQuery } from "../redux/slices/roleSlice";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import {
   useAddUserMutation,
   useArchivedUserMutation,
   useGetUserQuery,
   useUpdateUserMutation,
 } from "../redux/slices/userSlice";
+import { toast } from "sonner";
+import CloseIcon from "@mui/icons-material/Close";
 
 const User = () => {
   const [page, setPage] = useState(0);
@@ -67,11 +73,6 @@ const User = () => {
   const [selectedID, setSelectedID] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [restoreUser, setRestoreUser] = useState(false);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "info",
-  });
 
   const {
     control,
@@ -83,6 +84,8 @@ const User = () => {
     watch,
     inputError,
     setValue,
+    isValid,
+    isDirty,
   } = useForm({
     defaultValues: {
       fname: "",
@@ -114,20 +117,9 @@ const User = () => {
     status,
   });
 
-  const [
-    triggerRole,
-    { data: roles, isLoading: isRoleLoading, isError: isRoleError },
-  ] = useLazyGetRoleDropDownQuery();
-
-  const handleFocus = () => {
-    if (!roles) {
-      triggerRole();
-    }
-  };
-
   const [addUser, { isLoading: isAdding }] = useAddUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
-  const [archiveUser] = useArchivedUserMutation();
+  const [archiveUser, { isLoading: isArchiving }] = useArchivedUserMutation();
 
   // Handle Create User
   const handleCreateUser = async (data) => {
@@ -142,11 +134,7 @@ const User = () => {
       setOpenDialog(false);
       refetch();
       reset();
-      setSnackbar({
-        open: true,
-        message: response?.message,
-        severity: "success",
-      });
+      toast.success(response?.message);
     } catch (error) {
       console.log(error?.data?.errors);
       if (error?.data?.errors) {
@@ -156,11 +144,7 @@ const User = () => {
           setError(key, { type: "server", message: e.detail });
         });
       }
-      setSnackbar({
-        open: true,
-        message: "Please Double Check your input",
-        severity: "error",
-      });
+      toast.error(error?.data?.errors[0]?.detail);
     }
   };
 
@@ -179,12 +163,9 @@ const User = () => {
       refetch();
       setOpenDialog(false);
       setEdit(false);
-      setSnackbar({
-        open: true,
-        message: response?.message,
-        severity: "success",
-      });
+      toast.success(response?.message);
     } catch (error) {
+      console.log(error?.data?.errors[0]?.detail);
       if (error?.data?.errors) {
         error.data.errors.forEach((e) => {
           const pointer = e.source?.pointer || "";
@@ -192,17 +173,13 @@ const User = () => {
           setError(key, { type: "server", message: e.detail });
         });
       }
-      setSnackbar({
-        open: true,
-        message: error?.message || "An unexpected error occurred",
-        severity: "error",
-      });
+      toast.error(error?.data?.errors[0]?.detail);
     }
   };
+  // And extend dayjs with it
 
   const handleEdit = (row) => {
-    triggerRole();
-
+    dayjs.extend(customParseFormat);
     setSelectedID(row.id);
     if (row) {
       const formattedUser = {
@@ -211,9 +188,9 @@ const User = () => {
       };
 
       reset(formattedUser);
+      console.log(watch()); // This should now show the date in YYYY-MM-DD format
     }
     setEdit(true);
-
     setOpenDialog(true);
   };
 
@@ -224,19 +201,10 @@ const User = () => {
       console.log("User archived:", response);
       setOpenDeleteDialog(false);
       refetch();
-      setSnackbar({
-        open: true,
-        message: response?.message,
-        severity: "success",
-      });
+      toast.success(response?.message);
     } catch (errors) {
-      console.error("Error archiving role:", errors?.data?.errors?.[0]?.detail);
-      setSnackbar({
-        open: true,
-        message:
-          errors?.data?.errors?.[0]?.detail || "An unexpected error occurred",
-        severity: "error",
-      });
+      console.error("Error archiving user:", errors?.data?.errors[0]?.title);
+      toast.error(errors?.data?.errors[0]?.title);
     }
   };
 
@@ -543,7 +511,7 @@ const User = () => {
                       {row.email}
                     </TableCell>
                     <TableCell component="th" align="center" scope="row">
-                      {row?.role?.name}
+                      {row?.role_type}
                     </TableCell>
                     <TableCell align="center">
                       {dayjs(row.created_at).format("YYYY-MM-DD")}
@@ -626,7 +594,24 @@ const User = () => {
       {/* Dialog Create  */}
 
       <Dialog open={openDialog} fullWidth maxWidth="sm">
-        <DialogTitle>{edit ? "Update User" : "Create New User"}</DialogTitle>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1}>
+            <Check />
+            <Typography variant="h6" fontWeight="bold">
+              {edit ? "Update User" : "Create New User"}
+            </Typography>
+          </Box>
+          <IconButton onClick={() => handleClose()}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
         <form
           onSubmit={
             edit
@@ -664,11 +649,7 @@ const User = () => {
               name="suffix"
               control={control}
               render={({ field }) => (
-                <FormControl
-                  fullWidth
-                  sx={{ width: 535, paddingBottom: 1 }}
-                  error={!!errors.suffix}
-                >
+                <FormControl fullWidth error={!!errors.suffix}>
                   <InputLabel id="suffix-label">Suffix</InputLabel>
                   <Select
                     labelId="suffix-label"
@@ -700,7 +681,7 @@ const User = () => {
               error={!!errors.birthday}
               helperText={errors.birthday?.message}
               InputLabelProps={{
-                shrink: true, // Make label shrink even when empty, common for date inputs
+                shrink: true,
               }}
               InputProps={{
                 startAdornment: (
@@ -714,7 +695,7 @@ const User = () => {
               name="gender"
               control={control}
               render={({ field }) => (
-                <FormControl sx={{ width: 535 }} error={!!errors.gender}>
+                <FormControl fullWidth error={!!errors.gender}>
                   <InputLabel id="gender-label">Gender</InputLabel>
                   <Select
                     labelId="gender-label"
@@ -779,33 +760,36 @@ const User = () => {
               helperText={errors.email?.message}
             />
             <Controller
-              name="role_id"
+              name="role_type"
               control={control}
               render={({ field }) => (
-                <FormControl sx={{ width: 535 }} error={!!errors.role_id}>
-                  <InputLabel id="role-label">Role</InputLabel>
+                <FormControl fullWidth error={!!errors.role_type}>
+                  <InputLabel id="role_type-label">Role Type</InputLabel>
                   <Select
-                    labelId="role-label"
-                    id="role"
-                    label="Role"
+                    labelId="role_type-label"
+                    id="role_type"
+                    label="Gender"
                     {...field}
-                    onOpen={handleFocus} // trigger API when dropdown opens
                   >
                     <MenuItem value="">Select Role</MenuItem>
-                    {roles?.data?.map((role) => (
-                      <MenuItem key={role.id} value={role.id}>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          {role.name}
-                        </Box>
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="admin">
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <VerifiedUser fontSize="small" /> Admin
+                      </Box>
+                    </MenuItem>
+                    <MenuItem value="female">
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <SupervisedUserCircle fontSize="small" /> customer
+                      </Box>
+                    </MenuItem>
                   </Select>
-
-                  {errors.role_id && (
+                  {errors.role_type && (
                     <Typography color="error" variant="caption">
-                      {errors.role_id.message}
+                      {errors.role_type.message}
                     </Typography>
                   )}
                 </FormControl>
@@ -813,15 +797,16 @@ const User = () => {
             />
           </DialogContent>
           <Divider />
-          <DialogActions>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button
-              onClick={() => handleClose()}
-              color="error"
+              type="submit"
               variant="contained"
+              color="success"
+              fullWidth
+              disabled={isLoading}
+              startIcon={!isLoading && <Check />}
+              sx={{ py: 1.5 }}
             >
-              Cancel
-            </Button>
-            <Button type="submit" color="success" variant="contained">
               {isAdding || isUpdating ? (
                 <CircularProgress size={20} />
               ) : (
@@ -834,7 +819,23 @@ const User = () => {
 
       {/* Confirmation Dialog for Delete */}
       <Dialog open={openDeleteDialog}>
-        <DialogTitle>{restoreUser ? "Restore" : "Archived"}</DialogTitle>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1}>
+            <Check />
+            <Typography variant="h6" fontWeight="bold">
+              {restoreUser ? "Restore" : "Archived"}
+            </Typography>
+          </Box>
+          <IconButton onClick={() => handleClose()}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
         <Divider />
         <DialogContent>
           <Typography>
@@ -843,34 +844,21 @@ const User = () => {
           </Typography>
         </DialogContent>
         <Divider />
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
-            onClick={() => handleClose()}
+            type="submit"
             variant="contained"
-            color="error"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDeleteUser}
             color="success"
-            variant="contained"
+            fullWidth
+            loading={isLoading}
+            onClick={handleDeleteUser}
+            startIcon={!isLoading && <Check />}
+            sx={{ py: 1.5 }}
           >
-            Yes
+            {isArchiving ? <CircularProgress size={20} /> : "Submit"}
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert severity={snackbar.severity} sx={{ width: "100%" }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 };

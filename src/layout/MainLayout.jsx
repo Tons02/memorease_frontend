@@ -46,6 +46,7 @@ import {
   ExpandLess,
   ExpandMore,
   Map,
+  MapsUgc,
   PersonOff,
 } from "@mui/icons-material";
 import LockResetIcon from "@mui/icons-material/LockReset";
@@ -200,7 +201,7 @@ export default function MiniDrawer() {
     setAnchorEl(null);
   };
 
-  let accessPermissions = storedData?.role?.access_permission;
+  let accessPermissions = storedData?.role_type;
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -389,7 +390,7 @@ export default function MiniDrawer() {
                 />
               </ListItemButton>
             </ListItem>
-            {accessPermissions.includes("masterlist") && (
+            {accessPermissions.includes("admin") && (
               <ListItem disablePadding sx={{ display: "block" }}>
                 <ListItemButton
                   sx={[
@@ -453,7 +454,7 @@ export default function MiniDrawer() {
             )}
             {/* Child Items */}
             <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-              {accessPermissions.includes("cemeteries") && (
+              {accessPermissions.includes("admin") && (
                 <ListItemButton
                   sx={{
                     pl: open ? 5 : 2.5,
@@ -486,15 +487,54 @@ export default function MiniDrawer() {
                     />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Cemetery"
+                    primary="Cemetery Map"
+                    sx={{
+                      opacity: open ? 1 : 0,
+                    }}
+                  />
+                </ListItemButton>
+              )}{" "}
+              {accessPermissions.includes("admin") && (
+                <ListItemButton
+                  sx={{
+                    pl: open ? 5 : 2.5,
+                  }}
+                  onClick={() =>
+                    handleNavigation("/admin/masterlist/cemetery-deceased")
+                  }
+                >
+                  <ListItemIcon
+                    sx={[
+                      {
+                        minWidth: 0,
+                        justifyContent: "center",
+                      },
+                      open
+                        ? {
+                            mr: 2,
+                          }
+                        : {
+                            mr: "auto",
+                          },
+                    ]}
+                  >
+                    <MapsUgc
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Map Deceased"
                     sx={{
                       opacity: open ? 1 : 0,
                     }}
                   />
                 </ListItemButton>
               )}
-
-              {accessPermissions.includes("cemeteries") && (
+              {accessPermissions.includes("admin") && (
                 <ListItemButton
                   sx={{
                     pl: open ? 5 : 2.5,
@@ -535,7 +575,7 @@ export default function MiniDrawer() {
             </Collapse>
 
             {/* user management */}
-            {accessPermissions.includes("role") && (
+            {accessPermissions.includes("admin") && (
               <ListItem disablePadding sx={{ display: "block" }}>
                 <ListItemButton
                   sx={[
@@ -609,7 +649,7 @@ export default function MiniDrawer() {
               timeout="auto"
               unmountOnExit
             >
-              {accessPermissions.includes("user") && (
+              {accessPermissions.includes("admin") && (
                 <ListItemButton
                   sx={{
                     pl: open ? 5 : 2.5,
@@ -648,48 +688,7 @@ export default function MiniDrawer() {
                     }}
                   />
                 </ListItemButton>
-              )}
-
-              {accessPermissions.includes("role") && (
-                <ListItemButton
-                  sx={{
-                    pl: open ? 5 : 2.5,
-                  }}
-                  onClick={() =>
-                    handleNavigation("/admin/user-management/role-management")
-                  }
-                >
-                  <ListItemIcon
-                    sx={[
-                      {
-                        minWidth: 0,
-                        justifyContent: "center",
-                      },
-                      open
-                        ? {
-                            mr: 2,
-                          }
-                        : {
-                            mr: "auto",
-                          },
-                    ]}
-                  >
-                    <ManageAccountsIcon
-                      sx={{
-                        maxWidth: 275,
-                        cursor: "pointer",
-                        color: theme.palette.secondary.main,
-                      }}
-                    />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Role Management"
-                    sx={{
-                      opacity: open ? 1 : 0,
-                    }}
-                  />
-                </ListItemButton>
-              )}
+              )}{" "}
             </Collapse>
           </List>
           <Divider />

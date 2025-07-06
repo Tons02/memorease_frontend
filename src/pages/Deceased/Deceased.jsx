@@ -53,6 +53,7 @@ const Deceased = () => {
   const [openModalArchived, setOpenModalArchived] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
+  const [selectedID, setSelectedID] = useState(false);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -145,6 +146,7 @@ const Deceased = () => {
     { field: "full_name", headerName: "Fullname", align: "center" },
     { field: "gender", headerName: "Gender", align: "center" },
     { field: "birthday", headerName: "Gender", align: "center" },
+    { field: "death_date", headerName: "Date Death", align: "center" },
     {
       field: "death_certificate",
       headerName: "Burial Certificate",
@@ -202,9 +204,11 @@ const Deceased = () => {
               onClick={() => {
                 handleCloseDropDown();
                 setOpenModalArchived(true);
+                setSelectedID(row.id);
+                setIsArchived(true);
               }}
             >
-              Archived
+              {status === "inactive" ? "Restore" : "Archive"}
             </MenuItem>
           </Menu>
         </>
@@ -271,11 +275,43 @@ const Deceased = () => {
   };
 
   const handleUpdateDeceased = async (data) => {
-    console.log("data", data);
     try {
-      const response = await updateDeceased({
-        ...data,
-      }).unwrap();
+      const id = data.id;
+
+      const formData = new FormData();
+
+      // formData.append("_method", "PATCH");
+
+      // Object.entries(data).forEach(([key, value]) => {
+      //   if (value !== undefined && value !== null) {
+      //     formData.append(key, value instanceof File ? value : String(value));
+      //   }
+      // });
+
+      formData.append("_method", "PATCH");
+
+      formData.append("id", String(data.id));
+      formData.append("lot_id", String(data.lot_id));
+      formData.append("fname", data.fname);
+      formData.append("mname", data.mname || ""); // Optional
+      formData.append("lname", data.lname);
+      formData.append("suffix", data.suffix || ""); // Optional
+      formData.append("gender", data.gender);
+      formData.append("birthday", data.birthday);
+      formData.append("death_date", data.death_date);
+
+      // Only append if it's a new File
+      if (data.death_certificate instanceof File) {
+        formData.append("death_certificate", data.death_certificate);
+      }
+
+      if (data.lot_image instanceof File) {
+        formData.append("lot_image", data.lot_image);
+      }
+
+      const response = await updateDeceased({ id, formData }).unwrap();
+
+      // Reset form after success
       reset({
         id: "",
         lot_id: "",
@@ -289,18 +325,27 @@ const Deceased = () => {
         death_date: "",
         death_certificate: "",
       });
+
       refetch();
       setopenModal(false);
       setIsEdit(false);
       console.log(response);
       toast.success(response?.message);
     } catch (error) {
-      toast.error(error?.data?.errors[0].detail);
+      toast.error(error?.data?.errors?.[0]?.detail || "Something went wrong.");
     }
   };
 
-  const handleArchivedDeceased = async (data) => {
-    console.log(data);
+  const handleArchivedDeceased = async () => {
+    console.log("hit handlearchive");
+    try {
+      const response = await archivedDeceased({ id: selectedID }).unwrap();
+      setOpenModalArchived(false);
+      setIsArchived(false);
+      toast.success(response?.message);
+    } catch (errors) {
+      toast.error(errors?.data?.errors[0]?.title);
+    }
   };
 
   return (
@@ -408,6 +453,7 @@ const Deceased = () => {
               name="lot_image"
               value={field.value}
               onChange={field.onChange}
+              setValue={setValue}
               previousImageUrl={defaultImage}
               error={!!errors.lot_image}
               helperText={errors.lot_image?.message}
@@ -590,19 +636,22 @@ const Deceased = () => {
         open={openModalArchived}
         onClose={() => {
           setOpenModalArchived(false);
+          setIsArchived(false);
         }}
         onSubmit={handleArchivedDeceased}
-        title={isArchived ? "Restore" : "Archived"}
+        title={status === "inactive" ? "Restore" : "Archive"}
         icon={<Clear color="secondary" />}
         isLoading={isArchivedLotLoading}
         submitIcon={<Check />}
-        submitLabel={isArchived ? "Restore" : "Archived"}
+        submitLabel={status === "inactive" ? "Restore" : "Archive"}
         formMethods={{ handleSubmit }}
         isValid={true}
         isDirty={true}
+        isArchived={isArchived}
       >
         <Typography variant="body1" sx={{ mt: 1 }}>
-          Are you sure you want to archive this data?
+          Are you sure you want to{" "}
+          {status === "inactive" ? "restore" : "archive"} this data?
         </Typography>
       </DialogComponent>
     </>
