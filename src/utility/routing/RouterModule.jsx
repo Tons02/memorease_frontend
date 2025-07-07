@@ -22,7 +22,6 @@ import MapDeceased from "../../pages/MapDeceased/MapDeceased";
 const router = createBrowserRouter([
   {
     element: <HomePageLayOut />,
-    errorElement: <PreventLoginRoutes />,
     children: [
       {
         path: "/",

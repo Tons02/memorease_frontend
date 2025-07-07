@@ -69,7 +69,7 @@ function HomePageLayOut(props) {
   try {
     const userData = localStorage.getItem("user");
     storedData = userData ? JSON.parse(userData) : null;
-    roleName = storedData?.role?.name || null;
+    roleName = storedData?.role_type || null;
   } catch (error) {
     console.error("Invalid user data in localStorage", error);
   }

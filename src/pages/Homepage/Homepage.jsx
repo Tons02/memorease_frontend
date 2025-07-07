@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   Box,
   Typography,
@@ -12,6 +12,8 @@ import background from "../../assets/background.png";
 import lotImage from "../../assets/lot-a1.jpg";
 import cemeteryBanner from "../../assets/cemetery-banner.jpg";
 import Slider from "react-slick"; // <--- Import at top of file
+import { useGetLotQuery } from "../../redux/slices/apiLot";
+import { useGetCemeteryQuery } from "../../redux/slices/cemeterySlice";
 
 const cemeteryInfo = {
   name: "Providence Memorial Park",
@@ -26,13 +28,36 @@ const featuredLot = {
 };
 
 const HomePage = () => {
+  const {
+    data: lotCemetery,
+    refetch: refetchCemetery,
+    isLoading: isCemeteryLoading,
+  } = useGetCemeteryQuery({
+    search: "",
+    pagination: "none",
+    status: "active",
+  });
+
+  const {
+    data: lotData,
+    refetch: refetchLots,
+    isLoading: isLotLoading,
+  } = useGetLotQuery({
+    search: "",
+    per_page: "8",
+    page: "1",
+    pagination: "",
+    status: "available",
+  });
+
+  console.log("lotData", lotData?.data?.data);
+
   return (
-    // <div>Dashboard</div>
     <>
       {/* Hero Section */}
       <Box
         sx={{
-          backgroundImage: `url(${cemeteryBanner})`,
+          backgroundImage: `url(${lotCemetery?.data[0]?.profile_picture})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           height: 400,
@@ -46,7 +71,7 @@ const HomePage = () => {
           variant="h3"
           sx={{ bgcolor: "rgba(0,0,0,0.5)", p: 3, borderRadius: 2 }}
         >
-          {cemeteryInfo.name}
+          {lotCemetery?.data[0]?.name}
         </Typography>
       </Box>
 
@@ -91,57 +116,66 @@ const HomePage = () => {
           Available Lots
         </Typography>
 
-        <Slider
-          dots={true}
-          infinite={true}
-          speed={500}
-          slidesToShow={4}
-          slidesToScroll={1}
-          responsive={[
-            {
-              breakpoint: 768,
-              settings: {
-                slidesToShow: 1,
+        {isLotLoading ? (
+          <Typography>Loading lots...</Typography>
+        ) : lotData?.data?.data?.filter((lot) => lot.status === "available")
+            .length === 0 ? (
+          <Typography>No available lots.</Typography>
+        ) : (
+          <Slider
+            dots={true}
+            infinite={true}
+            speed={500}
+            slidesToShow={4}
+            slidesToScroll={1}
+            responsive={[
+              {
+                breakpoint: 768,
+                settings: {
+                  slidesToShow: 1,
+                },
               },
-            },
-          ]}
-        >
-          {[1, 2, 3, 4].map((i) => (
-            <Box key={i} sx={{ px: 2 }}>
-              <Card>
-                <CardMedia
-                  component="img"
-                  height="200"
-                  image={lotImage}
-                  alt={`Lot ${i}`}
-                />
-                <CardContent>
-                  <Typography variant="h6">{`Lot ${i}`}</Typography>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    Spacious lawn lot with great location.
-                  </Typography>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    ₱{100000 + i * 5000}
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    color="success"
-                    sx={{ mt: 2 }}
-                    fullWidth
-                  >
-                    Inquire Now
-                  </Button>
-                </CardContent>
-              </Card>
-            </Box>
-          ))}
-        </Slider>
+            ]}
+          >
+            {lotData?.data?.data
+              ?.filter((lot) => lot.status === "available")
+              ?.map((lot) => (
+                <Box key={lot.id} sx={{ px: 2 }}>
+                  <Card>
+                    <CardMedia
+                      component="img"
+                      height="200"
+                      image={lot.lot_image || lotImage}
+                      alt={`Lot ${lot.lot_number}`}
+                    />
+                    <CardContent>
+                      <Typography variant="h6">{`Lot ${lot.lot_number}`}</Typography>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        {lot.description ?? "No description available."}
+                      </Typography>
+                      <Typography variant="subtitle1" fontWeight="bold">
+                        ₱{lot.price}
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        sx={{ mt: 2 }}
+                        fullWidth
+                      >
+                        Inquire Now
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Box>
+              ))}
+          </Slider>
+        )}
       </Box>
 
       {/* Static Map Background Section */}
       <Box
         sx={{
-          backgroundImage: `url(${background})`,
+          backgroundImage: `url(${lotCemetery?.data[0]?.profile_picture})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           height: 300,
@@ -153,11 +187,11 @@ const HomePage = () => {
         }}
       >
         <Box sx={{ bgcolor: "rgba(0, 0, 0, 0.5)", p: 3, borderRadius: 2 }}>
-          <Typography variant="h5">
-            7XVC+6PQ, Juanito R. Remulla Senior Rd, Dasmariñas, Cavite
-          </Typography>
+          <Typography variant="h5">{lotCemetery?.data[0]?.location}</Typography>
           <Typography>
-            Visit our site to explore available lots in person
+            <Typography variant="h5">
+              {lotCemetery?.data[0]?.description}
+            </Typography>
           </Typography>
         </Box>
       </Box>

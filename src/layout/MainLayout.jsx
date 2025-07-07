@@ -45,6 +45,7 @@ import {
   Dashboard,
   ExpandLess,
   ExpandMore,
+  Home,
   Map,
   MapsUgc,
   PersonOff,
@@ -376,8 +377,64 @@ export default function MiniDrawer() {
                     }}
                   />
                 </ListItemIcon>
+
                 <ListItemText
                   primary="Dashboard"
+                  sx={[
+                    open
+                      ? {
+                          opacity: 1,
+                        }
+                      : {
+                          opacity: 0,
+                        },
+                  ]}
+                />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding sx={{ display: "block" }}>
+              <ListItemButton
+                sx={[
+                  {
+                    minHeight: 48,
+                    px: 2.5,
+                  },
+                  open
+                    ? {
+                        justifyContent: "initial",
+                      }
+                    : {
+                        justifyContent: "center",
+                      },
+                ]}
+                onClick={() => handleNavigation("/")}
+              >
+                <ListItemIcon
+                  sx={[
+                    {
+                      minWidth: 0,
+                      justifyContent: "center",
+                    },
+                    open
+                      ? {
+                          mr: 2,
+                        }
+                      : {
+                          mr: "auto",
+                        },
+                  ]}
+                >
+                  <Home
+                    sx={{
+                      maxWidth: 275,
+                      cursor: "pointer",
+                      color: theme.palette.secondary.main,
+                    }}
+                  />
+                </ListItemIcon>
+
+                <ListItemText
+                  primary="HomePage"
                   sx={[
                     open
                       ? {

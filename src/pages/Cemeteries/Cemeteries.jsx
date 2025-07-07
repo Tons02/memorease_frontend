@@ -42,6 +42,7 @@ import { Add, Check, Dashboard, Map } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import FileUploadInput from "../../components/FileUploadInput";
 import { toast } from "sonner";
+import defaultImage from "../../assets/default-image.png";
 import {
   useGetCemeteryQuery,
   useUpdateCemeteryMutation,
@@ -53,6 +54,7 @@ import {
   useUpdateLotMutation,
 } from "../../redux/slices/apiLot";
 import DialogComponent from "../../components/DialogComponent";
+import MapLegend from "../../components/MapLegend";
 
 const Cemeteries = () => {
   const [coords, setCoords] = useState([]);
@@ -89,10 +91,22 @@ const Cemeteries = () => {
     watch,
     setError,
     control,
-    isValid,
-    isDirty,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(lotSchema) });
+  } = useForm({
+    defaultValues: {
+      lot_number: "",
+      description: "",
+      lot_image: null,
+      status: "",
+      reserved_until: "",
+      price: "",
+      downpayment_price: "",
+      promo_price: "",
+      promo_until: "",
+      is_featured: "",
+    },
+    resolver: yupResolver(lotSchema),
+  });
 
   const isFeatured = watch("is_featured") === 1;
 
@@ -148,16 +162,22 @@ const Cemeteries = () => {
 
     if (type === "edit" && data) {
       setSelectedLot(data);
+      setValue("lot_image", data.lot_image);
       setValue("lot_number", data.lot_number);
+      setValue("description", data.description);
       setValue("price", data.price);
       setValue("status", data.status);
+      setValue("downpayment_price", data.downpayment_price);
       setValue("reserved_until", data.reserved_until || "");
       setValue("promo_price", data.promo_price || "");
       setValue("promo_until", data.promo_until || "");
       setValue("is_featured", data.is_featured ? 1 : 0);
+      setSelectedID(data.id);
     } else {
       reset({
         lot_number: "",
+        description: "",
+        lot_image: null,
         price: "",
         status: "available",
         reserved_until: "",
@@ -185,11 +205,34 @@ const Cemeteries = () => {
     };
 
     try {
+      const formData = new FormData();
+
       if (formType === "edit") {
-        await updateLot({ id: selectedLot.id, ...payload }).unwrap();
+        console.log("selected id", selectedID);
+        formData.append("_method", "PATCH");
+      }
+
+      // Common fields for both add and edit
+      formData.append("lot_number", payload.lot_number);
+      formData.append("description", payload.description);
+      formData.append("coordinates", JSON.stringify(payload.coordinates || []));
+      formData.append("status", payload.status);
+      formData.append("reserved_until", payload.reserved_until);
+      formData.append("price", payload.price);
+      formData.append("downpayment_price", payload.downpayment_price);
+      formData.append("promo_price", payload.promo_price);
+      formData.append("promo_until", payload.promo_until);
+      formData.append("is_featured", payload.is_featured);
+
+      if (payload.lot_image instanceof File) {
+        formData.append("lot_image", payload.lot_image);
+      }
+
+      if (formType === "edit") {
+        await updateLot({ id: selectedID, lot: formData }).unwrap();
         toast.success("Lot updated successfully");
       } else {
-        await addLot(payload).unwrap();
+        await addLot(formData).unwrap();
         toast.success("Lot added successfully");
       }
 
@@ -283,8 +326,6 @@ const Cemeteries = () => {
   const onSubmitCemeteryUpdate = async (data) => {
     try {
       const cemeteryId = cemeteryData?.data?.[0]?.id;
-
-      console.log("data", data);
 
       console.log("Submitted profile_picture:", data.profile_picture);
       console.log("Is File:", data.profile_picture instanceof File);
@@ -497,16 +538,24 @@ const Cemeteries = () => {
                   }}
                 >
                   <Popup>
-                    <strong>{lot.lot_number}</strong>
+                    <strong>Lot Name: </strong>
+                    {lot.lot_number}
                     <br />
-                    Status: {lot.status}
-                    <br />₱{lot.price}
+                    <strong>Description: </strong>
+                    {lot.description}
+                    <br />
+                    <strong>Status: </strong>
+                    {lot.status}
+                    <br />
+                    <strong>Price: </strong>₱{lot.price}
                     <br />
                     <Button
                       size="small"
                       variant="contained"
                       color="success"
-                      onClick={() => openForm("edit", lot, lot.coordinates)}
+                      onClick={() => {
+                        openForm("edit", lot, lot.coordinates);
+                      }}
                       style={{ marginTop: 8, marginRight: 5 }}
                     >
                       Edit
@@ -523,6 +572,7 @@ const Cemeteries = () => {
                   </Popup>
                 </Polygon>
               ))}
+              <MapLegend />
             </MapContainer>
             <div
               style={{
@@ -531,15 +581,7 @@ const Cemeteries = () => {
                 left: 150,
                 zIndex: 1000,
               }}
-            >
-              {/* <Button
-            variant="contained"
-            color={isDrawing ? "error" : "success"}
-            onClick={() => setIsDrawing((prev) => !prev)}
-          >
-            {isDrawing ? "Cancel Drawing" : "Start Plotting"}
-          </Button> */}
-            </div>
+            ></div>
           </div>
         )}
       </Box>
@@ -558,6 +600,23 @@ const Cemeteries = () => {
         isValid={true}
         isDirty={true}
       >
+        <Controller
+          name="lot_image"
+          control={control}
+          defaultValue={null}
+          render={({ field }) => (
+            <FileUploadInput
+              title="Lot Image"
+              name="lot_image"
+              value={field.value}
+              onChange={field.onChange}
+              setValue={setValue}
+              previousImageUrl={defaultImage}
+              error={!!errors.lot_image}
+              helperText={errors.lot_image?.message}
+            />
+          )}
+        />
         <TextField
           label="Lot Number"
           fullWidth
@@ -565,6 +624,14 @@ const Cemeteries = () => {
           {...register("lot_number")}
           error={!!errors.lot_number}
           helperText={errors.lot_number?.message}
+        />
+        <TextField
+          label="Description"
+          fullWidth
+          margin="normal"
+          {...register("description")}
+          error={!!errors.description}
+          helperText={errors.description?.message}
         />
 
         <TextField

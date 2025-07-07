@@ -22,9 +22,9 @@ export const apiLot = apiSlice
         invalidatesTags: ["Lots"],
       }),
       updateLot: builder.mutation({
-        query: (lot) => ({
-          url: `/lot/${lot.id}`,
-          method: "PATCH",
+        query: ({ id, lot }) => ({
+          url: `/lot/${id}`,
+          method: "POST",
           body: lot,
         }),
         invalidatesTags: ["Lots"],
