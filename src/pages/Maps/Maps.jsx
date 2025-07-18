@@ -29,6 +29,7 @@ import { Controller, useForm } from "react-hook-form";
 import { lotSchema } from "../../validations/validation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as turf from "@turf/turf";
+import defaultImage from "../../assets/default-image.png";
 import { useGetCemeteryQuery } from "../../redux/slices/cemeterySlice";
 import {
   useAddLotMutation,
@@ -83,6 +84,7 @@ const Cemeteries = () => {
 
   const { data: lotData, refetch: refetchLots } = useGetLotQuery({
     search: "",
+    pagination: "none",
   });
 
   const { data: cemeteryData } = useGetCemeteryQuery();
@@ -179,6 +181,13 @@ const Cemeteries = () => {
     const map = mapRef.current;
     if (!map || !lot?.coordinates?.length) return;
 
+    map.dragging.disable();
+    map.touchZoom.disable();
+    map.doubleClickZoom.disable();
+    map.scrollWheelZoom.disable();
+    map.boxZoom.disable();
+    map.keyboard.disable();
+
     // Flip [lat, lng] to [lng, lat] for turf
     const reversedCoords = lot.coordinates.map(([lat, lng]) => [lng, lat]);
 
@@ -197,6 +206,15 @@ const Cemeteries = () => {
       fillColor: "#00f",
       fillOpacity: 0.6,
     }).addTo(map);
+
+    map.once("moveend", () => {
+      map.dragging.enable();
+      map.touchZoom.enable();
+      map.doubleClickZoom.enable();
+      map.scrollWheelZoom.enable();
+      map.boxZoom.enable();
+      map.keyboard.enable();
+    });
 
     setTimeout(() => map.removeLayer(marker), 3000);
   };
@@ -316,20 +334,48 @@ const Cemeteries = () => {
                 }}
               >
                 <Popup>
-                  <strong>{lot.lot_number}</strong>
+                  <Box
+                    component="img"
+                    src={lot.lot_image ?? defaultImage}
+                    alt=""
+                    sx={{
+                      width: "200px",
+                      height: "150",
+                      alignItems: "center",
+                    }}
+                  />
                   <br />
-                  Status: {lot.status}
-                  <br />₱{lot.price}
+                  <strong>Lot Name: </strong>
+                  {lot.lot_number}
                   <br />
-                  <Button
-                    size="small"
-                    variant="contained"
-                    color="success"
-                    onClick={() => openForm("edit", lot, lot.coordinates)}
-                    style={{ marginTop: 8, marginRight: 5 }}
+                  <strong>Description: </strong>
+                  {lot.description}
+                  <br />
+                  <strong>Status: </strong>
+                  {lot.status}
+                  <br />
+                  <strong>Price: </strong>₱{lot.price}
+                  <br />
+                  <strong>Downpayment: </strong>₱{lot.downpayment_price}
+                  <br />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: 1, // spacing between buttons (theme-based)
+                      mt: 1, // margin top
+                    }}
                   >
-                    View
-                  </Button>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="success"
+                      onClick={() => openForm("edit", lot, lot.coordinates)}
+                      style={{ marginTop: 8, marginRight: 5 }}
+                    >
+                      Reserve
+                    </Button>
+                  </Box>
                 </Popup>
               </Polygon>
             ))}

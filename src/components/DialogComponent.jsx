@@ -25,8 +25,8 @@ const DialogComponent = ({
   maxWidth = "xs",
   fullWidth = true,
   formMethods = {},
-  isValid,
-  isDirty,
+  isValid = true,
+  isDirty = true,
   isArchived,
 }) => {
   const { handleSubmit, reset } = formMethods;

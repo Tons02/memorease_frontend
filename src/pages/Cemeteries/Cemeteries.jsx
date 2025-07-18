@@ -38,7 +38,7 @@ import { cemeterySchema, lotSchema } from "../../validations/validation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as turf from "@turf/turf";
 import { EditControl } from "react-leaflet-draw";
-import { Add, Check, Dashboard, Map } from "@mui/icons-material";
+import { Add, Check, Dashboard, Map, Remove } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import FileUploadInput from "../../components/FileUploadInput";
 import { toast } from "sonner";
@@ -538,6 +538,17 @@ const Cemeteries = () => {
                   }}
                 >
                   <Popup>
+                    <Box
+                      component="img"
+                      src={lot.lot_image ?? defaultImage}
+                      alt=""
+                      sx={{
+                        width: "200px",
+                        height: "150",
+                        alignItems: "center",
+                      }}
+                    />
+                    <br />
                     <strong>Lot Name: </strong>
                     {lot.lot_number}
                     <br />
@@ -549,26 +560,33 @@ const Cemeteries = () => {
                     <br />
                     <strong>Price: </strong>₱{lot.price}
                     <br />
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="success"
-                      onClick={() => {
-                        openForm("edit", lot, lot.coordinates);
+                    <strong>Downpayment: </strong>₱{lot.downpayment_price}
+                    <br />
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: 1, // spacing between buttons (theme-based)
+                        mt: 1, // margin top
                       }}
-                      style={{ marginTop: 8, marginRight: 5 }}
                     >
-                      Edit
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="error"
-                      onClick={() => handleDeleteClick(lot)}
-                      style={{ marginTop: 8 }}
-                    >
-                      Delete
-                    </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        onClick={() => openForm("edit", lot, lot.coordinates)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="error"
+                        onClick={() => handleDeleteClick(lot)}
+                      >
+                        Delete
+                      </Button>
+                    </Box>
                   </Popup>
                 </Polygon>
               ))}
@@ -709,7 +727,21 @@ const Cemeteries = () => {
       </DialogComponent>
 
       {/* Confirmation Dialog for Delete */}
-      <Dialog open={openDeleteDialog}>
+      <DialogComponent
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+        onSubmit={handleDeleteLot}
+        title={"Delete Lot"}
+        icon={<Remove color="error" />}
+        isLoading={isDeleteLot}
+        submitIcon={<Check />}
+        submitLabel={"Confirm"}
+        formMethods={{ handleSubmit }}
+        isArchived={true}
+      >
+        <Typography>Are you sure you want to detele this record?</Typography>
+      </DialogComponent>
+      {/* <Dialog open={openDeleteDialog}>
         <DialogTitle>Delete</DialogTitle>
         <Divider />
         <DialogContent>
@@ -728,7 +760,7 @@ const Cemeteries = () => {
             {isDeleteLot ? <CircularProgress size={20} /> : "Yes"}
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
 
       {/* Edit Information Dialog*/}
       <DialogComponent
