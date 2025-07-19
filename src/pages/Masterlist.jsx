@@ -4,7 +4,7 @@ import Link from "@mui/material/Link";
 import Card from "../components/Card";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
-import { Dashboard } from "@mui/icons-material";
+import { Dashboard, EventAvailable } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 
 const Masterlist = () => {
@@ -64,6 +64,14 @@ const Masterlist = () => {
             icon={<PersonOffIcon />}
             title="Deceased"
             subtitle="Manage cemetery deceased records and information "
+          />
+        )}{" "}
+        {accessPermissions.includes("admin") && (
+          <Card
+            destination="reservation"
+            icon={<EventAvailable />}
+            title="Reservation"
+            subtitle="Manage cemetery reservation records and information "
           />
         )}
       </Box>

@@ -43,6 +43,7 @@ import {
 import {
   AccountCircle,
   Dashboard,
+  EventAvailable,
   ExpandLess,
   ExpandMore,
   Home,
@@ -143,7 +144,7 @@ const Drawer = styled(MuiDrawer, {
 
 export default function MiniDrawer() {
   const theme = useTheme();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [openModal, setOpenModal] = useState(false);
   const [openModalChangePassword, setOpenModalChangePassword] = useState(false);
   const storedData = JSON.parse(localStorage.getItem("user"));
@@ -623,6 +624,46 @@ export default function MiniDrawer() {
                   </ListItemIcon>
                   <ListItemText
                     primary="Deceased"
+                    sx={{
+                      opacity: open ? 1 : 0,
+                    }}
+                  />
+                </ListItemButton>
+              )}
+              {accessPermissions.includes("admin") && (
+                <ListItemButton
+                  sx={{
+                    pl: open ? 5 : 2.5,
+                  }}
+                  onClick={() =>
+                    handleNavigation("/admin/masterlist/reservation")
+                  }
+                >
+                  <ListItemIcon
+                    sx={[
+                      {
+                        minWidth: 0,
+                        justifyContent: "center",
+                      },
+                      open
+                        ? {
+                            mr: 2,
+                          }
+                        : {
+                            mr: "auto",
+                          },
+                    ]}
+                  >
+                    <EventAvailable
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Reservation"
                     sx={{
                       opacity: open ? 1 : 0,
                     }}

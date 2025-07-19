@@ -143,3 +143,22 @@ export const deceasedSchema = yup.object({
   birthday: yup.string().required("Birthday is required"),
   death_date: yup.string().required("Death Date is required"),
 });
+
+export const reservationSchema = yup.object({
+  lot_id: yup.string().required("Lot Id is required"),
+  proof_of_payment: yup
+    .mixed()
+    .required("Proof of Payment is required")
+    .test("fileType", "Only JPG, PNG, or WEBP images are allowed", (value) => {
+      if (typeof value === "string") return true; // allow URL string
+      return value && SUPPORTED_FORMATS.includes(value.type);
+    })
+    .test("fileSize", "Image must be less than 2MB", (value) => {
+      if (typeof value === "string") return true; // skip size check for URL
+      return value && value.size <= MAX_FILE_SIZE;
+    }),
+});
+
+export const rejectReservationSchema = yup.object({
+  remarks: yup.string().required("Remarks is required"),
+});

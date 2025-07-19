@@ -578,14 +578,16 @@ const Cemeteries = () => {
                       >
                         Edit
                       </Button>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color="error"
-                        onClick={() => handleDeleteClick(lot)}
-                      >
-                        Delete
-                      </Button>
+                      {lot.status !== "reserve" && lot.status !== "sold" && (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="error"
+                          onClick={() => handleDeleteClick(lot)}
+                        >
+                          Delete
+                        </Button>
+                      )}
                     </Box>
                   </Popup>
                 </Polygon>
@@ -706,7 +708,7 @@ const Cemeteries = () => {
             />
           </>
         )}
-        <Controller
+        {/* <Controller
           name="is_featured"
           control={control}
           defaultValue={0}
@@ -723,7 +725,7 @@ const Cemeteries = () => {
               </Select>
             </FormControl>
           )}
-        />
+        /> */}
       </DialogComponent>
 
       {/* Confirmation Dialog for Delete */}

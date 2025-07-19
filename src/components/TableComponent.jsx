@@ -14,6 +14,9 @@ import {
   Box,
   MenuItem,
   Menu,
+  FormControl,
+  InputLabel,
+  Select,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { useState } from "react";
@@ -52,17 +55,35 @@ const TableComponent = ({
         alignItems="center"
         sx={{ padding: 1.5 }}
       >
-        <FormControlLabel
-          control={
-            <Checkbox
-              color="success"
-              onChange={(e) =>
-                setStatus(e.target.checked ? "inactive" : "active")
-              }
-            />
-          }
-          label="Archived"
-        />
+        {status !== "active" && status !== "inactive" ? (
+          <FormControl sx={{ width: 150 }}>
+            <InputLabel id="status-label">Status</InputLabel>
+            <Select
+              labelId="status-label"
+              value={status}
+              label="Status"
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="canceled">Canceled</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
+            </Select>
+          </FormControl>
+        ) : (
+          <FormControlLabel
+            control={
+              <Checkbox
+                color="success"
+                checked={status === "inactive"}
+                onChange={(e) =>
+                  setStatus(e.target.checked ? "inactive" : "active")
+                }
+              />
+            }
+            label="Archived"
+          />
+        )}
         <TextField
           label={
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>

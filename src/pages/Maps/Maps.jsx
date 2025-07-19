@@ -9,65 +9,44 @@ import {
 } from "react-leaflet";
 import "leaflet-draw/dist/leaflet.draw.css";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
   TextField,
-  Select,
-  MenuItem,
-  Snackbar,
-  Alert,
-  FormControl,
-  InputLabel,
-  Typography,
   Autocomplete,
   Box,
+  Typography,
+  Divider,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
-import { lotSchema } from "../../validations/validation";
+import { reservationSchema } from "../../validations/validation";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as turf from "@turf/turf";
 import defaultImage from "../../assets/default-image.png";
+import GcashPayment from "../../assets/gcash.png";
 import { useGetCemeteryQuery } from "../../redux/slices/cemeterySlice";
-import {
-  useAddLotMutation,
-  useArchivedLotMutation,
-  useGetLotQuery,
-  useUpdateLotMutation,
-} from "../../redux/slices/apiLot";
+import { useGetLotQuery } from "../../redux/slices/apiLot";
+import DialogComponent from "../../components/DialogComponent";
+import { useAddReservationMutation } from "../../redux/slices/reservationSlice";
+import { Add, Check } from "@mui/icons-material";
+import FileUploadInput from "../../components/FileUploadInput";
+import { toast } from "sonner";
+import Echo from "laravel-echo";
 
 const Cemeteries = () => {
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [coords, setCoords] = useState([]);
+  const isLoggedIn = !!localStorage.getItem("token");
   const mapRef = useRef(null);
-  const [formType, setFormType] = useState("create"); // 'create' or 'edit'
   const [selectedLot, setSelectedLot] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedID, setSelectedID] = useState(null);
-  const cemeteryBoundaryLatLng = [
-    [14.292776, 120.971491],
-    [14.292266, 120.971781],
-    [14.291476, 120.97162],
-    [14.289574, 120.971824],
-    [14.28921, 120.971609],
-    [14.285103, 120.971974],
-    [14.284999, 120.970676],
-    [14.289584, 120.968186],
-    [14.292776, 120.971427],
-    [14.292776, 120.971491],
-  ];
 
-  const cemeteryPolygon = turf.polygon([
-    cemeteryBoundaryLatLng.map(([lat, lng]) => [lng, lat]),
-  ]);
+  useEffect(() => {
+    const channel = window.Echo.channel("lots").listen(".LotReserved", (e) => {
+      console.log("Lot reserved update received:", e);
+      refetchLots();
+    });
 
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+    return () => {
+      channel.stopListening(".LotReserved");
+    };
+  }, []);
 
   const {
     register,
@@ -75,12 +54,11 @@ const Cemeteries = () => {
     reset,
     setValue,
     watch,
+    inputError,
     setError,
     control,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(lotSchema) });
-
-  const isFeatured = watch("is_featured") === 1;
+  } = useForm({ resolver: yupResolver(reservationSchema) });
 
   const { data: lotData, refetch: refetchLots } = useGetLotQuery({
     search: "",
@@ -88,92 +66,46 @@ const Cemeteries = () => {
   });
 
   const { data: cemeteryData } = useGetCemeteryQuery();
-  const [addLot] = useAddLotMutation();
-  const [updateLot] = useUpdateLotMutation();
-  const [deleteLot] = useArchivedLotMutation();
+  const [addReservation, { isLoading: isReservationLoading }] =
+    useAddReservationMutation();
 
   function cleanPointer(pointer) {
-    return pointer?.replace(/^\//, ""); // Removes the leading '/'
+    return pointer?.replace(/^\//, "");
   }
 
   const center = cemeteryData?.data?.[0]?.coordinates ?? [
     14.288794, 120.970325,
   ];
 
-  const openForm = (type, data = null, coordinates = []) => {
-    console.log(data?.is_featured);
-    setFormType(type);
-    setCoords(coordinates);
-
-    if (type === "edit" && data) {
-      setSelectedLot(data);
-      setValue("lot_number", data.lot_number);
-      setValue("price", data.price);
-      setValue("status", data.status);
-      setValue("reserved_until", data.reserved_until || "");
-      setValue("promo_price", data.promo_price || "");
-      setValue("promo_until", data.promo_until || "");
-      setValue("is_featured", data.is_featured ? 1 : 0);
-    } else {
-      reset({
-        lot_number: "",
-        price: "",
-        status: "available",
-        reserved_until: "",
-        promo_price: "",
-        promo_until: "",
-        is_featured: 0,
-      });
-    }
-
-    setOpenDialog(true);
-  };
-
-  const onDrawComplete = (coords) => {
-    openForm("create", null, coords);
-  };
-
-  const onSubmit = async (formData) => {
-    const payload = {
-      ...formData,
-      price: parseFloat(formData.price),
-      promo_price: formData.promo_price || "",
-      promo_until: formData.promo_until || "",
-      is_featured: parseInt(formData.is_featured),
-      coordinates: coords,
-    };
+  const handleReservation = async (data) => {
+    console.log("data", data);
 
     try {
-      if (formType === "edit") {
-        await updateLot({ id: selectedLot.id, ...payload }).unwrap();
-        setSnackbar({
-          open: true,
-          message: "Lot updated successfully",
-          severity: "success",
-        });
-      } else {
-        await addLot(payload).unwrap();
-        setSnackbar({
-          open: true,
-          message: "Lot added successfully",
-          severity: "success",
-        });
-      }
+      const formData = new FormData();
 
+      Object.entries(data).forEach(([key, value]) => {
+        // Only append if value is not null or undefined
+        if (value !== undefined && value !== null) {
+          formData.append(key, value);
+        }
+      });
+
+      const response = await addReservation(formData).unwrap();
       refetchLots();
+      setSelectedLot(null);
       setOpenDialog(false);
+      setValue("proof_of_payment", "");
+      setValue("lot_id", data.lot_id);
+      setValue("downpayment_price", data.downpayment_price);
+      toast.success(response?.message);
     } catch (error) {
-      error?.data?.errors.map((inputError, index) =>
+      error?.data?.errors.map(
+        (inputError, index) => toast.error(error?.data?.errors[0].detail),
         setError(cleanPointer(inputError?.source?.pointer), {
           type: "message",
           message: inputError?.detail,
         })
       );
-      setSnackbar({
-        open: true,
-        message: error?.data?.errors?.[0]?.detail,
-        severity: "error",
-      });
     }
   };
 
@@ -329,7 +261,12 @@ const Cemeteries = () => {
                 key={lot.id}
                 positions={lot.coordinates}
                 pathOptions={{
-                  color: lot.status === "available" ? "#15803d" : "red",
+                  color:
+                    lot.status === "available"
+                      ? "#15803d"
+                      : lot.status === "reserved"
+                      ? "orange"
+                      : "red",
                   fillOpacity: 0.5,
                 }}
               >
@@ -366,15 +303,20 @@ const Cemeteries = () => {
                       mt: 1, // margin top
                     }}
                   >
-                    <Button
-                      size="small"
-                      variant="contained"
-                      color="success"
-                      onClick={() => openForm("edit", lot, lot.coordinates)}
-                      style={{ marginTop: 8, marginRight: 5 }}
-                    >
-                      Reserve
-                    </Button>
+                    {lot.status === "available" && isLoggedIn && (
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        onClick={() => {
+                          setSelectedLot(lot);
+                          setOpenDialog(true);
+                        }}
+                        style={{ marginTop: 8, marginRight: 5 }}
+                      >
+                        Reserve
+                      </Button>
+                    )}
                   </Box>
                 </Popup>
               </Polygon>
@@ -386,118 +328,127 @@ const Cemeteries = () => {
         </div>
       </Box>
 
-      {/* Form Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>
-          {formType === "edit" ? "Edit Lot" : "Create Lot"}
-        </DialogTitle>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogContent dividers>
-            <TextField
-              label="Lot Number"
-              fullWidth
-              margin="normal"
-              {...register("lot_number")}
-              error={!!errors.lot_number}
-              helperText={errors.lot_number?.message}
-            />
-
-            <TextField
-              label="Price"
-              type="number"
-              fullWidth
-              margin="normal"
-              {...register("price")}
-              error={!!errors.price}
-              helperText={errors.price?.message}
-            />
-
-            <Controller
-              name="status"
-              control={control}
-              defaultValue="available"
-              render={({ field }) => (
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Status</InputLabel>
-                  <Select {...field} label="Status">
-                    <MenuItem value="available">Available</MenuItem>
-                    <MenuItem value="reserved">Reserved</MenuItem>
-                    <MenuItem value="sold">Sold</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
-            />
-
-            {isFeatured && (
-              <>
-                <TextField
-                  label="Promo Price"
-                  type="number"
-                  fullWidth
-                  margin="normal"
-                  {...register("promo_price")}
-                />
-                <TextField
-                  label="Promo Until"
-                  type="date"
-                  fullWidth
-                  margin="normal"
-                  InputLabelProps={{ shrink: true }}
-                  {...register("promo_until")}
-                />
-              </>
-            )}
-            <Controller
-              name="is_featured"
-              control={control}
-              defaultValue={0}
-              render={({ field }) => (
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Is Featured</InputLabel>
-                  <Select
-                    {...field}
-                    label="Is Featured"
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  >
-                    <MenuItem value={0}>No</MenuItem>
-                    <MenuItem value={1}>Yes</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
-            />
-          </DialogContent>
-
-          <DialogActions>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() => setOpenDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" variant="contained" color="success">
-              {formType === "edit" ? "Update" : "Create"}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      {/* Reservation Dialog */}
+      <DialogComponent
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        onSubmit={handleSubmit(handleReservation)}
+        title={"Reserve Lot"}
+        icon={<Add color="secondary" />}
+        isLoading={isReservationLoading}
+        submitIcon={<Check />}
+        submitLabel={"Confirm"}
+        formMethods={{ handleSubmit, reset }}
+        isValid={true}
+        isDirty={true}
+        isArchived={true}
       >
-        <Alert
-          severity={snackbar.severity}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          variant="filled"
-          sx={{ width: "100%" }}
+        <TextField
+          label="Lot Number"
+          fullWidth
+          margin="normal"
+          {...register("lot_id")}
+          value={selectedLot?.id}
+          sx={{ display: "none" }}
+        />
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          textAlign="center"
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
+            Lot Image
+          </Typography>
+
+          <Box
+            component="img"
+            src={selectedLot?.lot_image ?? defaultImage}
+            alt="GCASH Payment"
+            sx={{
+              width: "90%",
+              height: "200px",
+              objectFit: "contain",
+            }}
+          />
+        </Box>
+        <TextField
+          label="Lot Number"
+          fullWidth
+          margin="normal"
+          disabled
+          value={selectedLot?.lot_number}
+        />
+        <TextField
+          label="Description"
+          fullWidth
+          disabled
+          margin="normal"
+          value={selectedLot?.description}
+        />
+        <TextField
+          label="Status"
+          fullWidth
+          disabled
+          margin="normal"
+          value={selectedLot?.status}
+        />
+        <TextField
+          label="Price"
+          fullWidth
+          disabled
+          margin="normal"
+          value={selectedLot?.price}
+        />
+        <TextField
+          label="Downpayment_price"
+          fullWidth
+          disabled
+          margin="normal"
+          value={selectedLot?.downpayment_price}
+          {...register("total_downpayment_price")}
+        />
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          textAlign="center"
+        >
+          <Typography variant="h6" fontWeight="bold" gutterBottom>
+            PMP GCASH
+          </Typography>
+
+          <Box
+            component="img"
+            src={GcashPayment}
+            alt="GCASH Payment"
+            sx={{
+              width: "100%",
+              height: "250px",
+              objectFit: "contain",
+              paddingBottom: "10px",
+            }}
+          />
+        </Box>
+        <Divider />
+        <Controller
+          name="proof_of_payment"
+          control={control}
+          defaultValue={null}
+          render={({ field }) => (
+            <FileUploadInput
+              title="Proof of Payment"
+              name="proof_of_payment"
+              value={field.value}
+              onChange={field.onChange}
+              setValue={setValue}
+              previousImageUrl={defaultImage}
+              error={!!errors.proof_of_payment}
+              helperText={errors.proof_of_payment?.message}
+            />
+          )}
+        />
+      </DialogComponent>
     </>
   );
 };

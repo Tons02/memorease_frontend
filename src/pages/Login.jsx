@@ -52,7 +52,7 @@ const LoginForm = () => {
       localStorage.setItem("user", JSON.stringify(response?.data));
       localStorage.setItem("token", response?.token);
 
-      if (response?.data?.role?.name == "customer") {
+      if (response?.data?.role_type == "customer") {
         setTimeout(() => {
           navigate("/");
         }, 500);

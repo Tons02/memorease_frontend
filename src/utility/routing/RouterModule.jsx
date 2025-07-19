@@ -18,10 +18,14 @@ import Maps from "../../pages/Maps/Maps";
 import Cemeteries from "../../pages/Cemeteries/Cemeteries";
 import Deceased from "../../pages/Deceased/Deceased";
 import MapDeceased from "../../pages/MapDeceased/MapDeceased";
+import CustomerMapViewing from "../../pages/MapDeceasedViewing/CustomerMapVIewing";
+import CustomerReservation from "../../pages/CustomerReservation/CustomerReservation";
+import AdminReservation from "../../pages/AdminReservation/AdminReservation";
 
 const router = createBrowserRouter([
   {
     element: <HomePageLayOut />,
+    errorElement: <PrivateRoutes />,
     children: [
       {
         path: "/",
@@ -34,6 +38,14 @@ const router = createBrowserRouter([
       {
         path: "/maps",
         element: <Maps />,
+      },
+      {
+        path: "/maps-deceased-viewing",
+        element: <CustomerMapViewing />,
+      },
+      {
+        path: "/customer-reservation",
+        element: <CustomerReservation />,
       },
       {
         path: "/login",
@@ -87,6 +99,15 @@ const router = createBrowserRouter([
         element: (
           <AccessPermissionContext permission="admin" context="routing">
             <Deceased />
+          </AccessPermissionContext>
+        ),
+      },
+      {
+        path: "masterlist/reservation",
+        index: true,
+        element: (
+          <AccessPermissionContext permission="admin" context="routing">
+            <AdminReservation />
           </AccessPermissionContext>
         ),
       },
