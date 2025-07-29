@@ -250,7 +250,7 @@ const CustomerMapViewing = () => {
                           fillOpacity: 0.5,
                         }}
                       >
-                        <Popup minWidth={300} maxWidth={300}>
+                        <Popup minWidth={250} maxWidth={150}>
                           <Swiper
                             spaceBetween={10}
                             slidesPerView={1}
@@ -277,7 +277,8 @@ const CustomerMapViewing = () => {
                                         display: "block", // makes margin auto work
                                         margin: "6px auto 0", // top margin 6px, auto left/right
                                         width: "100%", // responsive width
-                                        maxWidth: "250px", // limit size
+                                        maxWidth: "150px", // limit size
+                                        objectFit: "contain",
                                         borderRadius: "6px",
                                       }}
                                     />

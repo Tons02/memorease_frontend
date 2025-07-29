@@ -779,7 +779,7 @@ const User = () => {
                         <VerifiedUser fontSize="small" /> Admin
                       </Box>
                     </MenuItem>
-                    <MenuItem value="female">
+                    <MenuItem value="customer">
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
