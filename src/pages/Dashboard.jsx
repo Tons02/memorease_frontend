@@ -1,11 +1,8 @@
 import React from "react";
+import ChatPopup from "./ChatMessage/ChatPopup";
 
 const Dashboard = () => {
-  return (
-    <div>
-      <h1>Dashboard</h1>
-    </div>
-  );
+  return <div></div>;
 };
 
 export default Dashboard;

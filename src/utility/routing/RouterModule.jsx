@@ -21,6 +21,7 @@ import MapDeceased from "../../pages/MapDeceased/MapDeceased";
 import CustomerMapViewing from "../../pages/MapDeceasedViewing/CustomerMapVIewing";
 import CustomerReservation from "../../pages/CustomerReservation/CustomerReservation";
 import AdminReservation from "../../pages/AdminReservation/AdminReservation";
+import MessengerPage from "../../pages/ChatMessage/MessengerPage";
 
 const router = createBrowserRouter([
   {
@@ -120,13 +121,21 @@ const router = createBrowserRouter([
           </AccessPermissionContext>
         ),
       },
-
       {
         path: "user-management/user-accounts",
         index: true,
         element: (
           <AccessPermissionContext permission="admin" context="routing">
             <User />
+          </AccessPermissionContext>
+        ),
+      },
+      {
+        path: "messages",
+        index: true,
+        element: (
+          <AccessPermissionContext permission="admin" context="routing">
+            <MessengerPage />
           </AccessPermissionContext>
         ),
       },

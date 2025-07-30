@@ -1,3 +1,7 @@
 main.MuiBox-root.css-zxdg2z {
   width: 80%;
 }
+
+header.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation4 {
+  z-index: 0;
+}

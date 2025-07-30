@@ -16,6 +16,15 @@ window.Echo = new Echo({
   wssPort: import.meta.env.VITE_REVERB_PORT,
   forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? "https") === "https",
   enabledTransports: ["ws", "wss"],
+
+  // ✅ For Sanctum
+  withCredentials: true,
+  authEndpoint: "http://10.10.12.12:8009/broadcasting/auth",
+  auth: {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  },
 });
 
 window.Echo.connector.pusher.connection.bind("connected", () => {

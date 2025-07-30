@@ -49,6 +49,7 @@ import {
   Home,
   Map,
   MapsUgc,
+  MessageRounded,
   PersonOff,
 } from "@mui/icons-material";
 import LockResetIcon from "@mui/icons-material/LockReset";
@@ -61,6 +62,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { changePasswordSchema } from "../validations/validation";
 import DialogComponent from "../components/DialogComponent";
+import ChatPopup from "../pages/ChatMessage/ChatPopup";
 
 const drawerWidth = 240;
 
@@ -144,7 +146,7 @@ const Drawer = styled(MuiDrawer, {
 
 export default function MiniDrawer() {
   const theme = useTheme();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [openModalChangePassword, setOpenModalChangePassword] = useState(false);
   const storedData = JSON.parse(localStorage.getItem("user"));
@@ -245,8 +247,11 @@ export default function MiniDrawer() {
     setAnchorEl(event.currentTarget);
   };
 
+  console.log("Drawer open:", open);
+
   return (
     <>
+      <ChatPopup receiverId={2} conversationId={1} token={1} currentUser={1} />
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
         <AppBar position="fixed" open={open}>
@@ -258,7 +263,10 @@ export default function MiniDrawer() {
                 aria-label="open drawer"
                 onClick={handleDrawerOpen}
                 edge="start"
-                sx={[{ marginRight: 5 }, open && { display: "none" }]}
+                sx={{
+                  marginRight: 5,
+                  display: open ? "none" : "block",
+                }}
               >
                 <MenuIcon sx={{ color: "secondary.main" }} />
               </IconButton>
@@ -328,13 +336,11 @@ export default function MiniDrawer() {
         </AppBar>
         <Drawer variant="permanent" open={open}>
           <DrawerHeader>
-            <IconButton onClick={handleDrawerClose}>
-              {theme.direction === "rtl" ? (
-                <ChevronRightIcon />
-              ) : (
-                <ChevronLeftIcon />
-              )}
-            </IconButton>
+            <DrawerHeader>
+              <IconButton onClick={open ? handleDrawerClose : handleDrawerOpen}>
+                {open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+              </IconButton>
+            </DrawerHeader>
           </DrawerHeader>
           <Divider />
           <List>
@@ -788,6 +794,61 @@ export default function MiniDrawer() {
                 </ListItemButton>
               )}{" "}
             </Collapse>
+            <ListItem disablePadding sx={{ display: "block" }}>
+              <ListItemButton
+                sx={[
+                  {
+                    minHeight: 48,
+                    px: 2.5,
+                  },
+                  open
+                    ? {
+                        justifyContent: "initial",
+                      }
+                    : {
+                        justifyContent: "center",
+                      },
+                ]}
+                onClick={() => handleNavigation("/admin/messages")}
+              >
+                <ListItemIcon
+                  sx={[
+                    {
+                      minWidth: 0,
+                      justifyContent: "center",
+                    },
+                    open
+                      ? {
+                          mr: 2,
+                        }
+                      : {
+                          mr: "auto",
+                        },
+                  ]}
+                >
+                  <MessageRounded
+                    sx={{
+                      maxWidth: 275,
+                      cursor: "pointer",
+                      color: theme.palette.secondary.main,
+                    }}
+                  />
+                </ListItemIcon>
+
+                <ListItemText
+                  primary="Messages"
+                  sx={[
+                    open
+                      ? {
+                          opacity: 1,
+                        }
+                      : {
+                          opacity: 0,
+                        },
+                  ]}
+                />
+              </ListItemButton>
+            </ListItem>
           </List>
           <Divider />
           <List></List>
