@@ -162,3 +162,7 @@ export const reservationSchema = yup.object({
 export const rejectReservationSchema = yup.object({
   remarks: yup.string().required("Remarks is required"),
 });
+
+export const startConversationSchema = yup.object({
+  user_id: yup.string().required("User is required"),
+});

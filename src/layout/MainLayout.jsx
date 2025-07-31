@@ -206,6 +206,7 @@ export default function MiniDrawer() {
   };
 
   let accessPermissions = storedData?.role_type;
+  let LoginUser = JSON.parse(localStorage.getItem("user"));
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -302,13 +303,26 @@ export default function MiniDrawer() {
                   horizontal: "right",
                 }}
               >
+                {" "}
+                <MenuItem>
+                  <ListItemIcon>
+                    <PersonIcon fontSize="small" />
+                  </ListItemIcon>
+                  {[
+                    LoginUser.fname,
+                    LoginUser.mi,
+                    LoginUser.lname,
+                    LoginUser.suffix,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                </MenuItem>
                 <MenuItem>
                   <ListItemIcon>
                     <PersonIcon fontSize="small" />
                   </ListItemIcon>
                   Change Profile
                 </MenuItem>
-
                 <MenuItem
                   onClick={() => {
                     setOpenModalChangePassword(true), handleClose();
@@ -319,7 +333,6 @@ export default function MiniDrawer() {
                   </ListItemIcon>
                   Change Password
                 </MenuItem>
-
                 <MenuItem
                   onClick={() => {
                     setOpenModal(true), handleClose();

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   List,
   ListItem,
@@ -11,12 +11,32 @@ import {
   TextField,
 } from "@mui/material";
 import { useGetConversationQuery } from "../redux/slices/chatSlice";
+import { toast } from "sonner";
 
 const ChatUserList = ({ onSelectUser, selectedUser }) => {
   const LoginUser = JSON.parse(localStorage.getItem("user")); // Current user
-  const { data: conversations, isLoading, isError } = useGetConversationQuery();
+  const {
+    data: conversations,
+    refetch,
+    isLoading,
+    isError,
+  } = useGetConversationQuery();
 
-  // Loading state
+  useEffect(() => {
+    console.log("Effect run");
+
+    const channel = window.Echo.private(`chat.${LoginUser.id}`);
+    channel.listen(".conversation.created", (e) => {
+      console.log("New conversation created!", e);
+      toast.success("New Conversation");
+      refetch();
+    });
+
+    return () => {
+      window.Echo.leave(`chat.${LoginUser.id}`);
+    };
+  }, [LoginUser.id]);
+
   if (isLoading) {
     return (
       <Box
@@ -29,16 +49,6 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
         }}
       >
         <CircularProgress color="secondary" size={28} />
-        <Typography sx={{ ml: 2 }}>Loading conversations...</Typography>
-      </Box>
-    );
-  }
-
-  // Error fallback (optional)
-  if (isError || !conversations?.data) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error">Failed to load conversations.</Typography>
       </Box>
     );
   }

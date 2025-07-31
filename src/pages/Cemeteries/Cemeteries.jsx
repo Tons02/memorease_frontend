@@ -151,9 +151,10 @@ const Cemeteries = () => {
     return pointer?.replace(/^\//, ""); // Removes the leading '/'
   }
 
-  const center = cemeteryData?.data?.[0]?.coordinates ?? [
-    14.288794, 120.970325,
-  ];
+  // const center = cemeteryData?.data?.[0]?.coordinates ?? [
+  //   14.288794, 120.970325,
+  // ];
+  const center = [14.288794, 120.970325];
 
   const openForm = (type, data = null, coordinates = []) => {
     console.log(data?.is_featured);

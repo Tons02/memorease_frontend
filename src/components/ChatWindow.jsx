@@ -131,6 +131,7 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
           variant="outlined"
           placeholder="Type a message..."
           value={text}
+          disabled={isSending}
           onChange={(e) => setText(e.target.value)}
           onKeyPress={handleKeyPress}
           multiline
