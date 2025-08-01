@@ -55,7 +55,6 @@ const MessengerPage = () => {
   const { data: users, isLoading } = useGetUserQuery({
     pagination: "none",
   });
-  console.log("user_id", watch("user_id"));
 
   return (
     <>
@@ -106,6 +105,7 @@ const MessengerPage = () => {
               <ChatWindow
                 selectedUser={selectedUser}
                 conversationId={selectedUser.conversationId}
+                conversations={selectedUser.conversationId}
               />
             ) : (
               <Box

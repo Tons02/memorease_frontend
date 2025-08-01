@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import {
+  useGetConversationQuery,
   useGetSpecificMessageQuery,
   useSendMessageMutation,
 } from "../redux/slices/chatSlice";
@@ -25,20 +26,24 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
     data: messagesData,
     isLoading,
     isError,
-    refetch,
+    refetch: messageRefetch,
   } = useGetSpecificMessageQuery({ id: conversationId });
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
+
+  const { data: conversations, refetch: ConversationRefetch } =
+    useGetConversationQuery();
 
   const messages = messagesData?.data?.messages || [];
 
   useEffect(() => {
-    console.log(conversationId);
+    console.log("conversationId", conversationId);
+
     window.Echo.private(`chat.${conversationId}`)
       .listen(".message.sent", (e) => {
         // Note the dot prefix
         console.log("Message received:", e.message);
 
-        refetch();
+        messageRefetch();
       })
       .error((error) => {
         console.error("Channel error:", error);

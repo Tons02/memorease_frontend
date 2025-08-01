@@ -22,20 +22,42 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
     isError,
   } = useGetConversationQuery();
 
+  console.log("LoginUser", LoginUser.id);
   useEffect(() => {
-    console.log("Effect run");
+    if (!LoginUser.id) return;
 
-    const channel = window.Echo.private(`chat.${LoginUser.id}`);
-    channel.listen(".conversation.created", (e) => {
-      console.log("New conversation created!", e);
-      toast.success("New Conversation");
-      refetch();
+    console.log("inside the effect");
+
+    const channel = window.Echo.private(`user.${LoginUser.id}`).listen(
+      ".message.sent",
+      (e) => {
+        console.LoginUser.id("You received a new message:", e.message);
+      }
+    );
+
+    return () => {
+      window.Echo.leave(`private-user.${LoginUser.id}`);
+    };
+  }, [LoginUser.id]);
+
+  useEffect(() => {
+    if (!conversations?.data) return;
+
+    conversations.data.forEach((conv) => {
+      const channel = window.Echo.private(`chat.${conv.id}`);
+      channel.listen(".message.sent", (e) => {
+        console.log("New message on conv", conv.id, e.message);
+        toast.info(`New message from ${e.message.sender_name}`);
+        refetch(); // optionally just update that one convo in state
+      });
     });
 
     return () => {
-      window.Echo.leave(`chat.${LoginUser.id}`);
+      conversations.data.forEach((conv) => {
+        window.Echo.leave(`private-chat.${conv.id}`);
+      });
     };
-  }, [LoginUser.id]);
+  }, [conversations]);
 
   if (isLoading) {
     return (
