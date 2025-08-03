@@ -30,28 +30,12 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
   } = useGetSpecificMessageQuery({ id: conversationId });
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
 
-  const { data: conversations, refetch: ConversationRefetch } =
-    useGetConversationQuery();
-
   const messages = messagesData?.data?.messages || [];
 
   useEffect(() => {
-    console.log("conversationId", conversationId);
-
-    window.Echo.private(`chat.${conversationId}`)
-      .listen(".message.sent", (e) => {
-        // Note the dot prefix
-        console.log("Message received:", e.message);
-
-        messageRefetch();
-      })
-      .error((error) => {
-        console.error("Channel error:", error);
-      });
-
-    return () => {
-      window.Echo.leave(`chat.${conversationId}`);
-    };
+    if (conversationId) {
+      messageRefetch?.();
+    }
   }, [conversationId]);
 
   useEffect(() => {

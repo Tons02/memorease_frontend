@@ -87,7 +87,12 @@ const CustomerMapViewing = () => {
     data: deceasedData,
     refetch: refetchDeceased,
     isLoading: isDeceasedLoading,
-  } = useGetDeceasedQuery({ search: "", pagination: "none", status: "active" });
+  } = useGetDeceasedQuery({
+    search: "",
+    pagination: "none",
+    status: "active",
+    is_private: 0,
+  });
 
   const { data: cemeteryData, isLoading: isGetLoadingCemetery } =
     useGetCemeteryQuery();

@@ -8,150 +8,414 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  useTheme,
+  useMediaQuery,
+  Paper,
+  IconButton,
 } from "@mui/material";
+import { Check, ArrowBack, Chat, Add } from "@mui/icons-material";
+import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { toast } from "sonner";
+
 import ChatUserList from "../../components/ChatUserList";
 import ChatWindow from "../../components/ChatWindow";
 import DialogComponent from "../../components/DialogComponent";
-import { startConversationSchema } from "../../validations/validation";
-import { Controller, useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { Check, Watch } from "@mui/icons-material";
+
 import { useGetUserQuery } from "../../redux/slices/userSlice";
-import { useAddConversationMutation } from "../../redux/slices/chatSlice";
-import { toast } from "sonner";
+import {
+  useAddConversationMutation,
+  useGetConversationQuery,
+  useGetSpecificMessageQuery,
+} from "../../redux/slices/chatSlice";
+
+import { startConversationSchema } from "../../validations/validation";
 
 const MessengerPage = () => {
+  const LoginUser = JSON.parse(localStorage.getItem("user"));
   const [selectedUser, setSelectedUser] = useState(null);
-  const [openNewChat, setOpenNewChat] = useState(null);
+  const [openNewChat, setOpenNewChat] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  // For mobile view switching
+  const [mobileView, setMobileView] = useState("list"); // "list" or "chat"
+
+  // Form setup for new conversation
   const {
     handleSubmit,
-    reset,
     control,
-    setError,
-    watch,
+    reset,
     formState: { errors },
   } = useForm({
-    defaultValues: {
-      user_id: "",
-    },
+    defaultValues: { user_id: "" },
     resolver: yupResolver(startConversationSchema),
   });
 
-  const [startConversation, { isLoading: isstartConversationLoading }] =
+  const [startConversation, { isLoading: isStarting }] =
     useAddConversationMutation();
 
+  // Fetch user list for dropdown
+  const { data: users, isLoading: usersLoading } = useGetUserQuery({
+    pagination: "none",
+  });
+
+  // Chat Data Fetchers
+  const { data: conversationsData, refetch: conversationRefetch } =
+    useGetConversationQuery();
+
+  const { refetch: messageRefetch } = useGetSpecificMessageQuery(
+    { id: selectedUser?.conversationId },
+    { skip: !selectedUser?.conversationId }
+  );
+
+  // Real-time listener for new messages
+  useEffect(() => {
+    if (!LoginUser?.id) return;
+
+    const channel = window.Echo.private(`user.${LoginUser.id}`);
+
+    channel.listen(".message.sent", (e) => {
+      console.log("New message received", e.message);
+      conversationRefetch?.();
+      if (e.message.conversation_id === selectedUser?.conversationId) {
+        messageRefetch?.();
+      }
+    });
+
+    return () => {
+      window.Echo.leave(`user.${LoginUser.id}`);
+    };
+  }, [LoginUser?.id, selectedUser?.conversationId]);
+
+  // Start new conversation
   const handleStartConversation = async (data) => {
     try {
       const response = await startConversation(data).unwrap();
       toast.success(response?.message);
       setOpenNewChat(false);
+      reset();
+      conversationRefetch?.();
     } catch (error) {
       console.log(error?.data?.errors);
-      toast.error(error?.data?.errors[0]?.detail);
+      toast.error(error?.data?.errors?.[0]?.detail || "Something went wrong");
     }
   };
 
-  // Fetch users with RTK Query hook
-  const { data: users, isLoading } = useGetUserQuery({
-    pagination: "none",
-  });
+  // Socket for new conversation
+  useEffect(() => {
+    if (!LoginUser?.id) return;
+    console.log("🟢 New conversation received via socket:", LoginUser.id);
+
+    const channel = window.Echo.private(`chat.${LoginUser.id}`);
+
+    channel.listen(".conversation.created", (e) => {
+      console.log("🟢 New conversation received via socket:", e);
+      conversationRefetch?.();
+      toast.success(`New chat started with ${e.conversation.name}`);
+    });
+
+    return () => {
+      window.Echo.leave(`chat.${LoginUser.id}`);
+    };
+  }, [LoginUser?.id]);
+
+  // Handle user selection
+  const handleSelectUser = (user) => {
+    setSelectedUser(user);
+    if (isMobile) {
+      setMobileView("chat");
+    }
+  };
+
+  // Handle back button on mobile
+  const handleBackToList = () => {
+    if (isMobile) {
+      setMobileView("list");
+      setSelectedUser(null);
+    }
+  };
 
   return (
     <>
       <Box
         sx={{
           width: "100%",
-          height: "80vh", // Adjust if you have a topbar
+          height: "calc(100vh - 100px)", // Adjust based on your header/footer
+          maxHeight: "800px",
           overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <Grid container sx={{ height: "100%" }}>
-          {/* Chat User List */}
-          <Grid
-            item
-            xs={3}
-            sx={{
-              height: "100%",
-              width: "20%",
-              borderRight: "1px solid #ddd",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            {/* ChatUserList content */}
-            <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
-              <ChatUserList
-                onSelectUser={setSelectedUser}
-                selectedUser={selectedUser}
-              />
-            </Box>
-
-            {/* Bottom Button */}
-            <Box sx={{ p: 1 }}>
-              <Button
-                variant="contained"
-                color="secondary"
-                fullWidth
-                onClick={() => setOpenNewChat(true)}
-              >
-                Start New Conversation
-              </Button>
-            </Box>
-          </Grid>
-
-          {/* Chat Panel */}
-          <Grid item xs={9} sx={{ height: "100%", width: "80%" }}>
-            {selectedUser ? (
-              <ChatWindow
-                selectedUser={selectedUser}
-                conversationId={selectedUser.conversationId}
-                conversations={selectedUser.conversationId}
-              />
-            ) : (
+        <Paper
+          elevation={2}
+          sx={{
+            height: "100%",
+            display: "flex",
+            overflow: "hidden",
+          }}
+        >
+          {/* Desktop Layout */}
+          {!isMobile && (
+            <>
+              {/* Sidebar */}
               <Box
                 sx={{
-                  height: "100%",
-                  width: "80%",
+                  width: 350,
+                  minWidth: 300,
+                  maxWidth: 400,
+                  borderRight: 1,
+                  borderColor: "divider",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  flexDirection: "column",
+                  backgroundColor: "background.paper",
                 }}
               >
-                Select a user to start chatting
+                {/* Sidebar Header */}
+                <Box
+                  sx={{
+                    p: 2,
+                    borderBottom: 1,
+                    borderColor: "divider",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexShrink: 0, // Prevent shrinking
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Chat color="secondary" />
+                    <Box sx={{ fontWeight: 600, fontSize: "1.1rem" }}>
+                      Messages
+                    </Box>
+                  </Box>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="secondary"
+                    onClick={() => setOpenNewChat(true)}
+                    sx={{
+                      minWidth: "auto",
+                      px: 2,
+                      color: "primary.light",
+                    }}
+                  >
+                    New
+                  </Button>
+                </Box>
+
+                {/* Chat User List - Scrollable */}
+                <Box
+                  sx={{
+                    flex: 1, // Take remaining space
+                    overflowY: "auto", // Enable scrolling
+                    minHeight: 0, // Critical for flex scrolling
+                  }}
+                >
+                  <ChatUserList
+                    onSelectUser={handleSelectUser}
+                    selectedUser={selectedUser}
+                  />
+                </Box>
               </Box>
-            )}
-          </Grid>
-        </Grid>
+
+              {/* Chat Window */}
+              <Box
+                sx={{
+                  flexGrow: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  backgroundColor: "grey.50",
+                  overflow: "hidden", // Prevent overflow
+                }}
+              >
+                {selectedUser ? (
+                  <ChatWindow
+                    selectedUser={selectedUser}
+                    conversationId={selectedUser.conversationId}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexDirection: "column",
+                      gap: 2,
+                      color: "text.secondary",
+                    }}
+                  >
+                    <Chat sx={{ fontSize: 64, opacity: 0.3 }} />
+                    <Box sx={{ fontSize: "1.2rem", fontWeight: 500 }}>
+                      Select a conversation to start messaging
+                    </Box>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={() => setOpenNewChat(true)}
+                      startIcon={<Chat />}
+                    >
+                      Start New Conversation
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            </>
+          )}
+
+          {/* Mobile Layout */}
+          {isMobile && (
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                height: "100%",
+                overflow: "hidden",
+              }}
+            >
+              {mobileView === "list" && (
+                <>
+                  {/* Mobile Header */}
+                  <Box
+                    sx={{
+                      p: 2,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      backgroundColor: "background.paper",
+                      flexShrink: 0, // Prevent shrinking
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Chat color="secondary" />
+                      <Box sx={{ fontWeight: 600, fontSize: "1.1rem" }}>
+                        Messages
+                      </Box>
+                    </Box>
+                    <IconButton
+                      color="secondary"
+                      onClick={() => setOpenNewChat(true)}
+                      sx={{
+                        backgroundColor: "secondary.main",
+                        color: "white",
+                        "&:hover": {
+                          backgroundColor: "secondary.dark",
+                        },
+                        width: 40,
+                        height: 40,
+                      }}
+                    >
+                      <Add />
+                    </IconButton>
+                  </Box>
+
+                  {/* Mobile Chat List - Scrollable */}
+                  <Box
+                    sx={{
+                      flex: 1, // Take remaining space
+                      overflowY: "auto", // Enable scrolling
+                      minHeight: 0, // Critical for flex scrolling
+                    }}
+                  >
+                    <ChatUserList
+                      onSelectUser={handleSelectUser}
+                      selectedUser={selectedUser}
+                    />
+                  </Box>
+                </>
+              )}
+
+              {mobileView === "chat" && selectedUser && (
+                <>
+                  {/* Mobile Chat Header */}
+                  <Box
+                    sx={{
+                      p: 1,
+                      borderBottom: 1,
+                      borderColor: "divider",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      backgroundColor: "background.paper",
+                      flexShrink: 0, // Prevent shrinking
+                    }}
+                  >
+                    <IconButton onClick={handleBackToList} size="small">
+                      <ArrowBack />
+                    </IconButton>
+                    <Box sx={{ fontWeight: 600 }}>
+                      {selectedUser.name || "Chat"}
+                    </Box>
+                  </Box>
+
+                  {/* Mobile Chat Window - Full height remaining */}
+                  <Box
+                    sx={{
+                      flex: 1, // Take remaining space
+                      display: "flex",
+                      flexDirection: "column",
+                      overflow: "hidden", // Prevent overflow
+                      minHeight: 0, // Critical for flex
+                    }}
+                  >
+                    <ChatWindow
+                      selectedUser={selectedUser}
+                      conversationId={selectedUser.conversationId}
+                    />
+                  </Box>
+                </>
+              )}
+
+              {mobileView === "chat" && !selectedUser && (
+                <Box
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    p: 3,
+                  }}
+                >
+                  <Button variant="outlined" onClick={handleBackToList}>
+                    Back to Messages
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          )}
+        </Paper>
       </Box>
 
+      {/* New Conversation Dialog */}
       <DialogComponent
         open={openNewChat}
-        onClose={() => {
-          setOpenNewChat(false);
-        }}
+        onClose={() => setOpenNewChat(false)}
         onSubmit={handleSubmit(handleStartConversation)}
-        title={"Start Conversation Select User"}
-        icon={null}
-        isLoading={isstartConversationLoading}
+        title={"Start New Conversation"}
+        isLoading={isStarting}
         submitIcon={<Check />}
         submitLabel={"Start"}
         formMethods={{ handleSubmit, reset }}
         isValid={true}
         isDirty={true}
       >
-        <FormControl fullWidth error={!!errors.user_id}>
+        <FormControl fullWidth error={!!errors.user_id} sx={{ mt: 2 }}>
           <InputLabel id="select-user-label">Select User</InputLabel>
           <Controller
             name="user_id"
             control={control}
-            defaultValue=""
             render={({ field }) => (
               <Select
                 {...field}
                 labelId="select-user-label"
                 label="Select User"
               >
-                {isLoading ? (
+                {usersLoading ? (
                   <MenuItem disabled>
                     <CircularProgress
                       color="secondary"
@@ -163,7 +427,8 @@ const MessengerPage = () => {
                 ) : (
                   users?.data?.map((user) => (
                     <MenuItem key={user.id} value={user.id}>
-                      {user.fname} {user.mi} {user.lname} {user.suffix}
+                      {user.fname} {user.mi && `${user.mi}.`} {user.lname}{" "}
+                      {user.suffix}
                     </MenuItem>
                   ))
                 )}
@@ -171,15 +436,16 @@ const MessengerPage = () => {
             )}
           />
           {errors.user_id && (
-            <p
-              style={{
-                color: "#d32f2f",
-                margin: "3px 14px 0",
+            <Box
+              sx={{
+                color: "error.main",
+                mt: 0.5,
                 fontSize: "0.75rem",
+                ml: 1.75,
               }}
             >
               {errors.user_id.message}
-            </p>
+            </Box>
           )}
         </FormControl>
       </DialogComponent>

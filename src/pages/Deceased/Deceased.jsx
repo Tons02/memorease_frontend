@@ -116,6 +116,7 @@ const Deceased = () => {
       gender: "",
       birthday: "",
       death_date: "",
+      is_private: "",
       death_certificate: null,
     },
     resolver: yupResolver(deceasedSchema),
@@ -166,6 +167,11 @@ const Deceased = () => {
         ) : (
           "N/A"
         ),
+    },
+    {
+      field: "visibility",
+      headerName: "Visilibity",
+      align: "center",
     },
     {
       field: "created_at",
@@ -258,6 +264,7 @@ const Deceased = () => {
 
   const handleEditModal = (data) => {
     setIsEdit(true);
+    console.log(data);
     reset({
       id: data?.id,
       lot_id: data?.lot_id,
@@ -267,6 +274,7 @@ const Deceased = () => {
       lname: data?.lname,
       suffix: data?.suffix,
       gender: data?.gender,
+      is_private: data?.is_private,
       birthday: data?.birthday,
       death_date: data?.death_date,
       death_certificate: data?.death_certificate,
@@ -299,6 +307,7 @@ const Deceased = () => {
       formData.append("gender", data.gender);
       formData.append("birthday", data.birthday);
       formData.append("death_date", data.death_date);
+      formData.append("is_private", data.is_private);
 
       // Only append if it's a new File
       if (data.death_certificate instanceof File) {
@@ -323,6 +332,7 @@ const Deceased = () => {
         gender: "",
         birthday: "",
         death_date: "",
+        is_private: "",
         death_certificate: "",
       });
 
@@ -430,6 +440,7 @@ const Deceased = () => {
               gender: "",
               birthday: "",
               death_date: "",
+              is_private: "",
               death_certificate: "",
             });
         }}
@@ -613,6 +624,32 @@ const Deceased = () => {
               </InputAdornment>
             ),
           }}
+        />
+        <Controller
+          name="is_private"
+          control={control}
+          render={({ field: { onChange, value, name } }) => (
+            <FormControl fullWidth>
+              <InputLabel id="visibility-label">Visibility</InputLabel>
+              <Select
+                name={name}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                labelId="visibility-label"
+                id="visibility"
+                label="Visibility"
+                error={!!errors.is_private}
+              >
+                <MenuItem value={0}>Public</MenuItem>
+                <MenuItem value={1}>Private</MenuItem>
+              </Select>
+              {errors.is_private && (
+                <Typography color="error" variant="caption">
+                  {errors.is_private.message}
+                </Typography>
+              )}
+            </FormControl>
+          )}
         />
         <Controller
           name="death_certificate"

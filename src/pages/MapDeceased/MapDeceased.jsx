@@ -53,35 +53,59 @@ const MapDeceased = () => {
   ];
 
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-          setIconState(true);
-        },
-        (error) => {
-          setIconState(false);
-          console.warn("Geolocation failed, using default location.", error);
-          setUserLocation({
-            lat: 14.293145,
-            lng: 120.971924,
-          });
-        },
-        {
+    const getLocationWithFallback = async () => {
+      if (!navigator.geolocation) {
+        console.warn("Geolocation not supported");
+        setUserLocation({ lat: 14.293145, lng: 120.971924 });
+        return;
+      }
+
+      // Try high accuracy first
+      try {
+        await getCurrentPositionPromise({
           enableHighAccuracy: true,
-          timeout: 5000,
+          timeout: 8000,
+          maximumAge: 300000,
+        });
+      } catch (highAccuracyError) {
+        console.warn("High accuracy failed:", highAccuracyError);
+
+        // Fallback to low accuracy
+        try {
+          await getCurrentPositionPromise({
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 600000,
+          });
+        } catch (lowAccuracyError) {
+          console.error("All location attempts failed:", lowAccuracyError);
+          setIconState(false);
+          setUserLocation({ lat: 14.293145, lng: 120.971924 });
         }
-      );
-    } else {
-      setUserLocation({
-        lat: 14.293145,
-        lng: 120.971924,
+      }
+    };
+
+    const getCurrentPositionPromise = (options) => {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            });
+            setIconState(true);
+            resolve(position);
+          },
+          reject,
+          options
+        );
       });
-    }
+    };
+
+    getLocationWithFallback();
   }, []);
+
+  console.log("userLocation", userLocation);
 
   const {
     data: deceasedData,

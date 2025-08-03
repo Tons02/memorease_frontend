@@ -19,7 +19,7 @@ window.Echo = new Echo({
 
   // ✅ For Sanctum
   withCredentials: true,
-  authEndpoint: "http://10.10.12.12:8009/broadcasting/auth",
+  authEndpoint: import.meta.env.VITE_AUTH_ENDPOINT,
   auth: {
     headers: {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
