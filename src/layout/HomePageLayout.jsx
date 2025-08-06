@@ -102,7 +102,7 @@ function HomePageLayOut(props) {
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
       <Typography variant="h6" sx={{ my: 2 }}>
-        MUI
+        PMP
       </Typography>
       <Divider />
       <List>
@@ -131,6 +131,34 @@ function HomePageLayOut(props) {
             </ListItem>
           );
         })}
+
+        {/* ✅ Add avatar menu in drawer for mobile */}
+        {isLoggedIn && (
+          <>
+            {roleName === "admin" && (
+              <ListItem disablePadding>
+                <ListItemButton component={Link} to="/admin">
+                  <ListItemText primary="Admin" />
+                </ListItemButton>
+              </ListItem>
+            )}
+            <ListItem disablePadding>
+              <ListItemButton>
+                <ListItemText primary="Change Profile" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setOpenModalChangePassword(true)}>
+                <ListItemText primary="Change Password" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton onClick={() => setOpenLogoutDialog(true)}>
+                <ListItemText primary="Logout" />
+              </ListItemButton>
+            </ListItem>
+          </>
+        )}
       </List>
     </Box>
   );
@@ -150,7 +178,7 @@ function HomePageLayOut(props) {
             onClick={handleDrawerToggle}
             sx={{ mr: 2, display: { sm: "none" } }}
           >
-            <MenuIcon />
+            <MenuIcon color="secondary" />
           </IconButton>
           <Typography
             variant="h6"

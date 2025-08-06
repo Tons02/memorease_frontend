@@ -4,6 +4,7 @@ import PrivateRoutes from "./PrivateRoutes";
 import PreventLoginRoutes from "./PreventLoginRoutes";
 import Mainlayout from "../../layout/MainLayout";
 import Login from "../../pages/Login";
+import Contact from "../../pages/Contact";
 import NotFound from "../../pages/NotFound";
 import Dashboard from "../../pages/Dashboard";
 import Masterlist from "../../pages/Masterlist";
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
       {
         path: "/customer-reservation",
         element: <CustomerReservation />,
+      },
+      {
+        path: "/contact",
+        element: <Contact />,
       },
       {
         path: "/login",
