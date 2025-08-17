@@ -20,6 +20,7 @@ import { toast } from "sonner";
 const ChatUserList = ({ onSelectUser, selectedUser }) => {
   const LoginUser = JSON.parse(localStorage.getItem("user")); // Current user
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentUser, setCurrentUser] = useState("");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -30,6 +31,13 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
     isLoading,
     isError,
   } = useGetConversationQuery();
+
+  useEffect(() => {
+    if (LoginUser?.id && currentUser !== LoginUser.id) {
+      setCurrentUser(LoginUser.id);
+      refetch();
+    }
+  }, [LoginUser?.id, currentUser, refetch]);
 
   const formatTime = (timestamp) => {
     if (!timestamp) return "";

@@ -58,6 +58,7 @@ const MessengerPage = () => {
   // Fetch user list for dropdown
   const { data: users, isLoading: usersLoading } = useGetUserQuery({
     pagination: "none",
+    role_type: LoginUser?.role_type === "admin" ? "" : "admin",
   });
 
   // Chat Data Fetchers
@@ -428,7 +429,7 @@ const MessengerPage = () => {
                   users?.data?.map((user) => (
                     <MenuItem key={user.id} value={user.id}>
                       {user.fname} {user.mi && `${user.mi}.`} {user.lname}{" "}
-                      {user.suffix}
+                      {user.suffix} - {user.role_type}
                     </MenuItem>
                   ))
                 )}

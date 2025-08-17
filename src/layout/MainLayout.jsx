@@ -252,7 +252,6 @@ export default function MiniDrawer() {
 
   return (
     <>
-      <ChatPopup receiverId={2} conversationId={1} token={1} currentUser={1} />
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
         <AppBar position="fixed" open={open}>
@@ -691,122 +690,63 @@ export default function MiniDrawer() {
               )}
             </Collapse>
 
-            {/* user management */}
-            {accessPermissions.includes("admin") && (
-              <ListItem disablePadding sx={{ display: "block" }}>
-                <ListItemButton
+            <ListItem disablePadding sx={{ display: "block" }}>
+              <ListItemButton
+                sx={[
+                  {
+                    minHeight: 48,
+                    px: 2.5,
+                  },
+                  open
+                    ? {
+                        justifyContent: "initial",
+                      }
+                    : {
+                        justifyContent: "center",
+                      },
+                ]}
+                onClick={() =>
+                  handleNavigation("/admin/user-management/user-accounts")
+                }
+              >
+                <ListItemIcon
                   sx={[
                     {
-                      minHeight: 48,
-                      px: 2.5,
+                      minWidth: 0,
+                      justifyContent: "center",
                     },
                     open
                       ? {
-                          justifyContent: "initial",
+                          mr: 2,
                         }
                       : {
-                          justifyContent: "center",
+                          mr: "auto",
                         },
                   ]}
-                  onClick={() => {
-                    handleNavigation("/admin/user-management");
-                    toggleExpandUserManagement();
-                  }}
                 >
-                  <ListItemIcon
-                    sx={[
-                      {
-                        minWidth: 0,
-                        justifyContent: "center",
-                      },
-                      open
-                        ? {
-                            mr: 2,
-                          }
-                        : {
-                            mr: "auto",
-                          },
-                    ]}
-                  >
-                    <AssignmentIndIcon
-                      sx={{
-                        maxWidth: 275,
-                        cursor: "pointer",
-                        color: theme.palette.secondary.main,
-                      }}
-                    />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="User Management"
-                    sx={[
-                      open
-                        ? {
-                            opacity: 1,
-                          }
-                        : {
-                            opacity: 0,
-                          },
-                    ]}
-                  />
-                  {open && (
-                    <div>
-                      {isExpandedUserManagement ? (
-                        <ExpandLess />
-                      ) : (
-                        <ExpandMore />
-                      )}
-                    </div>
-                  )}
-                </ListItemButton>
-              </ListItem>
-            )}
-            {/* Child Items */}
-            <Collapse
-              in={isExpandedUserManagement}
-              timeout="auto"
-              unmountOnExit
-            >
-              {accessPermissions.includes("admin") && (
-                <ListItemButton
-                  sx={{
-                    pl: open ? 5 : 2.5,
-                  }}
-                  onClick={() =>
-                    handleNavigation("/admin/user-management/user-accounts")
-                  }
-                >
-                  <ListItemIcon
-                    sx={[
-                      {
-                        minWidth: 0,
-                        justifyContent: "center",
-                      },
-                      open
-                        ? {
-                            mr: 2,
-                          }
-                        : {
-                            mr: "auto",
-                          },
-                    ]}
-                  >
-                    <GroupIcon
-                      sx={{
-                        maxWidth: 275,
-                        cursor: "pointer",
-                        color: theme.palette.secondary.main,
-                      }}
-                    />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="User Accounts"
+                  <GroupIcon
                     sx={{
-                      opacity: open ? 1 : 0,
+                      maxWidth: 275,
+                      cursor: "pointer",
+                      color: theme.palette.secondary.main,
                     }}
                   />
-                </ListItemButton>
-              )}{" "}
-            </Collapse>
+                </ListItemIcon>
+
+                <ListItemText
+                  primary="User Management"
+                  sx={[
+                    open
+                      ? {
+                          opacity: 1,
+                        }
+                      : {
+                          opacity: 0,
+                        },
+                  ]}
+                />
+              </ListItemButton>
+            </ListItem>
             <ListItem disablePadding sx={{ display: "block" }}>
               <ListItemButton
                 sx={[

@@ -3,5 +3,5 @@ main.MuiBox-root.css-zxdg2z {
 }
 
 header.MuiPaper-root.MuiPaper-elevation.MuiPaper-elevation4 {
-  z-index: 0;
+  z-index: 1000;
 }

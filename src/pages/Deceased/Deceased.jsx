@@ -146,7 +146,7 @@ const Deceased = () => {
     },
     { field: "full_name", headerName: "Fullname", align: "center" },
     { field: "gender", headerName: "Gender", align: "center" },
-    { field: "birthday", headerName: "Gender", align: "center" },
+    { field: "birthday", headerName: "Birthday", align: "center" },
     { field: "death_date", headerName: "Date Death", align: "center" },
     {
       field: "death_certificate",
@@ -181,7 +181,7 @@ const Deceased = () => {
     },
     {
       field: "Action",
-      headerName: "Action",
+      headerName: "Actions",
       align: "center",
       renderCell: ({ row, index }) => (
         <>
@@ -395,18 +395,25 @@ const Deceased = () => {
         justifyContent="space-between"
         mb={2}
       >
-        <Typography variant="h4" sx={{ mr: 2 }}>
-          Deceased
+        <Typography variant="h4" sx={{ mr: 2, fontWeight: 600 }}>
+          Deceased Management
         </Typography>
-
         <Button
-          size="small"
+          size="medium"
           variant="contained"
-          color="success"
           onClick={() => setopenModal(true)}
-          sx={{ mt: 1 }}
+          color="success"
+          startIcon={<Add />}
+          sx={{
+            mt: 1,
+            borderRadius: "10px",
+            px: 3,
+            py: 1,
+            fontWeight: 600,
+            textTransform: "none",
+          }}
         >
-          Add
+          Add User
         </Button>
       </Box>
       <TableComponent

@@ -316,7 +316,7 @@ const AdminReservation = () => {
         justifyContent="space-between"
         mb={2}
       >
-        <Typography variant="h4" sx={{ mr: 2 }}>
+        <Typography variant="h4" sx={{ mr: 2, fontWeight: 600 }}>
           Customer Reservation
         </Typography>
       </Box>
