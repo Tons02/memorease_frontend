@@ -23,6 +23,7 @@ import CustomerMapViewing from "../../pages/MapDeceasedViewing/CustomerMapVIewin
 import CustomerReservation from "../../pages/CustomerReservation/CustomerReservation";
 import AdminReservation from "../../pages/AdminReservation/AdminReservation";
 import MessengerPage from "../../pages/ChatMessage/MessengerPage";
+import VerificationPage from "../../pages/VerificationPage";
 
 const router = createBrowserRouter([
   {
@@ -56,6 +57,10 @@ const router = createBrowserRouter([
       {
         path: "/login",
         element: <Login />,
+      },
+      {
+        path: "/verification",
+        element: <VerificationPage />,
       },
       {
         path: "/verify/:id/:hash",

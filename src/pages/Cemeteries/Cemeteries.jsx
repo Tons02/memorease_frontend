@@ -854,7 +854,6 @@ const Cemeteries = () => {
                               </Typography>
                               <Typography
                                 variant="h6"
-                                color="secondary.main"
                                 fontWeight="bold"
                                 sx={{
                                   fontSize: { xs: "1rem", sm: "1.25rem" },
@@ -873,7 +872,6 @@ const Cemeteries = () => {
                             >
                               <Typography
                                 variant="body2"
-                                color="text.secondary"
                                 sx={{
                                   fontSize: { xs: "0.75rem", sm: "0.875rem" },
                                 }}
@@ -882,7 +880,6 @@ const Cemeteries = () => {
                               </Typography>
                               <Typography
                                 variant="body1"
-                                color="success.main"
                                 fontWeight="medium"
                                 sx={{
                                   fontSize: { xs: "0.875rem", sm: "1rem" },
@@ -974,11 +971,7 @@ const Cemeteries = () => {
         maxWidth="md" // Increased from default to accommodate better layout
       >
         {/* Image Upload Section */}
-        <Typography
-          variant="h6"
-          gutterBottom
-          sx={{ mt: 1, mb: 2, color: "secondary.main" }}
-        >
+        <Typography variant="h6" gutterBottom>
           📷 Lot Images
         </Typography>
         <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -1063,11 +1056,7 @@ const Cemeteries = () => {
         <Divider sx={{ my: 3 }} />
 
         {/* Basic Information Section */}
-        <Typography
-          variant="h6"
-          gutterBottom
-          sx={{ mb: 2, color: "secondary.main" }}
-        >
+        <Typography variant="h6" gutterBottom>
           📋 Basic Information
         </Typography>
         <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -1115,11 +1104,7 @@ const Cemeteries = () => {
         <Divider sx={{ my: 3 }} />
 
         {/* Pricing Section */}
-        <Typography
-          variant="h6"
-          gutterBottom
-          sx={{ mb: 2, color: "secondary.main" }}
-        >
+        <Typography variant="h6" gutterBottom>
           💰 Pricing Details
         </Typography>
         <Grid container spacing={2} sx={{ mb: 3 }}>

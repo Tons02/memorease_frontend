@@ -95,6 +95,7 @@ function Registration() {
 
       localStorage.setItem("user", JSON.stringify(response?.data));
       localStorage.setItem("token", response?.token);
+      localStorage.setItem("email_verified", null);
 
       setTimeout(() => {
         navigate("/");

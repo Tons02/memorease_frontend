@@ -54,6 +54,63 @@ const Deceased = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [isArchived, setIsArchived] = useState(false);
   const [selectedID, setSelectedID] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState({});
+
+  // Helper functions (add these in your component)
+  const nextImage = (lotId) => {
+    setCurrentImageIndex((prev) => ({
+      ...prev,
+      [lotId]:
+        ((prev[lotId] || 0) + 1) %
+        getDisplayImages(lotData?.data?.find((lot) => lot.id === lotId)).length,
+    }));
+  };
+
+  const prevImage = (lotId) => {
+    const images = getDisplayImages(
+      lotData?.data?.find((lot) => lot.id === lotId)
+    );
+    setCurrentImageIndex((prev) => ({
+      ...prev,
+      [lotId]: ((prev[lotId] || 0) - 1 + images.length) % images.length,
+    }));
+  };
+
+  const getDisplayImages = (lot) => {
+    const images = [
+      lot.lot_image,
+      lot.second_lot_image,
+      lot.third_lot_image,
+      lot.fourth_lot_image,
+    ].filter((img) => img && img !== null);
+    return images.length > 0 ? images : [defaultImage];
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "available":
+        return "success";
+      case "reserved":
+        return "warning";
+      case "sold":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "available":
+        return "🟢";
+      case "reserved":
+        return "🟡";
+      case "sold":
+        return "🔴";
+      default:
+        return "⚪";
+    }
+  };
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -413,7 +470,7 @@ const Deceased = () => {
             textTransform: "none",
           }}
         >
-          Add User
+          Add Deceased
         </Button>
       </Box>
       <TableComponent

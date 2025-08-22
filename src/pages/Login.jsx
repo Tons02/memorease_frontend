@@ -52,6 +52,11 @@ const LoginForm = () => {
       localStorage.setItem("user", JSON.stringify(response?.data));
       localStorage.setItem("token", response?.token);
 
+      localStorage.setItem(
+        "email_verified",
+        response?.data?.email_verified_at ?? null
+      );
+
       if (response?.data?.role_type == "customer") {
         setTimeout(() => {
           navigate("/");

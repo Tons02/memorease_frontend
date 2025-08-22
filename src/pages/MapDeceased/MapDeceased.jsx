@@ -79,11 +79,22 @@ const MapDeceased = () => {
 
   const calculateAge = (birthday, deathDate) => {
     if (!birthday || !deathDate) return null;
+
     const birth = new Date(birthday);
     const death = new Date(deathDate);
-    const ageInMs = death - birth;
-    const years = Math.floor(ageInMs / (1000 * 60 * 60 * 24 * 365.25));
-    return years;
+
+    if (death < birth) return null; // invalid case
+
+    const diffMs = death - birth;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    const years = Math.floor(diffDays / 365.25);
+    if (years >= 1) return `${years} year${years > 1 ? "s" : ""}`;
+
+    const months = Math.floor(diffDays / 30.44); // avg month length
+    if (months >= 1) return `${months} month${months > 1 ? "s" : ""}`;
+
+    return `${diffDays} day${diffDays > 1 ? "s" : ""}`;
   };
 
   useEffect(() => {
@@ -742,7 +753,6 @@ const MapDeceased = () => {
                                           currentDeceased.birthday,
                                           currentDeceased.death_date
                                         )}{" "}
-                                        years
                                       </Typography>
                                     </Box>
                                   )}

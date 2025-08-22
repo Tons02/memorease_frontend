@@ -227,6 +227,7 @@ export default function MiniDrawer() {
     // Remove token and user from localStorage
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("email_verified");
 
     // Redirect to the homepage or login page after logout
     navigate("/");

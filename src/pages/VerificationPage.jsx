@@ -6,10 +6,11 @@ import {
 } from "../redux/slices/apiSlice";
 import { Button, CircularProgress, Box, Typography } from "@mui/material";
 
-const VerifyEmail = () => {
+const VerificationPage = () => {
   const { id, hash } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const emailVerified = localStorage.getItem("email_verified");
 
   const expires = searchParams.get("expires");
   const signature = searchParams.get("signature");
@@ -28,7 +29,6 @@ const VerifyEmail = () => {
 
   useEffect(() => {
     if (isSuccess) {
-      localStorage.setItem("email_verified", "may value na to hindi na null");
       setTimeout(() => {
         navigate("/");
       }, 2000);
@@ -47,18 +47,21 @@ const VerifyEmail = () => {
   if (error) {
     return (
       <Box textAlign="center" mt={10}>
-        <Typography color="error">
-          Verification failed. Your link may be expired or invalid.
-        </Typography>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => resendVerification()}
-          sx={{ mt: 2 }}
-          disabled={isResending}
-        >
-          {isResending ? "Resending..." : "Resend Verification Email"}
-        </Button>
+        {emailVerified === "null" || !emailVerified ? (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => resendVerification()}
+            sx={{ mt: 2 }}
+            disabled={isResending}
+          >
+            {isResending ? "Resending..." : "Resend Verification Email"}
+          </Button>
+        ) : (
+          <Button variant="contained" color="success" sx={{ mt: 2 }} disabled>
+            Already Verified
+          </Button>
+        )}
         {resendSuccess && (
           <Typography color="success.main" mt={2}>
             A new verification email has been sent!
@@ -76,4 +79,4 @@ const VerifyEmail = () => {
   );
 };
 
-export default VerifyEmail;
+export default VerificationPage;

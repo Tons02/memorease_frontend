@@ -33,7 +33,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { useLogoutMutation } from "../redux/slices/apiSlice";
 import pmpd_logo from "../assets/pmpd_logo.png";
-import { VerifiedUser } from "@mui/icons-material";
+import { GppMaybe, VerifiedUser } from "@mui/icons-material";
 
 const drawerWidth = 240;
 
@@ -43,6 +43,7 @@ function HomePageLayOut(props) {
   const [openLogoutDialog, setOpenLogoutDialog] = React.useState(false);
   const [anchorElMaps, setAnchorElMaps] = React.useState(null);
   const [anchorElAvatar, setAnchorElAvatar] = React.useState(null);
+  const emailVerified = localStorage.getItem("email_verified");
   const [openModalChangePassword, setOpenModalChangePassword] =
     React.useState(false);
   const [openModal, setOpenModal] = React.useState(false);
@@ -60,6 +61,7 @@ function HomePageLayOut(props) {
     }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("email_verified");
     setOpenLogoutDialog(false);
     navigate("/login");
   };
@@ -84,6 +86,7 @@ function HomePageLayOut(props) {
 
   try {
     const userData = localStorage.getItem("user");
+
     storedData = userData ? JSON.parse(userData) : null;
     roleName = storedData?.role_type || null;
   } catch (error) {
@@ -277,6 +280,39 @@ function HomePageLayOut(props) {
                       Admin
                     </MenuItem>
                   )}
+
+                  {roleName !== "admin" && (
+                    <>
+                      {emailVerified !== null &&
+                        (emailVerified ? (
+                          <MenuItem
+                            onClick={handleAvatarClose}
+                            component={Link}
+                          >
+                            <ListItem disablePadding>
+                              <ListItemIcon>
+                                <VerifiedUser fontSize="small" />
+                              </ListItemIcon>
+                              Verified
+                            </ListItem>
+                          </MenuItem>
+                        ) : (
+                          <MenuItem
+                            onClick={handleAvatarClose}
+                            component={Link}
+                            to="/verification"
+                          >
+                            <ListItem disablePadding>
+                              <ListItemIcon>
+                                <GppMaybe fontSize="small" />
+                              </ListItemIcon>
+                              Not Verified
+                            </ListItem>
+                          </MenuItem>
+                        ))}
+                    </>
+                  )}
+
                   <MenuItem onClick={handleAvatarClose}>
                     <ListItemIcon>
                       <PersonIcon fontSize="small" />
