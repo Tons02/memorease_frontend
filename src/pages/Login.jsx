@@ -54,7 +54,7 @@ const LoginForm = () => {
 
       localStorage.setItem(
         "email_verified",
-        response?.data?.email_verified_at ?? null
+        response?.data?.email_verified_at ?? ""
       );
 
       if (response?.data?.role_type == "customer") {

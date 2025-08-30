@@ -21,6 +21,9 @@ import {
   DialogContent,
   Dialog,
   DialogTitle,
+  Checkbox,
+  FormControlLabel,
+  Link,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { reservationSchema } from "../../validations/validation";
@@ -32,6 +35,7 @@ import { useGetCemeteryQuery } from "../../redux/slices/cemeterySlice";
 import { useGetLotQuery } from "../../redux/slices/apiLot";
 import DialogComponent from "../../components/DialogComponent";
 import { useAddReservationMutation } from "../../redux/slices/reservationSlice";
+import { Link as RouterLink } from "react-router-dom";
 import {
   Add,
   Check,
@@ -260,6 +264,7 @@ const Cemeteries = () => {
     return null;
   };
 
+  const [isCheckTerm, setIsCheckTerm] = useState(false);
   return (
     <>
       <Box sx={{ flexGrow: 1, p: 3 }}>
@@ -729,7 +734,8 @@ const Cemeteries = () => {
         open={openDialog}
         onClose={() => {
           setOpenDialog(false);
-          setDialogImageIndex(0); // Reset image index when closing
+          setDialogImageIndex(0);
+          setIsCheckTerm(false); // Reset image index when closing
         }}
         onSubmit={handleSubmit(handleReservation)}
         title={"Reserve Lot"}
@@ -740,6 +746,7 @@ const Cemeteries = () => {
         formMethods={{ handleSubmit, reset }}
         isValid={true}
         isDirty={true}
+        isCheckTerm={isCheckTerm}
         isArchived={true}
       >
         <TextField
@@ -750,7 +757,6 @@ const Cemeteries = () => {
           value={selectedLot?.id}
           sx={{ display: "none" }}
         />
-
         {/* Enhanced Lot Image Slider Section */}
         <Box
           display="flex"
@@ -887,7 +893,6 @@ const Cemeteries = () => {
               })()}
           </Box>
         </Box>
-
         <TextField
           label="Lot Number"
           fullWidth
@@ -924,7 +929,6 @@ const Cemeteries = () => {
           value={selectedLot?.downpayment_price}
           {...register("total_downpayment_price")}
         />
-
         {/* Enhanced GCash Section */}
         <Box
           display="flex"
@@ -994,9 +998,7 @@ const Cemeteries = () => {
             Click image to view in full size and download
           </Typography>
         </Box>
-
         <Divider />
-
         <Controller
           name="proof_of_payment"
           control={control}
@@ -1013,6 +1015,29 @@ const Cemeteries = () => {
               helperText={errors.proof_of_payment?.message}
             />
           )}
+        />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={isCheckTerm}
+              onChange={(e) => setIsCheckTerm(e.target.checked)}
+              color="seconday"
+            />
+          }
+          label={
+            <Typography variant="body2">
+              By checking the checkbox you will agree to the{" "}
+              <Link
+                component={RouterLink}
+                to="/terms"
+                underline="hover"
+                color="secondary"
+              >
+                Terms and Agreement
+              </Link>{" "}
+              of Providence Memorial Park
+            </Typography>
+          }
         />
       </DialogComponent>
       {/* GCash Image Modal */}{" "}

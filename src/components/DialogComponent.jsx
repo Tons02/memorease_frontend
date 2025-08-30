@@ -27,6 +27,7 @@ const DialogComponent = ({
   formMethods = {},
   isValid = true,
   isDirty = true,
+  isCheckTerm = true,
   isArchived,
 }) => {
   const { handleSubmit, reset } = formMethods;
@@ -80,7 +81,11 @@ const DialogComponent = ({
             variant="contained"
             color="success"
             fullWidth
-            disabled={isLoading || (!isArchived && (!isValid || !isDirty))}
+            disabled={
+              isLoading ||
+              (!isArchived && (!isValid || !isDirty)) ||
+              !isCheckTerm
+            }
             startIcon={!isLoading && submitIcon}
             sx={{ py: 1.5 }}
           >

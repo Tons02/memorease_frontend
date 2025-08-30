@@ -63,6 +63,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { changePasswordSchema } from "../validations/validation";
 import DialogComponent from "../components/DialogComponent";
 import ChatPopup from "../pages/ChatMessage/ChatPopup";
+import GavelIcon from "@mui/icons-material/Gavel";
 
 const drawerWidth = 240;
 
@@ -683,6 +684,44 @@ export default function MiniDrawer() {
                   </ListItemIcon>
                   <ListItemText
                     primary="Reservation"
+                    sx={{
+                      opacity: open ? 1 : 0,
+                    }}
+                  />
+                </ListItemButton>
+              )}
+              {accessPermissions.includes("admin") && (
+                <ListItemButton
+                  sx={{
+                    pl: open ? 5 : 2.5,
+                  }}
+                  onClick={() => handleNavigation("/admin/masterlist/terms")}
+                >
+                  <ListItemIcon
+                    sx={[
+                      {
+                        minWidth: 0,
+                        justifyContent: "center",
+                      },
+                      open
+                        ? {
+                            mr: 2,
+                          }
+                        : {
+                            mr: "auto",
+                          },
+                    ]}
+                  >
+                    <GavelIcon
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Terms"
                     sx={{
                       opacity: open ? 1 : 0,
                     }}

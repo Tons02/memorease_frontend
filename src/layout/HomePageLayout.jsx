@@ -22,18 +22,28 @@ import {
   DialogContent,
   Avatar,
   ListItemIcon,
+  TextField,
 } from "@mui/material";
 
 import MenuIcon from "@mui/icons-material/Menu";
+import LockResetIcon from "@mui/icons-material/LockReset";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import LockIcon from "@mui/icons-material/Lock";
 
 import { Outlet, Link, useNavigate } from "react-router-dom";
-import { useLogoutMutation } from "../redux/slices/apiSlice";
+import {
+  useChangePasswordMutation,
+  useLogoutMutation,
+} from "../redux/slices/apiSlice";
 import pmpd_logo from "../assets/pmpd_logo.png";
 import { GppMaybe, VerifiedUser } from "@mui/icons-material";
+import DialogComponent from "../components/DialogComponent";
+import { changePasswordSchema } from "../validations/validation";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { toast } from "sonner";
 
 const drawerWidth = 240;
 
@@ -47,11 +57,48 @@ function HomePageLayOut(props) {
   const [openModalChangePassword, setOpenModalChangePassword] =
     React.useState(false);
   const [openModal, setOpenModal] = React.useState(false);
+  const {
+    register,
+    reset,
+    handleSubmit,
+    inputError,
+    setError,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      old_password: "",
+      new_password: "",
+      new_password_confirmation: "",
+    },
+    resolver: yupResolver(changePasswordSchema),
+  });
 
   const navigate = useNavigate();
   const [logout] = useLogoutMutation();
 
   const handleDrawerToggle = () => setMobileOpen((prev) => !prev);
+
+  function cleanPointer(pointer) {
+    return pointer?.replace(/^\//, ""); // Removes the leading '/'
+  }
+
+  const handleChangePassword = async (data) => {
+    try {
+      const response = await changePassword({
+        ...data,
+      }).unwrap();
+      setOpenModalChangePassword(false);
+      reset();
+      toast.success("Password Successfully Change");
+    } catch (error) {
+      error?.data?.errors.map((inputError, index) =>
+        setError(cleanPointer(inputError?.source?.pointer), {
+          type: "message",
+          message: inputError?.detail,
+        })
+      );
+    }
+  };
 
   const handleLogoutConfirm = async () => {
     try {
@@ -65,6 +112,8 @@ function HomePageLayOut(props) {
     setOpenLogoutDialog(false);
     navigate("/login");
   };
+
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
 
   const handleMapsClick = (event) => {
     setAnchorElMaps(event.currentTarget);
@@ -373,6 +422,47 @@ function HomePageLayOut(props) {
         <Toolbar />
         <Outlet />
       </Box>
+
+      <DialogComponent
+        open={openModalChangePassword}
+        onClose={() => setOpenModalChangePassword(false)}
+        onSubmit={handleChangePassword}
+        title="Change Password"
+        icon={<LockResetIcon color="secondary" />}
+        isLoading={isLoading}
+        submitIcon={<LogoutIcon />}
+        submitLabel="Confirm"
+        formMethods={{ handleSubmit, reset }}
+      >
+        <Divider />
+        <TextField
+          {...register("old_password")}
+          label="Old Password"
+          margin="dense"
+          type="password"
+          fullWidth
+          error={!!errors.old_password}
+          helperText={errors.old_password?.message}
+        />
+        <TextField
+          {...register("new_password")}
+          label="New Password"
+          type="password"
+          margin="dense"
+          fullWidth
+          error={!!errors.new_password}
+          helperText={errors.new_password?.message}
+        />
+        <TextField
+          {...register("new_password_confirmation")}
+          label="Confirm New Password"
+          margin="dense"
+          type="password"
+          fullWidth
+          error={!!errors.new_password_confirmation}
+          helperText={errors.new_password_confirmation?.message}
+        />
+      </DialogComponent>
 
       {/* Logout Confirmation Dialog */}
       <Dialog

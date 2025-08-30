@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import TableComponent from "../../components/TableComponent";
+import ImageDialog from "../../components/ImageDialog";
 import defaultImage from "../../assets/default-image.png";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -74,6 +75,19 @@ const CustomerReservation = () => {
   };
   const handleCloseDropDown = () => {
     setAnchorEl(null);
+  };
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const handleImageClick = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setSelectedImage(null);
   };
 
   let storedData = null;
@@ -163,21 +177,39 @@ const CustomerReservation = () => {
       field: "proof_of_payment",
       headerName: "Proof of payment",
       align: "center",
-      valueGetter: (row) =>
-        row.proof_of_payment ? (
-          <img
-            src={row.proof_of_payment}
-            alt="Lot"
-            style={{
-              width: 60,
-              height: 60,
-              objectFit: "cover",
-              borderRadius: 8,
-            }}
-          />
-        ) : (
-          "N/A"
-        ),
+      width: 150,
+      renderCell: (params) => {
+        if (params.row.proof_of_payment) {
+          return (
+            <div
+              onClick={() => handleImageClick(params.row.proof_of_payment)}
+              style={{
+                cursor: "pointer",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100%",
+                transition: "opacity 0.2s",
+              }}
+              onMouseEnter={(e) => (e.target.style.opacity = "0.8")}
+              onMouseLeave={(e) => (e.target.style.opacity = "1")}
+            >
+              <img
+                src={params.row.proof_of_payment}
+                alt="Proof of Payment"
+                style={{
+                  width: 60,
+                  height: 60,
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  border: "2px solid transparent",
+                }}
+              />
+            </div>
+          );
+        }
+        return "N/A";
+      },
     },
     {
       field: "reserved_at",
@@ -295,6 +327,13 @@ const CustomerReservation = () => {
           rowsPerPage={rowsPerPage}
           handleChangePage={handleChangePage}
           handleChangeRowsPerPage={handleChangeRowsPerPage}
+        />
+        {/* for the image popup proof of payment  */}
+        <ImageDialog
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          imageUrl={selectedImage}
+          title="Proof of Payment"
         />
         {/* dialog for creating deceased */}
         <DialogComponent

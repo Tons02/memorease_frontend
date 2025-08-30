@@ -6,6 +6,7 @@ import ApartmentIcon from "@mui/icons-material/Apartment";
 import PersonOffIcon from "@mui/icons-material/PersonOff";
 import { Dashboard, EventAvailable } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
+import GavelIcon from "@mui/icons-material/Gavel";
 
 const Masterlist = () => {
   const storedData = JSON.parse(localStorage.getItem("user"));
@@ -72,6 +73,14 @@ const Masterlist = () => {
             icon={<EventAvailable />}
             title="Reservation"
             subtitle="Manage cemetery reservation records and information "
+          />
+        )}
+        {accessPermissions.includes("admin") && (
+          <Card
+            destination="terms"
+            icon={<GavelIcon />}
+            title="Terms and agreement"
+            subtitle="Manage cemetery terms and agreement information "
           />
         )}
       </Box>

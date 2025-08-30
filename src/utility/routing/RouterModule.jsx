@@ -24,6 +24,8 @@ import CustomerReservation from "../../pages/CustomerReservation/CustomerReserva
 import AdminReservation from "../../pages/AdminReservation/AdminReservation";
 import MessengerPage from "../../pages/ChatMessage/MessengerPage";
 import VerificationPage from "../../pages/VerificationPage";
+import TermsAndAgreement from "../../pages/TermsAndAgreement/TermsAndAgreement";
+import TermsAndAgreementCustomer from "../../pages/TermsAndAgreementCustomer";
 
 const router = createBrowserRouter([
   {
@@ -61,6 +63,10 @@ const router = createBrowserRouter([
       {
         path: "/verification",
         element: <VerificationPage />,
+      },
+      {
+        path: "/terms",
+        element: <TermsAndAgreementCustomer />,
       },
       {
         path: "/verify/:id/:hash",
@@ -119,6 +125,15 @@ const router = createBrowserRouter([
         element: (
           <AccessPermissionContext permission="admin" context="routing">
             <AdminReservation />
+          </AccessPermissionContext>
+        ),
+      },
+      {
+        path: "masterlist/terms",
+        index: true,
+        element: (
+          <AccessPermissionContext permission="admin" context="routing">
+            <TermsAndAgreement />
           </AccessPermissionContext>
         ),
       },
