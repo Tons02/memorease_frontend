@@ -318,12 +318,12 @@ export default function MiniDrawer() {
                     .filter(Boolean)
                     .join(" ")}
                 </MenuItem>
-                <MenuItem>
+                {/* <MenuItem>
                   <ListItemIcon>
                     <PersonIcon fontSize="small" />
                   </ListItemIcon>
                   Change Profile
-                </MenuItem>
+                </MenuItem> */}
                 <MenuItem
                   onClick={() => {
                     setOpenModalChangePassword(true), handleClose();

@@ -30,6 +30,15 @@ export const apiReservation = apiSlice
         method: "GET",
         providesTags: ["Reservation"],
       }),
+      getReservationExport: builder.query({
+        query: (params) => ({
+          url: "/reservation-exports",
+          params,
+          responseHandler: (response) => response.blob(),
+        }),
+        method: "GET",
+        providesTags: ["Reservation"],
+      }),
       addReservation: builder.mutation({
         query: (body) => ({
           url: `/reservation`,
@@ -83,6 +92,7 @@ export const {
   useGetReservationQuery,
   useGetReservationCountsQuery,
   useGetReservationSalesQuery,
+  useLazyGetReservationExportQuery,
   useAddReservationMutation,
   useApproveReservationMutation,
   useCancelReservationMutation,

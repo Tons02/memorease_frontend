@@ -194,11 +194,11 @@ function HomePageLayOut(props) {
                 </ListItemButton>
               </ListItem>
             )}
-            <ListItem disablePadding>
+            {/* <ListItem disablePadding>
               <ListItemButton>
                 <ListItemText primary="Change Profile" />
               </ListItemButton>
-            </ListItem>
+            </ListItem> */}
             <ListItem disablePadding>
               <ListItemButton onClick={() => setOpenModalChangePassword(true)}>
                 <ListItemText primary="Change Password" />
@@ -362,12 +362,12 @@ function HomePageLayOut(props) {
                     </>
                   )}
 
-                  <MenuItem onClick={handleAvatarClose}>
+                  {/* <MenuItem onClick={handleAvatarClose}>
                     <ListItemIcon>
                       <PersonIcon fontSize="small" />
                     </ListItemIcon>
                     Change Profile
-                  </MenuItem>
+                  </MenuItem> */}
                   <MenuItem
                     onClick={() => {
                       setOpenModalChangePassword(true);

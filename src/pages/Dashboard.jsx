@@ -55,13 +55,24 @@ const Dashboard = () => {
   } = useGetReservationCountsQuery({ status: "canceled" });
 
   // Query for chart
+  const today = new Date();
+
+  // Get the first day of the current month
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  // Get the last day of the current month
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  // Format dates as YYYY-MM-DD
+  const formatDate = (date) => date.toISOString().split("T")[0];
+
   const {
     data: salesData,
     isLoading: salesLoading,
     refetch: refetchSales,
   } = useGetReservationSalesQuery({
-    start_date: "2025-08-01",
-    end_date: "2025-08-31",
+    start_date: formatDate(startOfMonth),
+    end_date: formatDate(endOfMonth),
   });
 
   // WebSocket integration

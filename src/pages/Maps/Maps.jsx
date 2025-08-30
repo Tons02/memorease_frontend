@@ -275,7 +275,12 @@ const Cemeteries = () => {
         </Box>
 
         <div style={{ height: "70vh", width: "100%" }}>
-          <MapContainer center={center} zoom={50} style={{ height: "100%" }}>
+          <MapContainer
+            center={center}
+            zoom={18}
+            maxZoom={19}
+            style={{ height: "100%" }}
+          >
             <Autocomplete
               options={lotData?.data || []}
               getOptionLabel={(option) => option.lot_number || ""}
@@ -358,6 +363,7 @@ const Cemeteries = () => {
             <TileLayer
               attribution="&copy; OpenStreetMap"
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              maxZoom={19}
             />
 
             {lotData?.data?.map((lot) => (
@@ -1029,6 +1035,8 @@ const Cemeteries = () => {
               By checking the checkbox you will agree to the{" "}
               <Link
                 component={RouterLink}
+                target="_blank"
+                rel="noopener noreferrer"
                 to="/terms"
                 underline="hover"
                 color="secondary"

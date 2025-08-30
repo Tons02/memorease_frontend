@@ -9,6 +9,10 @@ import {
   Breadcrumbs,
   Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   FormControl,
   InputAdornment,
@@ -25,8 +29,10 @@ import {
   Check,
   Clear,
   Dashboard,
+  Download,
   EventAvailable,
   Female,
+  FilterList,
   Male,
 } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
@@ -40,6 +46,7 @@ import {
   useRejectReservationMutation,
   useGetReservationQuery,
   useApproveReservationMutation,
+  useLazyGetReservationExportQuery,
 } from "../../redux/slices/reservationSlice";
 import dayjs from "dayjs";
 import { useForm } from "react-hook-form";
@@ -49,11 +56,16 @@ const AdminReservation = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [openModalFilter, setopenModalFilter] = useState(false);
   const [openModalAproved, setopenModalAproved] = useState(false);
   const [openModalReject, setOpenModalReject] = useState(false);
   const [selectedID, setSelectedID] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [tempStartDate, setTempStartDate] = useState("");
+  const [tempEndDate, setTempEndDate] = useState("");
 
   const handleImageClick = (imageUrl) => {
     setSelectedImage(imageUrl);
@@ -89,6 +101,19 @@ const AdminReservation = () => {
     resolver: yupResolver(rejectReservationSchema),
   });
 
+  const handleApply = () => {
+    // Commit the temporary dates to the real state
+    setStartDate(tempStartDate);
+    setEndDate(tempEndDate);
+
+    // Close dialog
+    setopenModalFilter(false);
+
+    // Refetch API with new dates
+    if (refetch)
+      refetchApi({ start_date: tempStartDate, end_date: tempEndDate });
+  };
+
   const [rejectReservation, { isLoading: isRejectReservationLoading }] =
     useRejectReservationMutation();
 
@@ -106,7 +131,34 @@ const AdminReservation = () => {
     page: page + 1,
     per_page: rowsPerPage,
     status,
+    start_date: startDate,
+    end_date: endDate,
   });
+
+  // Lazy query
+  const [triggerExport, { isLoading: isExportLoading }] =
+    useLazyGetReservationExportQuery();
+
+  const handleExport = async () => {
+    try {
+      const blob = await triggerExport({
+        status,
+        start_date: startDate,
+        end_date: endDate,
+      }).unwrap();
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "reservation-sales.xlsx"; // or .xml if really XML
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error exporting file:", err);
+    }
+  };
 
   useEffect(() => {
     const channel = window.Echo.channel("lots").listen(".LotReserved", (e) => {
@@ -202,12 +254,6 @@ const AdminReservation = () => {
       headerName: "Reserve Date",
       align: "center",
       valueGetter: (row) => dayjs(row.reserved_at).format("MM/DD/YYYY hh:mm A"),
-    },
-    {
-      field: "expires_at",
-      headerName: "Expires At",
-      align: "center",
-      valueGetter: (row) => dayjs(row.expires_at).format("MM/DD/YYYY hh:mm A"),
     },
     {
       field: "remarks",
@@ -347,9 +393,51 @@ const AdminReservation = () => {
         justifyContent="space-between"
         mb={2}
       >
-        <Typography variant="h4" sx={{ mr: 2, fontWeight: 600 }}>
+        {/* Title */}
+        <Typography variant="h4" sx={{ fontWeight: 600 }}>
           Customer Reservation
         </Typography>
+
+        {/* Buttons grouped */}
+        <Box display="flex" gap={1}>
+          <Button
+            size="medium"
+            variant="contained"
+            onClick={handleExport}
+            disabled={isExportLoading} // disable while loading
+            color="success"
+            startIcon={
+              isExportLoading ? <CircularProgress size={20} /> : <Download />
+            }
+            sx={{
+              mt: 1,
+              borderRadius: "10px",
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              textTransform: "none",
+            }}
+          >
+            {isExportLoading ? "Exporting..." : "Export"}
+          </Button>
+          <Button
+            size="medium"
+            variant="contained"
+            onClick={() => setopenModalFilter(true)}
+            color="success"
+            startIcon={<FilterList />}
+            sx={{
+              mt: 1,
+              borderRadius: "10px",
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              textTransform: "none",
+            }}
+          >
+            Filter
+          </Button>
+        </Box>
       </Box>
       <TableComponent
         columns={columns}
@@ -397,7 +485,6 @@ const AdminReservation = () => {
           helperText={errors.remarks?.message}
         />
       </DialogComponent>
-
       {/* approve  */}
       <DialogComponent
         open={openModalAproved}
@@ -417,6 +504,81 @@ const AdminReservation = () => {
       >
         <Typography>Are you sure?</Typography>
       </DialogComponent>
+      {/* filter  */}
+      <Dialog
+        open={openModalFilter}
+        onClose={() => setOpenModalFilter(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={1}>
+            <FilterList color="warning" />
+            <Typography variant="h6" fontWeight="bold">
+              Filter
+            </Typography>
+          </Box>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent>
+          <TextField
+            fullWidth
+            type="date"
+            label="Start Date"
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            value={tempStartDate}
+            onChange={(e) => setTempStartDate(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <CalendarMonth color="action" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            type="date"
+            label="End Date"
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            value={tempEndDate}
+            onChange={(e) => setTempEndDate(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <CalendarMonth color="action" />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </DialogContent>
+
+        <Divider />
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setopenModalFilter(false)}
+            variant="contained"
+            color="error"
+            fullWidth
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleApply}
+            variant="contained"
+            color="success"
+            fullWidth
+          >
+            Apply
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

@@ -20,7 +20,7 @@ const TermsAndAgreementCustomer = () => {
       <Box
         sx={{
           border: "1px solid #ddd",
-          p: 2,
+          p: 4,
           borderRadius: 2,
           bgcolor: "#f9f9f9",
         }}

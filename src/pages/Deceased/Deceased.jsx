@@ -56,6 +56,15 @@ const Deceased = () => {
   const [selectedID, setSelectedID] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState({});
 
+  const today = new Date();
+  const todayDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  )
+    .toISOString()
+    .split("T")[0];
+
   // Helper functions (add these in your component)
   const nextImage = (lotId) => {
     setCurrentImageIndex((prev) => ({
@@ -669,6 +678,9 @@ const Deceased = () => {
               </InputAdornment>
             ),
           }}
+          inputProps={{
+            max: todayDate, // 👈 only allows dates up to 8 years ago
+          }}
         />
         <TextField
           fullWidth
@@ -687,6 +699,9 @@ const Deceased = () => {
                 <CalendarMonth />
               </InputAdornment>
             ),
+          }}
+          inputProps={{
+            max: todayDate, // 👈 only allows dates up to 8 years ago
           }}
         />
         <Controller

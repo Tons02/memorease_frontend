@@ -50,7 +50,7 @@ const TableComponent = ({
         boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
         border: "1px solid #e5e7eb",
         maxHeight: 550,
-        minHeight: 300,
+        minHeight: 550,
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
