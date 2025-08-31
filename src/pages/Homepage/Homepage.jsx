@@ -209,7 +209,9 @@ const HomePage = () => {
           container
           spacing={4}
           alignItems="center"
-          sx={{ flexWrap: "nowrap" }}
+          sx={{
+            flexWrap: { xs: "wrap", sm: "nowrap" },
+          }}
         >
           {/* LEFT: Image Gallery — 2 columns from md up */}
           <Grid

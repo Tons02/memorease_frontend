@@ -407,7 +407,11 @@ const AdminReservation = () => {
             disabled={isExportLoading} // disable while loading
             color="success"
             startIcon={
-              isExportLoading ? <CircularProgress size={20} /> : <Download />
+              isExportLoading ? (
+                <CircularProgress color="secondary" size={20} />
+              ) : (
+                <Download />
+              )
             }
             sx={{
               mt: 1,
