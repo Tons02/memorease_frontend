@@ -12,9 +12,13 @@ import {
   InputAdornment,
   useTheme,
   useMediaQuery,
+  Badge,
 } from "@mui/material";
 import { Search, Person } from "@mui/icons-material";
-import { useGetConversationQuery } from "../redux/slices/chatSlice";
+import {
+  useGetConversationQuery,
+  useReceivedMessageCountMutation,
+} from "../redux/slices/chatSlice";
 import { toast } from "sonner";
 
 const ChatUserList = ({ onSelectUser, selectedUser }) => {
@@ -31,6 +35,8 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
     isLoading,
     isError,
   } = useGetConversationQuery();
+
+  const [receivedMessageCount] = useReceivedMessageCountMutation();
 
   useEffect(() => {
     if (LoginUser?.id && currentUser !== LoginUser.id) {
@@ -61,6 +67,21 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
     return date.toLocaleDateString();
   };
 
+  // Function to get unread message count from the API response
+  const getUnreadMessageCount = (conversation) => {
+    try {
+      // Get the receiver's new_message count from message_status
+      const receiverNewMessage =
+        conversation.message_status?.receiver?.new_message;
+
+      // Convert to number and return, default to 0 if not available
+      return receiverNewMessage ? parseInt(receiverNewMessage, 10) : 0;
+    } catch (error) {
+      console.warn("Error parsing unread message count:", error);
+      return 0;
+    }
+  };
+
   // Extract "other user" from each conversation and sort by date
   const usersToDisplay = useMemo(() => {
     if (!conversations?.data) return [];
@@ -77,10 +98,15 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
       const lastMessage =
         conversation.messages?.[conversation.messages.length - 1];
 
-      const hasUnread =
-        lastMessage &&
-        pivot?.last_read_at &&
-        new Date(lastMessage.created_at) > new Date(pivot.last_read_at);
+      // Use the API's message_status to determine unread count
+      const unreadCount = getUnreadMessageCount(conversation);
+
+      // A conversation has unread messages if unreadCount > 0
+      const hasUnread = unreadCount > 0;
+
+      // Alternative: you can also check if there's a new_message flag
+      const hasNewMessage =
+        conversation.message_status?.receiver?.new_message === "1";
 
       return {
         id: otherUser.id,
@@ -97,6 +123,8 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
         lastMessage: lastMessage?.body || "No messages yet",
         lastMessageTime: lastMessage?.created_at,
         hasUnread,
+        unreadCount,
+        hasNewMessage, // Additional flag if you want to use it
       };
     });
 
@@ -133,6 +161,29 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
 
   const clearSearch = () => {
     setSearchQuery("");
+  };
+
+  // Handle user selection and mark messages as read
+  const handleUserSelect = async (user) => {
+    // Call the original onSelectUser function
+    onSelectUser(user);
+
+    // If there are unread messages, mark them as read
+    if (user.unreadCount > 0) {
+      try {
+        await receivedMessageCount({
+          params: { id: user.conversationId },
+        }).unwrap();
+
+        // Refetch conversations to update the UI with new message status
+        refetch();
+
+        // Optionally show a success toast
+        // toast.success("Messages marked as read");
+      } catch (error) {
+        console.error("Failed to mark messages as read:", error);
+      }
+    }
   };
 
   // NOW we can do conditional rendering after all hooks are called
@@ -192,7 +243,7 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
                 borderColor: "grey.300",
               },
               "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                borderColor: "primary.main",
+                borderColor: "secondary.main",
               },
             },
           }}
@@ -276,7 +327,7 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
               <ListItem key={user.id} disablePadding>
                 <ListItemButton
                   selected={selectedUser?.id === user.id}
-                  onClick={() => onSelectUser(user)}
+                  onClick={() => handleUserSelect(user)}
                   sx={{
                     py: isMobile ? 1 : 1.5,
                     px: isMobile ? 1 : 2,
@@ -292,20 +343,41 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
                     transition: "background-color 0.2s ease",
                   }}
                 >
-                  <Avatar
-                    src={user.avatar ? `/uploads/${user.avatar}` : undefined}
-                    sx={{
-                      mr: isMobile ? 1.5 : 2,
-                      width: isMobile ? 40 : 48,
-                      height: isMobile ? 40 : 48,
-                      backgroundColor: "secondary.main",
-                      color: "white",
-                      fontSize: isMobile ? "1rem" : "1.2rem",
+                  <Badge
+                    badgeContent={
+                      user.unreadCount > 0 ? user.unreadCount : null
+                    }
+                    color="error"
+                    overlap="circular"
+                    anchorOrigin={{
+                      vertical: "top",
+                      horizontal: "right",
                     }}
-                    alt={user.name}
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        fontSize: isMobile ? "0.6rem" : "0.75rem",
+                        minWidth: isMobile ? "16px" : "20px",
+                        height: isMobile ? "16px" : "20px",
+                        borderRadius: "50%",
+                        fontWeight: "bold",
+                      },
+                    }}
                   >
-                    {user.name[0]?.toUpperCase()}
-                  </Avatar>
+                    <Avatar
+                      src={user.avatar ? `/uploads/${user.avatar}` : undefined}
+                      sx={{
+                        mr: isMobile ? 1.5 : 2,
+                        width: isMobile ? 40 : 48,
+                        height: isMobile ? 40 : 48,
+                        backgroundColor: "secondary.main",
+                        color: "white",
+                        fontSize: isMobile ? "1rem" : "1.2rem",
+                      }}
+                      alt={user.name}
+                    >
+                      {user.name[0]?.toUpperCase()}
+                    </Avatar>
+                  </Badge>
 
                   <ListItemText
                     primary={
@@ -315,7 +387,7 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
                           fontSize: isMobile ? "0.9rem" : "1rem",
                           color: user.hasUnread
                             ? "text.primary"
-                            : "text.primary",
+                            : "text.secondary",
                         }}
                         noWrap
                       >
@@ -351,13 +423,13 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
                             gap: 0.5,
                           }}
                         >
-                          {user.hasUnread && (
+                          {user.hasNewMessage && user.unreadCount === 0 && (
                             <Box
                               sx={{
                                 width: 8,
                                 height: 8,
                                 borderRadius: "50%",
-                                backgroundColor: "secondary.main",
+                                backgroundColor: "primary.main",
                               }}
                             />
                           )}

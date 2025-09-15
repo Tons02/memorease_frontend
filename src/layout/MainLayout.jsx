@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import MuiDrawer from "@mui/material/Drawer";
@@ -39,6 +39,7 @@ import {
   Alert,
   TextField,
   CircularProgress,
+  Badge,
 } from "@mui/material";
 import {
   AccountCircle,
@@ -52,6 +53,7 @@ import {
   MessageRounded,
   PersonOff,
 } from "@mui/icons-material";
+import { useGetConversationCountsQuery } from "../redux/slices/chatSlice";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import ShareLocationIcon from "@mui/icons-material/ShareLocation";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
@@ -157,6 +159,7 @@ export default function MiniDrawer() {
     message: "",
     severity: "info",
   });
+
   const {
     register,
     reset,
@@ -172,6 +175,25 @@ export default function MiniDrawer() {
     },
     resolver: yupResolver(changePasswordSchema),
   });
+
+  const LoginUserCount = JSON.parse(localStorage.getItem("user"));
+  const { data: conversationCounts, refetch: conversationCountsRefetch } =
+    useGetConversationCountsQuery();
+  // Real-time listener for new messages
+  useEffect(() => {
+    if (!LoginUserCount?.id) return;
+
+    const channel = window.Echo.private(`user.${LoginUserCount.id}`);
+
+    channel.listen(".message.sent", (e) => {
+      console.log("New message received", e.message);
+      conversationCountsRefetch?.();
+    });
+
+    return () => {
+      window.Echo.leave(`user.${LoginUserCount.id}`);
+    };
+  }, [LoginUserCount?.id]);
 
   const [changePassword, { isLoading }] = useChangePasswordMutation();
 
@@ -819,17 +841,24 @@ export default function MiniDrawer() {
                         },
                   ]}
                 >
-                  <MessageRounded
-                    sx={{
-                      maxWidth: 275,
-                      cursor: "pointer",
-                      color: theme.palette.secondary.main,
-                    }}
-                  />
+                  {/* 👇 Wrap icon in Badge when sidebar is closed */}
+                  <Badge
+                    badgeContent={conversationCounts?.data?.updated_count || 0}
+                    color="error"
+                  >
+                    <MessageRounded
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
+                  </Badge>
                 </ListItemIcon>
 
+                {/* 👇 Show count inline when sidebar is open */}
                 <ListItemText
-                  primary="Messages"
+                  primary={`Messages`}
                   sx={[
                     open
                       ? {

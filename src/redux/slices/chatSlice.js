@@ -14,6 +14,13 @@ export const chatSlice = apiSlice
         method: "GET",
         providesTags: ["Conversation"],
       }),
+      getConversationCounts: builder.query({
+        query: () => ({
+          url: "/get-conversations-counts",
+        }),
+        method: "GET",
+        providesTags: ["Conversation"],
+      }),
       getSpecificMessage: builder.query({
         query: (params) => ({
           url: `/conversations/${params.id}/messages`,
@@ -38,12 +45,21 @@ export const chatSlice = apiSlice
         }),
         invalidatesTags: ["Conversation"],
       }),
+      ReceivedMessageCount: builder.mutation({
+        query: ({ params }) => ({
+          url: `/update-message-status/${params.id}`,
+          method: "PATCH",
+        }),
+        invalidatesTags: ["Conversation"],
+      }),
     }),
   });
 
 export const {
   useGetConversationQuery,
+  useGetConversationCountsQuery,
   useGetSpecificMessageQuery,
   useAddConversationMutation,
   useSendMessageMutation,
+  useReceivedMessageCountMutation,
 } = chatSlice;

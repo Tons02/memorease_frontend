@@ -199,7 +199,7 @@ const MessengerPage = () => {
                     sx={{
                       minWidth: "auto",
                       px: 2,
-                      color: "primary.light",
+                      color: "secondary.light",
                     }}
                   >
                     New

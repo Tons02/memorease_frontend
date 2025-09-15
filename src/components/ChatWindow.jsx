@@ -13,9 +13,11 @@ import {
   useGetConversationQuery,
   useGetSpecificMessageQuery,
   useSendMessageMutation,
+  useReceivedMessageCountMutation,
 } from "../redux/slices/chatSlice";
 import { Avatar } from "stream-chat-react";
 import MessageBubble from "./MessageBubble";
+import { toast } from "sonner";
 
 const ChatWindow = ({ selectedUser, conversationId }) => {
   const [text, setText] = useState("");
@@ -28,15 +30,79 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
     isError,
     refetch: messageRefetch,
   } = useGetSpecificMessageQuery({ id: conversationId });
+
+  // Get conversations query to refetch conversation list
+  const { refetch: conversationRefetch } = useGetConversationQuery();
+
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
+  const [receivedMessageCount] = useReceivedMessageCountMutation();
 
   const messages = messagesData?.data?.messages || [];
 
+  // Mark messages as read when conversation is opened or messages are loaded
   useEffect(() => {
+    const markMessagesAsRead = async () => {
+      if (conversationId && selectedUser) {
+        try {
+          await receivedMessageCount({
+            params: { id: conversationId },
+          }).unwrap();
+
+          // Refetch conversations to update the unread counts in the sidebar
+          conversationRefetch();
+        } catch (error) {
+          console.error("Failed to mark messages as read:", error);
+        }
+      }
+    };
+
     if (conversationId) {
       messageRefetch?.();
+      markMessagesAsRead();
     }
-  }, [conversationId]);
+  }, [
+    conversationId,
+    selectedUser,
+    messageRefetch,
+    receivedMessageCount,
+    conversationRefetch,
+  ]);
+
+  // Mark messages as read when user starts typing
+  const handleTextChange = async (e) => {
+    const newText = e.target.value;
+    setText(newText);
+
+    // If user starts typing (first character), mark messages as read
+    if (newText.length === 1 && text.length === 0) {
+      try {
+        await receivedMessageCount({
+          params: { id: conversationId },
+        }).unwrap();
+
+        // Refetch conversations to update the unread counts
+        conversationRefetch();
+      } catch (error) {
+        console.error("Failed to mark messages as read while typing:", error);
+      }
+    }
+  };
+
+  // Also mark as read when user focuses on the text field
+  const handleTextFieldFocus = async () => {
+    if (conversationId) {
+      try {
+        await receivedMessageCount({
+          params: { id: conversationId },
+        }).unwrap();
+
+        // Refetch conversations to update the unread counts
+        conversationRefetch();
+      } catch (error) {
+        console.error("Failed to mark messages as read on focus:", error);
+      }
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -54,8 +120,15 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
       }).unwrap();
 
       setText(""); // Clear input
+
+      // Refetch messages to show the new message
+      messageRefetch();
+
+      // Refetch conversations to update last message and timestamps
+      conversationRefetch();
     } catch (err) {
       console.error("Failed to send message", err);
+      toast.error("Failed to send message");
     }
   };
 
@@ -121,7 +194,8 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
           placeholder="Type a message..."
           value={text}
           disabled={isSending}
-          onChange={(e) => setText(e.target.value)}
+          onChange={handleTextChange}
+          onFocus={handleTextFieldFocus}
           onKeyPress={handleKeyPress}
           multiline
         />
