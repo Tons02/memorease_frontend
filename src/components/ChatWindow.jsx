@@ -149,7 +149,7 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
           alignItems: "center",
         }}
       >
-        <CircularProgress />
+        <CircularProgress color="secondary" />
       </Box>
     );
   }

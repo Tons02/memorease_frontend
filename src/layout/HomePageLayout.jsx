@@ -32,7 +32,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import LockIcon from "@mui/icons-material/Lock";
 
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import {
   useChangePasswordMutation,
   useLogoutMutation,
@@ -44,12 +44,14 @@ import { changePasswordSchema } from "../validations/validation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "sonner";
+import FloatingChat from "../components/FloatingChat";
 
 const drawerWidth = 240;
 
 function HomePageLayOut(props) {
   const { window } = props;
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const location = useLocation();
   const [openLogoutDialog, setOpenLogoutDialog] = React.useState(false);
   const [anchorElMaps, setAnchorElMaps] = React.useState(null);
   const [anchorElAvatar, setAnchorElAvatar] = React.useState(null);
@@ -144,8 +146,9 @@ function HomePageLayOut(props) {
 
   const navItems = [
     { name: "Home", path: "/" },
+    { name: "About", path: "/" },
     { name: "MapsDropdown" },
-    { name: "Contact", path: "/contact" },
+    // { name: "Contact", path: "/contact" },
     !isLoggedIn ? null : { name: "Reservation", path: "/customer-reservation" },
     // No more Logout here
     isLoggedIn ? null : { name: "Login", path: "/login" },
@@ -420,6 +423,7 @@ function HomePageLayOut(props) {
 
       <Box component="main" sx={{ flexGrow: 1, width: "100%" }}>
         <Toolbar />
+        {location.pathname !== "/contact" && <FloatingChat />}
         <Outlet />
       </Box>
 
