@@ -122,6 +122,8 @@ const User = () => {
     status,
   });
 
+  console.log(role?.data?.total);
+
   const [addUser, { isLoading: isAdding }] = useAddUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [archiveUser, { isLoading: isArchiving }] = useArchivedUserMutation();
@@ -951,7 +953,7 @@ const User = () => {
           <TablePagination
             rowsPerPageOptions={[5, 10, 25, 50]}
             component="div"
-            count={role?.data?.data?.length || 0}
+            count={role?.data?.total || 0}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
