@@ -56,9 +56,10 @@ export const apiReservation = apiSlice
         invalidatesTags: ["Reservation"],
       }),
       cancelReservation: builder.mutation({
-        query: ({ id }) => ({
+        query: ({ id, body }) => ({
           url: `/reservation-cancel/${id}`,
           method: "PATCH",
+          body: body,
         }),
         invalidatesTags: ["Reservation"],
       }),

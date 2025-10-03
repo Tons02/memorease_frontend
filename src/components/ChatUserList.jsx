@@ -174,12 +174,9 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
         await receivedMessageCount({
           params: { id: user.conversationId },
         }).unwrap();
-
-        // Refetch conversations to update the UI with new message status
+        
         refetch();
 
-        // Optionally show a success toast
-        // toast.success("Messages marked as read");
       } catch (error) {
         console.error("Failed to mark messages as read:", error);
       }

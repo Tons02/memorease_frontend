@@ -16,6 +16,7 @@ import {
   Link,
   Menu,
   MenuItem,
+  TextField,
   Typography,
 } from "@mui/material";
 import {
@@ -39,16 +40,10 @@ import { useState } from "react";
 import DialogComponent from "../../components/DialogComponent";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
-import {
-  deceasedSchema,
-  reservationSchema,
-} from "../../validations/validation";
-import FileUploadInput from "../../components/FileUploadInput";
-import { useGetLotQuery } from "../../redux/slices/apiLot";
+import { reservationSchema } from "../../validations/validation";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { toast } from "sonner";
 import {
-  useArchivedReservationMutation,
   useGetReservationQuery,
   useCancelReservationMutation,
 } from "../../redux/slices/reservationSlice";
@@ -58,11 +53,9 @@ const CustomerReservation = () => {
   const [status, setStatus] = useState("pending");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [reason, setReason] = useState("");
   const [search, setSearch] = useState("");
   const [openModal, setopenModal] = useState(false);
-  const [openModalArchived, setOpenModalArchived] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
-  const [isArchived, setIsArchived] = useState(false);
   const [selectedID, setSelectedID] = useState(false);
 
   const [anchorEl, setAnchorEl] = useState(null);
@@ -127,6 +120,7 @@ const CustomerReservation = () => {
   }, []);
 
   const {
+    register,
     reset,
     handleSubmit,
     formState: { errors, isDirty, isValid },
@@ -225,7 +219,7 @@ const CustomerReservation = () => {
     },
     {
       field: "remarks",
-      headerName: "Remarks",
+      headerName: status === "canceled" ? "Reason" : "Remarks",
       align: "center",
     },
     {
@@ -290,9 +284,12 @@ const CustomerReservation = () => {
   }
 
   const handlCancelReservation = async () => {
-    console.log("hit handlCancelReservation");
+    console.log("hit handlCancelReservation", { reason });
     try {
-      const response = await cancelReservation({ id: selectedID }).unwrap();
+      const response = await cancelReservation({
+        id: selectedID,
+        body: { remarks: reason },
+      }).unwrap();
       setopenModal(false);
       setSelectedID(null);
       toast.success(response?.message);
@@ -340,6 +337,7 @@ const CustomerReservation = () => {
           open={openModal}
           onClose={() => {
             setopenModal(false), setSelectedID(null);
+            setReason("");
           }}
           onSubmit={handlCancelReservation}
           title={"Cancel Reservation"}
@@ -352,7 +350,18 @@ const CustomerReservation = () => {
           isDirty={true}
           isArchived={true}
         >
-          <Typography>Are you sure?</Typography>
+          <TextField
+            label="Reason"
+            fullWidth
+            margin="normal"
+            multiline
+            rows={1}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)} // ✅ update reason on typing
+            required // ✅ HTML5 required
+            error={!!errors.remarks}
+            helperText={errors.remarks?.message}
+          />
         </DialogComponent>
       </Box>
     </>
