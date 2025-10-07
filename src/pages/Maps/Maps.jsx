@@ -60,21 +60,36 @@ const Cemeteries = () => {
   const [gcashModalOpen, setGcashModalOpen] = useState(false);
   const [dialogImageIndex, setDialogImageIndex] = useState(0);
 
+  // Helper function to detect video files
+  const isVideoFile = (url) => {
+    if (!url) return false;
+
+    // Check file extension (works for direct URLs)
+    const videoExtensions = /\.(mp4|webm|ogg|mov|avi)(\?.*)?$/i;
+    if (videoExtensions.test(url)) return true;
+
+    // Check MIME type if available (for blob URLs or data URLs)
+    if (url.startsWith("blob:") || url.startsWith("data:video")) return true;
+
+    // Check the URL path without query params
+    const urlWithoutParams = url.split("?")[0];
+    return videoExtensions.test(urlWithoutParams);
+  };
+
   const nextDialogImage = () => {
     if (selectedLot) {
-      const images = getDisplayImages(selectedLot);
+      const images = getDisplayMedia(selectedLot);
       setDialogImageIndex((prev) => (prev + 1) % images.length);
     }
   };
 
   const prevDialogImage = () => {
     if (selectedLot) {
-      const images = getDisplayImages(selectedLot);
+      const images = getDisplayMedia(selectedLot);
       setDialogImageIndex((prev) => (prev - 1 + images.length) % images.length);
     }
   };
 
-  // Add this function to handle GCash image download:
   const downloadGcashImage = () => {
     const link = document.createElement("a");
     link.href = GcashPayment;
@@ -84,18 +99,17 @@ const Cemeteries = () => {
     document.body.removeChild(link);
   };
 
-  // Helper functions (add these in your component)
   const nextImage = (lotId) => {
     setCurrentImageIndex((prev) => ({
       ...prev,
       [lotId]:
         ((prev[lotId] || 0) + 1) %
-        getDisplayImages(lotData?.data?.find((lot) => lot.id === lotId)).length,
+        getDisplayMedia(lotData?.data?.find((lot) => lot.id === lotId)).length,
     }));
   };
 
   const prevImage = (lotId) => {
-    const images = getDisplayImages(
+    const images = getDisplayMedia(
       lotData?.data?.find((lot) => lot.id === lotId)
     );
     setCurrentImageIndex((prev) => ({
@@ -104,14 +118,15 @@ const Cemeteries = () => {
     }));
   };
 
-  const getDisplayImages = (lot) => {
-    const images = [
+  const getDisplayMedia = (lot) => {
+    const media = [
       lot.lot_image,
       lot.second_lot_image,
       lot.third_lot_image,
       lot.fourth_lot_image,
-    ].filter((img) => img && img !== null);
-    return images.length > 0 ? images : [defaultImage];
+    ].filter((file) => file && file !== null);
+
+    return media.length > 0 ? media : [defaultImage];
   };
 
   const getStatusColor = (status) => {
@@ -187,7 +202,6 @@ const Cemeteries = () => {
       const formData = new FormData();
 
       Object.entries(data).forEach(([key, value]) => {
-        // Only append if value is not null or undefined
         if (value !== undefined && value !== null) {
           formData.append(key, value);
         }
@@ -223,11 +237,10 @@ const Cemeteries = () => {
     map.boxZoom.disable();
     map.keyboard.disable();
 
-    // Flip [lat, lng] to [lng, lat] for turf
     const reversedCoords = lot.coordinates.map(([lat, lng]) => [lng, lat]);
 
     const lotPolygon = turf.polygon([[...reversedCoords, reversedCoords[0]]]);
-    const center = turf.center(lotPolygon).geometry.coordinates; // [lng, lat]
+    const center = turf.center(lotPolygon).geometry.coordinates;
     const [lng, lat] = center;
 
     map.flyTo([lat, lng], 18, {
@@ -265,6 +278,7 @@ const Cemeteries = () => {
   };
 
   const [isCheckTerm, setIsCheckTerm] = useState(false);
+
   return (
     <>
       <Box sx={{ flexGrow: 1, p: 3 }}>
@@ -297,7 +311,7 @@ const Cemeteries = () => {
                   variant="outlined"
                   size="small"
                   sx={{
-                    backgroundColor: "transparent", // input field background
+                    backgroundColor: "transparent",
                   }}
                 />
               )}
@@ -380,56 +394,6 @@ const Cemeteries = () => {
                   fillOpacity: 0.5,
                 }}
               >
-                {/* <Popup>
-                  <Box
-                    component="img"
-                    src={lot.lot_image ?? defaultImage}
-                    alt=""
-                    sx={{
-                      width: "200px",
-                      height: "150",
-                      alignItems: "center",
-                    }}
-                  />
-                  <br />
-                  <strong>Lot Name: </strong>
-                  {lot.lot_number}
-                  <br />
-                  <strong>Description: </strong>
-                  {lot.description}
-                  <br />
-                  <strong>Status: </strong>
-                  {lot.status}
-                  <br />
-                  <strong>Price: </strong>₱{lot.price}
-                  <br />
-                  <strong>Downpayment: </strong>₱{lot.downpayment_price}
-                  <br />
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      gap: 1, // spacing between buttons (theme-based)
-                      mt: 1, // margin top
-                    }}
-                  >
-                    {lot.status === "available" && isLoggedIn && (
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color="success"
-                        onClick={() => {
-                          setSelectedLot(lot);
-                          setOpenDialog(true);
-                        }}
-                        style={{ marginTop: 8, marginRight: 5 }}
-                      >
-                        Reserve
-                      </Button>
-                    )}
-                  </Box>
-                </Popup> */}
-
                 <Popup maxWidth={350}>
                   <Box
                     sx={{
@@ -442,27 +406,59 @@ const Cemeteries = () => {
                       overflow: "hidden",
                     }}
                   >
-                    {/* Enhanced Image Section */}
+                    {/* Enhanced Image/Video Section */}
                     <Box sx={{ position: "relative" }}>
-                      <Box
-                        component="img"
-                        src={(() => {
-                          const images = getDisplayImages(lot);
-                          const currentIndex = currentImageIndex[lot.id] || 0;
-                          return images[currentIndex];
-                        })()}
-                        alt={`Lot ${lot.lot_number}`}
-                        sx={{
-                          width: "100%",
-                          height: "180px",
-                          objectFit: "contain",
-                          backgroundColor: "#f5f5f5",
-                        }}
-                      />
-
-                      {/* Image Navigation - Only show if more than 1 image */}
                       {(() => {
-                        const images = getDisplayImages(lot);
+                        const images = getDisplayMedia(lot);
+                        const currentIndex = currentImageIndex[lot.id] || 0;
+                        const currentMedia = images[currentIndex];
+                        const isVideo = isVideoFile(currentMedia);
+
+                        return isVideo ? (
+                          <Box
+                            component="video"
+                            src={currentMedia}
+                            controls
+                            autoPlay={false}
+                            muted
+                            sx={{
+                              width: "100%",
+                              height: "180px",
+                              objectFit: "contain",
+                              backgroundColor: "#000",
+                            }}
+                            onError={(e) => {
+                              console.error(
+                                "Video failed to load:",
+                                currentMedia
+                              );
+                              console.error("Error details:", e);
+                            }}
+                          />
+                        ) : (
+                          <Box
+                            component="img"
+                            src={currentMedia}
+                            alt={`Lot ${lot.lot_number}`}
+                            sx={{
+                              width: "100%",
+                              height: "180px",
+                              objectFit: "contain",
+                              backgroundColor: "#f5f5f5",
+                            }}
+                            onError={(e) => {
+                              console.error(
+                                "Image failed to load:",
+                                currentMedia
+                              );
+                            }}
+                          />
+                        );
+                      })()}
+
+                      {/* Image/Video Navigation - Only show if more than 1 media */}
+                      {(() => {
+                        const images = getDisplayMedia(lot);
                         if (images.length > 1) {
                           return (
                             <>
@@ -506,7 +502,7 @@ const Cemeteries = () => {
                                 <ChevronRight fontSize="small" />
                               </IconButton>
 
-                              {/* Image Counter */}
+                              {/* Media Counter */}
                               <Box
                                 sx={{
                                   position: "absolute",
@@ -524,7 +520,7 @@ const Cemeteries = () => {
                                 {images.length}
                               </Box>
 
-                              {/* Image Indicators */}
+                              {/* Media Indicators */}
                               <Box
                                 sx={{
                                   position: "absolute",
@@ -736,12 +732,13 @@ const Cemeteries = () => {
           ></div>
         </div>
       </Box>
+
       <DialogComponent
         open={openDialog}
         onClose={() => {
           setOpenDialog(false);
           setDialogImageIndex(0);
-          setIsCheckTerm(false); // Reset image index when closing
+          setIsCheckTerm(false);
         }}
         onSubmit={handleSubmit(handleReservation)}
         title={"Reserve Lot"}
@@ -763,7 +760,8 @@ const Cemeteries = () => {
           value={selectedLot?.id}
           sx={{ display: "none" }}
         />
-        {/* Enhanced Lot Image Slider Section */}
+
+        {/* Enhanced Lot Media Slider Section */}
         <Box
           display="flex"
           flexDirection="column"
@@ -772,34 +770,74 @@ const Cemeteries = () => {
           sx={{ mb: 2 }}
         >
           <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Lot Images
+            Lot Media
           </Typography>
 
           <Box sx={{ position: "relative", width: "90%" }}>
-            <Box
-              component="img"
-              src={(() => {
-                if (selectedLot) {
-                  const images = getDisplayImages(selectedLot);
-                  return images[dialogImageIndex] || defaultImage;
-                }
-                return defaultImage;
-              })()}
-              alt="Lot Image"
-              sx={{
-                width: "100%",
-                height: "200px",
-                objectFit: "contain",
-                backgroundColor: "#f5f5f5",
-                borderRadius: 1,
-              }}
-            />
+            {(() => {
+              if (selectedLot) {
+                const media = getDisplayMedia(selectedLot);
+                const currentMedia = media[dialogImageIndex] || defaultImage;
+                const isVideo = isVideoFile(currentMedia);
 
-            {/* Navigation arrows - only show if multiple images */}
+                return isVideo ? (
+                  <Box
+                    component="video"
+                    src={currentMedia}
+                    controls
+                    autoPlay={false}
+                    muted
+                    sx={{
+                      width: "100%",
+                      height: "200px",
+                      objectFit: "contain",
+                      backgroundColor: "#000",
+                      borderRadius: 1,
+                    }}
+                    onError={(e) => {
+                      console.error("Video failed to load:", currentMedia);
+                      console.error("Error details:", e);
+                    }}
+                  />
+                ) : (
+                  <Box
+                    component="img"
+                    src={currentMedia}
+                    alt="Lot Media"
+                    sx={{
+                      width: "100%",
+                      height: "200px",
+                      objectFit: "contain",
+                      backgroundColor: "#f5f5f5",
+                      borderRadius: 1,
+                    }}
+                    onError={(e) => {
+                      console.error("Image failed to load:", currentMedia);
+                    }}
+                  />
+                );
+              }
+              return (
+                <Box
+                  component="img"
+                  src={defaultImage}
+                  alt="Default Lot Media"
+                  sx={{
+                    width: "100%",
+                    height: "200px",
+                    objectFit: "contain",
+                    backgroundColor: "#f5f5f5",
+                    borderRadius: 1,
+                  }}
+                />
+              );
+            })()}
+
+            {/* Navigation arrows - only show if multiple media */}
             {selectedLot &&
               (() => {
-                const images = getDisplayImages(selectedLot);
-                if (images.length > 1) {
+                const media = getDisplayMedia(selectedLot);
+                if (media.length > 1) {
                   return (
                     <>
                       <IconButton
@@ -836,7 +874,7 @@ const Cemeteries = () => {
                         <ChevronRight />
                       </IconButton>
 
-                      {/* Image counter */}
+                      {/* Media counter */}
                       <Box
                         sx={{
                           position: "absolute",
@@ -851,7 +889,7 @@ const Cemeteries = () => {
                           fontWeight: "bold",
                         }}
                       >
-                        {dialogImageIndex + 1} / {images.length}
+                        {dialogImageIndex + 1} / {media.length}
                       </Box>
                     </>
                   );
@@ -859,11 +897,11 @@ const Cemeteries = () => {
                 return null;
               })()}
 
-            {/* Image dots indicators */}
+            {/* Media dots indicators */}
             {selectedLot &&
               (() => {
-                const images = getDisplayImages(selectedLot);
-                if (images.length > 1) {
+                const media = getDisplayMedia(selectedLot);
+                if (media.length > 1) {
                   return (
                     <Box
                       sx={{
@@ -873,7 +911,7 @@ const Cemeteries = () => {
                         mt: 1,
                       }}
                     >
-                      {images.map((_, index) => (
+                      {media.map((_, index) => (
                         <Box
                           key={index}
                           sx={{
@@ -899,6 +937,7 @@ const Cemeteries = () => {
               })()}
           </Box>
         </Box>
+
         <TextField
           label="Lot Number"
           fullWidth
@@ -935,6 +974,7 @@ const Cemeteries = () => {
           value={selectedLot?.downpayment_price}
           {...register("total_downpayment_price")}
         />
+
         {/* Enhanced GCash Section */}
         <Box
           display="flex"
@@ -1048,7 +1088,8 @@ const Cemeteries = () => {
           }
         />
       </DialogComponent>
-      {/* GCash Image Modal */}{" "}
+
+      {/* GCash Image Modal */}
       <Dialog
         open={gcashModalOpen}
         onClose={() => setGcashModalOpen(false)}

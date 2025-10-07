@@ -7,8 +7,11 @@ import {
   Paper,
   TextField,
   IconButton,
+  Chip,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   useGetConversationQuery,
   useGetSpecificMessageQuery,
@@ -21,7 +24,9 @@ import { toast } from "sonner";
 
 const ChatWindow = ({ selectedUser, conversationId }) => {
   const [text, setText] = useState("");
+  const [attachments, setAttachments] = useState([]);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   const LoginUser = JSON.parse(localStorage.getItem("user"));
 
   const {
@@ -108,18 +113,83 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      attachments.forEach((attachment) => {
+        URL.revokeObjectURL(attachment.preview);
+      });
+    };
+  }, [attachments]);
+
+  // Handle file selection
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files);
+
+    // Filter only images and videos and create preview URLs
+    const validFiles = files
+      .filter((file) => {
+        const isImage = file.type.startsWith("image/");
+        const isVideo = file.type.startsWith("video/");
+
+        if (!isImage && !isVideo) {
+          toast.error(`${file.name} is not an image or video`);
+          return false;
+        }
+        return true;
+      })
+      .map((file) => ({
+        file,
+        preview: URL.createObjectURL(file),
+        type: file.type,
+      }));
+
+    if (validFiles.length > 0) {
+      setAttachments((prev) => [...prev, ...validFiles]);
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Remove attachment from list
+  const handleRemoveAttachment = (index) => {
+    setAttachments((prev) => {
+      // Revoke the preview URL to free memory
+      URL.revokeObjectURL(prev[index].preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
   const handleSend = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() && attachments.length === 0) return;
 
     try {
+      // Create FormData
+      const formData = new FormData();
+      formData.append("conversation_id", conversationId);
+      formData.append("content", text);
+
+      // Append all attachments (use the file object, not the wrapper)
+      attachments.forEach((attachment, index) => {
+        formData.append(`attachments[${index}]`, attachment.file);
+      });
+
+      console.log("formData", formData);
+
       await sendMessage({
-        body: {
-          conversation_id: conversationId,
-          content: text,
-        },
+        body: formData,
       }).unwrap();
 
+      // Revoke preview URLs before clearing
+      attachments.forEach((attachment) => {
+        URL.revokeObjectURL(attachment.preview);
+      });
+
       setText(""); // Clear input
+      setAttachments([]); // Clear attachments
 
       // Refetch messages to show the new message
       messageRefetch();
@@ -181,31 +251,133 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
             text={msg.body}
             isOwn={msg.sender_id === LoginUser.id}
             timestamp={msg.created_at}
+            attachments={msg.attachments}
           />
         ))}
         <div ref={messagesEndRef} />
       </Box>
 
       {/* Message Input */}
-      <Box component={Paper} square sx={{ display: "flex", p: 2 }}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Type a message..."
-          value={text}
-          disabled={isSending}
-          onChange={handleTextChange}
-          onFocus={handleTextFieldFocus}
-          onKeyPress={handleKeyPress}
-          multiline
-        />
-        <IconButton color="secondary" onClick={handleSend} disabled={isSending}>
-          {isSending ? (
-            <CircularProgress size={20} color="secondary" />
-          ) : (
-            <SendIcon />
-          )}
-        </IconButton>
+      <Box component={Paper} square sx={{ p: 2 }}>
+        {/* Attachment Preview - Messenger Style */}
+        {attachments.length > 0 && (
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1,
+              flexWrap: "wrap",
+              mb: 2,
+              p: 1,
+              backgroundColor: "#f5f5f5",
+              borderRadius: 2,
+            }}
+          >
+            {attachments.map((attachment, index) => (
+              <Box
+                key={index}
+                sx={{
+                  position: "relative",
+                  width: "100px",
+                  height: "100px",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  border: "1px solid #ddd",
+                }}
+              >
+                {/* Close Button */}
+                <IconButton
+                  size="small"
+                  onClick={() => handleRemoveAttachment(index)}
+                  sx={{
+                    position: "absolute",
+                    top: 4,
+                    right: 4,
+                    backgroundColor: "rgba(0, 0, 0, 0.6)",
+                    color: "white",
+                    "&:hover": {
+                      backgroundColor: "rgba(0, 0, 0, 0.8)",
+                    },
+                    zIndex: 1,
+                    padding: "4px",
+                  }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+
+                {/* Image/Video Preview */}
+                {attachment.type.startsWith("image/") ? (
+                  <img
+                    src={attachment.preview}
+                    alt={attachment.file.name}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <video
+                    src={attachment.preview}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                )}
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        {/* Input Area - maintaining your original layout */}
+        <Box sx={{ display: "flex" }}>
+          {/* Hidden File Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,video/*"
+            style={{ display: "none" }}
+            onChange={handleFileSelect}
+          />
+
+          {/* Attach File Button */}
+          <IconButton
+            color="secondary"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSending}
+            sx={{ mr: 1 }}
+          >
+            <AttachFileIcon />
+          </IconButton>
+
+          {/* Text Input */}
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Type a message..."
+            value={text}
+            disabled={isSending}
+            onChange={handleTextChange}
+            onFocus={handleTextFieldFocus}
+            onKeyPress={handleKeyPress}
+            multiline
+          />
+
+          {/* Send Button */}
+          <IconButton
+            color="secondary"
+            onClick={handleSend}
+            disabled={isSending || (!text.trim() && attachments.length === 0)}
+          >
+            {isSending ? (
+              <CircularProgress size={20} color="secondary" />
+            ) : (
+              <SendIcon />
+            )}
+          </IconButton>
+        </Box>
       </Box>
     </Box>
   );

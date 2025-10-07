@@ -30,6 +30,14 @@ export const apiUser = apiSlice
         }),
         invalidatesTags: ["Users"],
       }),
+      resetPassword: builder.mutation({
+        query: (user) => ({
+          url: `/resetpassword/${user.id}`,
+          method: "PATCH",
+          body: user,
+        }),
+        invalidatesTags: ["Users"],
+      }),
       archivedUser: builder.mutation({
         query: ({ id }) => ({
           url: `/user-archived/${id}`,
@@ -45,5 +53,6 @@ export const {
   useGetUserQuery,
   useAddUserMutation,
   useUpdateUserMutation,
+  useResetPasswordMutation,
   useArchivedUserMutation,
 } = apiUser;

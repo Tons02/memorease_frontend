@@ -62,6 +62,7 @@ import {
   useAddUserMutation,
   useArchivedUserMutation,
   useGetUserQuery,
+  useResetPasswordMutation,
   useUpdateUserMutation,
 } from "../redux/slices/userSlice";
 import { toast } from "sonner";
@@ -76,8 +77,10 @@ const User = () => {
   const [localSearch, setLocalSearch] = useState("");
   const [activeMenuRow, setActiveMenuRow] = useState(null);
   const [edit, setEdit] = useState(false);
+  const [password, setPassword] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedID, setSelectedID] = useState(null);
+  const [openResetPasswordDialog, setOpenResetPasswordDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [restoreUser, setRestoreUser] = useState(false);
 
@@ -127,6 +130,7 @@ const User = () => {
   const [addUser, { isLoading: isAdding }] = useAddUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [archiveUser, { isLoading: isArchiving }] = useArchivedUserMutation();
+  const [resetPassword, { isLoading: isReseting }] = useResetPasswordMutation();
 
   // Handle Create User
   const handleCreateUser = async (data) => {
@@ -201,6 +205,12 @@ const User = () => {
     setOpenDialog(true);
   };
 
+  const handleResetPassword = (row) => {
+    setSelectedID(row.id);
+    setPassword(true);
+    setOpenResetPasswordDialog(true);
+  };
+
   // Handle Delete/Archive User
   const handleDeleteUser = async () => {
     try {
@@ -208,6 +218,18 @@ const User = () => {
       console.log("User archived:", response);
       setOpenDeleteDialog(false);
       refetch();
+      toast.success(response?.message);
+    } catch (errors) {
+      console.error("Error archiving user:", errors?.data?.errors[0]?.title);
+      toast.error(errors?.data?.errors[0]?.title);
+    }
+  };
+
+  const handleResetPasswordUser = async () => {
+    try {
+      const response = await resetPassword({ id: selectedID }).unwrap();
+      console.log("Reset Passwrod", response);
+      setOpenResetPasswordDialog(false);
       toast.success(response?.message);
     } catch (errors) {
       console.error("Error archiving user:", errors?.data?.errors[0]?.title);
@@ -284,6 +306,7 @@ const User = () => {
     setEdit(false);
     setRestoreUser(false);
     setOpenDeleteDialog(false);
+    setOpenResetPasswordDialog(false);
   };
 
   const getInitials = (fname, lname) => {
@@ -835,6 +858,20 @@ const User = () => {
                             <MenuItem
                               onClick={() => {
                                 handleCloseDropDown();
+                                handleResetPassword(row);
+                              }}
+                              sx={{
+                                "&:hover": {
+                                  backgroundColor: "#f3f4f6",
+                                },
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              Reset Password
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                handleCloseDropDown();
                                 handleDeleteClick(row);
                               }}
                               sx={{
@@ -1232,6 +1269,45 @@ const User = () => {
             </FormControl>
           )}
         />
+      </DialogComponent>
+
+      {/* Reset Password User Dialog using DialogComponent */}
+      <DialogComponent
+        open={openResetPasswordDialog}
+        onClose={handleClose}
+        onSubmit={handleResetPasswordUser}
+        title={"Reset Password?"}
+        icon={<Check />}
+        isLoading={isReseting}
+        submitLabel={"Reset Password"}
+        submitIcon={<Check />}
+        maxWidth="sm"
+        isArchived={true}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+            py: 2,
+          }}
+        >
+          <Box
+            sx={{
+              fontSize: "4rem",
+              opacity: 0.5,
+            }}
+          >
+            {restoreUser ? "🔄" : "🔑"}
+          </Box>
+          <Typography variant="h6" fontWeight={600} textAlign="center">
+            Are you sure?
+          </Typography>
+          <Typography color="text.secondary" textAlign="center">
+            The new password will match the username.
+          </Typography>
+        </Box>
       </DialogComponent>
 
       {/* Archive/Restore User Dialog using DialogComponent */}

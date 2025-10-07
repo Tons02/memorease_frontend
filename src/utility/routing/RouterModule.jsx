@@ -26,6 +26,7 @@ import MessengerPage from "../../pages/ChatMessage/MessengerPage";
 import VerificationPage from "../../pages/VerificationPage";
 import TermsAndAgreement from "../../pages/TermsAndAgreement/TermsAndAgreement";
 import TermsAndAgreementCustomer from "../../pages/TermsAndAgreementCustomer";
+import CustomerDeceased from "../../pages/CustomerDeceased/CustomerDeceased";
 
 const router = createBrowserRouter([
   {
@@ -51,6 +52,10 @@ const router = createBrowserRouter([
       {
         path: "/customer-reservation",
         element: <CustomerReservation />,
+      },
+      {
+        path: "/customer-deceased",
+        element: <CustomerDeceased />,
       },
       {
         path: "/contact",

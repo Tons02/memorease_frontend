@@ -140,19 +140,49 @@ const HomePage = () => {
       <Box
         sx={{
           position: "relative",
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${
-            lotCemetery?.data[0]?.profile_picture || cemeteryBanner
-          })`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundAttachment: isMobile ? "scroll" : "fixed",
           height: { xs: 300, md: 500 },
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           color: "#fff",
+          overflow: "hidden",
         }}
       >
+        {lotCemetery?.data[0]?.profile_picture?.endsWith(".mp4") ? (
+          <video
+            src={lotCemetery.data[0].profile_picture}
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              zIndex: -1,
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${
+                lotCemetery?.data[0]?.profile_picture || cemeteryBanner
+              })`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundAttachment: isMobile ? "scroll" : "fixed",
+              zIndex: -1,
+            }}
+          />
+        )}
         <Container maxWidth="lg">
           <Fade in timeout={1000}>
             <Box textAlign="center">

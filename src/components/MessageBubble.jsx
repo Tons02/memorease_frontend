@@ -1,8 +1,17 @@
 import React from "react";
-import { Box, Typography, Avatar } from "@mui/material";
+import { Box, Typography, Paper } from "@mui/material";
 
-const MessageBubble = ({ text, isOwn, timestamp }) => {
-  const formatTime = (time) => {
+const MessageBubble = ({ text, isOwn, timestamp, attachments }) => {
+  // Parse attachments if it's a string
+  let parsedAttachments = [];
+  try {
+    parsedAttachments =
+      typeof attachments === "string" ? JSON.parse(attachments) : attachments;
+  } catch (error) {
+    console.error("Failed to parse attachments:", error);
+  }
+
+  const formattedTime = (time) => {
     const date = new Date(time);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
@@ -12,51 +21,97 @@ const MessageBubble = ({ text, isOwn, timestamp }) => {
       sx={{
         display: "flex",
         justifyContent: isOwn ? "flex-end" : "flex-start",
-        mb: 1,
-        alignItems: "flex-end",
+        mb: 2,
       }}
     >
-      <Box>
-        <Box
-          sx={{
-            bgcolor: isOwn ? "#15803d" : "#e0e0e0",
-            color: isOwn ? "white" : "black",
-            p: 1.5,
-            px: 2,
-            borderRadius: 3,
-            wordBreak: "break-word",
-
-            // Responsive max width
-            maxWidth: {
-              xs: "100px", // 👈 mobile
-              sm: "350px", // 👈 tablet
-              md: "650px", // 👈 laptop and up
-            },
-          }}
-        >
-          <Typography
+      <Paper
+        elevation={1}
+        sx={{
+          p: 1.5,
+          maxWidth: "70%",
+          backgroundColor: isOwn ? "#e3f2fd" : "#ffffff",
+          borderRadius: 2,
+        }}
+      >
+        {/* Attachments Display */}
+        {parsedAttachments && parsedAttachments.length > 0 && (
+          <Box
             sx={{
-              whiteSpace: "pre-wrap",
+              mb: text ? 1 : 0,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
+          >
+            {parsedAttachments.map((attachment, index) => {
+              const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(
+                attachment.url
+              );
+              const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(attachment.url);
+
+              return (
+                <Box key={index}>
+                  {isImage ? (
+                    <img
+                      src={attachment.url}
+                      alt={`attachment-${index}`}
+                      style={{
+                        maxWidth: "300px",
+                        width: "100%",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        display: "block",
+                      }}
+                      onClick={() => window.open(attachment.url, "_blank")}
+                    />
+                  ) : isVideo ? (
+                    <video
+                      src={attachment.url}
+                      controls
+                      style={{
+                        maxWidth: "300px",
+                        width: "100%",
+                        borderRadius: "8px",
+                        display: "block",
+                      }}
+                    />
+                  ) : (
+                    <Typography variant="caption" color="textSecondary">
+                      📎 {attachment.name || "Attachment"}
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
+        )}
+
+        {/* Message Text */}
+        {text && (
+          <Typography
+            variant="body1"
+            sx={{
               wordBreak: "break-word",
+              whiteSpace: "pre-wrap",
             }}
           >
             {text}
           </Typography>
-        </Box>
+        )}
 
+        {/* Timestamp */}
         <Typography
           variant="caption"
           color="textSecondary"
           sx={{
+            display: "block",
             mt: 0.5,
-            ml: isOwn ? 0 : 1,
-            display: "flex",
-            justifyContent: isOwn ? "flex-end" : "flex-start",
+            textAlign: "right",
           }}
         >
-          {formatTime(timestamp)}
+          {formattedTime(timestamp)}
         </Typography>
-      </Box>
+      </Paper>
     </Box>
   );
 };

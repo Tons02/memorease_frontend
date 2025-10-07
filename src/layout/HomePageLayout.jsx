@@ -146,10 +146,11 @@ function HomePageLayOut(props) {
 
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "About", path: "/" },
+    // { name: "About", path: "/" },
     { name: "MapsDropdown" },
     // { name: "Contact", path: "/contact" },
     !isLoggedIn ? null : { name: "Reservation", path: "/customer-reservation" },
+    !isLoggedIn ? null : { name: "Deceased", path: "/customer-deceased" },
     // No more Logout here
     isLoggedIn ? null : { name: "Login", path: "/login" },
   ].filter(Boolean);

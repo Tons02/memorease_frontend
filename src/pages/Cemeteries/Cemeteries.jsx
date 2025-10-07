@@ -658,21 +658,50 @@ const Cemeteries = () => {
                       >
                         {/* Image Slider Section */}
                         <Box sx={{ position: "relative" }}>
-                          <CardMedia
-                            component="img"
-                            height="180"
-                            image={displayImages[currentIndex] || defaultImage}
-                            alt={`Lot ${lot.lot_number} - Image ${
-                              currentIndex + 1
-                            }`}
-                            sx={{
-                              objectFit: "contain",
-                              backgroundColor: "#f5f5f5",
-                              height: { xs: "150px", sm: "180px" },
-                            }}
-                          />
+                          {(() => {
+                            const currentMedia = displayImages[currentIndex];
+                            const isVideo =
+                              currentMedia &&
+                              (currentMedia.endsWith(".mp4") ||
+                                currentMedia.endsWith(".mov") ||
+                                currentMedia.endsWith(".avi") ||
+                                currentMedia.endsWith(".mkv") ||
+                                currentMedia.includes("video")); // optional MIME-type check
 
-                          {/* Image Navigation - Only show if more than 1 image */}
+                            if (isVideo) {
+                              return (
+                                <CardMedia
+                                  component="video"
+                                  height="180"
+                                  controls
+                                  src={currentMedia}
+                                  sx={{
+                                    objectFit: "contain",
+                                    backgroundColor: "#000",
+                                    height: { xs: "150px", sm: "180px" },
+                                  }}
+                                />
+                              );
+                            } else {
+                              return (
+                                <CardMedia
+                                  component="img"
+                                  height="180"
+                                  image={currentMedia || defaultImage}
+                                  alt={`Lot ${lot.lot_number} - Image ${
+                                    currentIndex + 1
+                                  }`}
+                                  sx={{
+                                    objectFit: "contain",
+                                    backgroundColor: "#f5f5f5",
+                                    height: { xs: "150px", sm: "180px" },
+                                  }}
+                                />
+                              );
+                            }
+                          })()}
+
+                          {/* Navigation arrows */}
                           {displayImages.length > 1 && (
                             <>
                               <IconButton
@@ -715,7 +744,7 @@ const Cemeteries = () => {
                                 <ChevronRight fontSize="small" />
                               </IconButton>
 
-                              {/* Image Indicators */}
+                              {/* Image indicators and counter */}
                               <Box
                                 sx={{
                                   position: "absolute",
@@ -738,7 +767,6 @@ const Cemeteries = () => {
                                           ? "white"
                                           : "rgba(255, 255, 255, 0.5)",
                                       cursor: "pointer",
-                                      transition: "all 0.2s",
                                     }}
                                     onClick={() =>
                                       setCurrentImageIndex((prev) => ({
@@ -750,7 +778,6 @@ const Cemeteries = () => {
                                 ))}
                               </Box>
 
-                              {/* Image Counter */}
                               <Box
                                 sx={{
                                   position: "absolute",
@@ -1001,7 +1028,7 @@ const Cemeteries = () => {
               defaultValue={null}
               render={({ field }) => (
                 <FileUploadInput
-                  title="Second Image"
+                  title="Second Image/Video"
                   name="second_lot_image"
                   value={field.value}
                   onChange={field.onChange}
@@ -1020,7 +1047,7 @@ const Cemeteries = () => {
               defaultValue={null}
               render={({ field }) => (
                 <FileUploadInput
-                  title="Third Image"
+                  title="Third Image/Video"
                   name="third_lot_image"
                   value={field.value}
                   onChange={field.onChange}
@@ -1039,7 +1066,7 @@ const Cemeteries = () => {
               defaultValue={null}
               render={({ field }) => (
                 <FileUploadInput
-                  title="Fourth Image"
+                  title="Fourth Image/Video"
                   name="fourth_lot_image"
                   value={field.value}
                   onChange={field.onChange}
