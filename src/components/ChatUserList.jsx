@@ -120,7 +120,9 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
           .join(" "),
         avatar: otherUser.profile_picture,
         conversationId: conversation.id,
-        lastMessage: lastMessage?.body || "No messages yet",
+        lastMessage: lastMessage?.attachments
+          ? "📎 Attachment"
+          : lastMessage?.body || "No messages yet",
         lastMessageTime: lastMessage?.created_at,
         hasUnread,
         unreadCount,
@@ -174,9 +176,8 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
         await receivedMessageCount({
           params: { id: user.conversationId },
         }).unwrap();
-        
-        refetch();
 
+        refetch();
       } catch (error) {
         console.error("Failed to mark messages as read:", error);
       }

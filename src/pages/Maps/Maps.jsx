@@ -52,6 +52,7 @@ import { Card } from "stream-chat-react";
 const Cemeteries = () => {
   const isLoggedIn = !!localStorage.getItem("token");
   const userData = localStorage.getItem("user");
+  const [popupOpen, setPopupOpen] = useState(false);
   const emailVerified = localStorage.getItem("email_verified");
   const mapRef = useRef(null);
   const [selectedLot, setSelectedLot] = useState(null);
@@ -277,6 +278,14 @@ const Cemeteries = () => {
     return null;
   };
 
+  function PopupEventHandler() {
+    useMapEvents({
+      popupopen: () => setPopupOpen(true),
+      popupclose: () => setPopupOpen(false),
+    });
+    return null;
+  }
+
   const [isCheckTerm, setIsCheckTerm] = useState(false);
 
   return (
@@ -324,53 +333,56 @@ const Cemeteries = () => {
                 width: 150,
               }}
             />
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: 16,
-                right: 16,
-                zIndex: 1000,
-                backgroundColor: "#fff",
-                padding: 2,
-                borderRadius: 2,
-                boxShadow: 3,
-                fontSize: 14,
-              }}
-            >
-              <Typography variant="subtitle2" gutterBottom>
-                MAP LEGENDS
-              </Typography>
-              <Box display="flex" alignItems="center" mb={0.5}>
-                <Box
-                  width={16}
-                  height={16}
-                  bgcolor="#15803d"
-                  borderRadius="50%"
-                  mr={1}
-                />
-                Available Lot
+            {!popupOpen && !openDialog && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 16,
+                  right: 16,
+                  zIndex: 1000,
+                  backgroundColor: "#fff",
+                  padding: 2,
+                  borderRadius: 2,
+                  boxShadow: 3,
+                  fontSize: 14,
+                }}
+              >
+                <Typography variant="subtitle2" gutterBottom>
+                  MAP LEGENDS
+                </Typography>
+                <Box display="flex" alignItems="center" mb={0.5}>
+                  <Box
+                    width={16}
+                    height={16}
+                    bgcolor="#15803d"
+                    borderRadius="50%"
+                    mr={1}
+                  />
+                  Available Lot
+                </Box>
+                <Box display="flex" alignItems="center" mb={0.5}>
+                  <Box
+                    width={16}
+                    height={16}
+                    bgcolor="yellow"
+                    borderRadius="50%"
+                    mr={1}
+                  />
+                  Reserved Lot
+                </Box>
+                <Box display="flex" alignItems="center" mb={0.5}>
+                  <Box
+                    width={16}
+                    height={16}
+                    bgcolor="red"
+                    borderRadius="50%"
+                    mr={1}
+                  />
+                  Sold Lot
+                </Box>
+                {/* Your content here */}
               </Box>
-              <Box display="flex" alignItems="center" mb={0.5}>
-                <Box
-                  width={16}
-                  height={16}
-                  bgcolor="yellow"
-                  borderRadius="50%"
-                  mr={1}
-                />
-                Reserved Lot
-              </Box>
-              <Box display="flex" alignItems="center" mb={0.5}>
-                <Box
-                  width={16}
-                  height={16}
-                  bgcolor="red"
-                  borderRadius="50%"
-                  mr={1}
-                />
-                Sold Lot
-              </Box>
-            </Box>
+            )}
             <MapRefHandler
               setMap={(mapInstance) => (mapRef.current = mapInstance)}
             />
@@ -394,6 +406,7 @@ const Cemeteries = () => {
                   fillOpacity: 0.5,
                 }}
               >
+                <PopupEventHandler />
                 <Popup maxWidth={350}>
                   <Box
                     sx={{
@@ -563,7 +576,7 @@ const Cemeteries = () => {
                     </Box>
 
                     {/* Content Section */}
-                    <Box sx={{ p: 2 }}>
+                    <Box sx={{ p: 1 }}>
                       {/* Header with Lot Number and Status */}
                       <Box
                         sx={{
@@ -626,21 +639,27 @@ const Cemeteries = () => {
                         </Box>
                       )}
 
-                      <Divider sx={{ my: 1.5 }} />
+                      <Divider />
 
                       {/* Pricing Information */}
-                      <Box sx={{ mb: 1.5 }}>
+                      <Box
+                        sx={{
+                          padding: 0,
+                        }}
+                      >
                         <Box
                           sx={{
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            mb: 0.5,
                           }}
                         >
                           <Typography
                             variant="body2"
-                            sx={{ fontWeight: "medium" }}
+                            sx={{
+                              fontWeight: "medium",
+                              margin: 0,
+                            }}
                           >
                             💰 Total Price:
                           </Typography>
@@ -684,7 +703,6 @@ const Cemeteries = () => {
                           sx={{
                             display: "flex",
                             justifyContent: "center",
-                            mt: 2,
                           }}
                         >
                           {emailVerified !== null && (

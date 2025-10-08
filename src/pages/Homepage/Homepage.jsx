@@ -444,120 +444,12 @@ const HomePage = () => {
           </Box>
         ) : (
           <>
-            {/* Desktop and Tablet: Show 4 cards at once with slider functionality */}
-            {!isMobile ? (
-              <Box sx={{ "& .slick-dots": { bottom: -50 } }}>
-                <Slider {...sliderSettings}>
-                  {lotData?.data?.data
-                    ?.filter((lot) => lot.status === "available")
-                    ?.map((lot, index) => (
-                      <Box key={lot.id} sx={{ px: 2 }}>
-                        <Grow in timeout={800 + index * 100}>
-                          <Card
-                            elevation={2}
-                            sx={{
-                              borderRadius: 3,
-                              overflow: "hidden",
-                              transition: "all 0.3s ease",
-                              height: 420,
-                              "&:hover": {
-                                elevation: 8,
-                                transform: "translateY(-5px)",
-                              },
-                            }}
-                          >
-                            <CardMedia
-                              component="img"
-                              height="200"
-                              image={lot.lot_image || lotImage}
-                              alt={`Lot ${lot.lot_number}`}
-                              sx={{
-                                transition: "transform 0.3s ease",
-                                "&:hover": {
-                                  transform: "scale(1.1)",
-                                },
-                              }}
-                            />
-                            <CardContent
-                              sx={{
-                                p: 3,
-                                height: 200,
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "space-between",
-                              }}
-                            >
-                              <Box>
-                                <Box
-                                  display="flex"
-                                  justifyContent="space-between"
-                                  alignItems="start"
-                                >
-                                  <Typography
-                                    variant="h6"
-                                    sx={{ fontWeight: "bold" }}
-                                  >
-                                    Lot {lot.lot_number}
-                                  </Typography>
-                                  <Chip
-                                    label="Available"
-                                    color="success"
-                                    size="small"
-                                    variant="outlined"
-                                  />
-                                </Box>
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                  sx={{ minHeight: 40 }}
-                                >
-                                  {lot.description ||
-                                    "Premium lot in a peaceful location with easy access."}
-                                </Typography>
-                              </Box>
-                              <Box>
-                                <Typography
-                                  variant="h6"
-                                  color="success.main"
-                                  sx={{ fontWeight: "bold", mb: 2 }}
-                                >
-                                  ₱{Number(lot.price).toLocaleString()}
-                                </Typography>
-                                <Button
-                                  component={RouterLink}
-                                  to="/maps"
-                                  variant="contained"
-                                  fullWidth
-                                  sx={{
-                                    bgcolor: "success.main",
-                                    py: 1.5,
-                                    fontWeight: "bold",
-                                    "&:hover": {
-                                      bgcolor: "success.dark", // keep consistent with theme
-                                      transform: "translateY(-1px)",
-                                    },
-                                    transition: "all 0.3s ease",
-                                  }}
-                                  endIcon={<ArrowForward />}
-                                >
-                                  Inquire Now
-                                </Button>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        </Grow>
-                      </Box>
-                    ))}
-                </Slider>
-              </Box>
-            ) : (
-              /* Mobile: Grid layout for better touch interaction */
-              <Grid container spacing={3}>
+            <Box sx={{ "& .slick-dots": { bottom: -50 } }}>
+              <Slider {...sliderSettings}>
                 {lotData?.data?.data
                   ?.filter((lot) => lot.status === "available")
-                  ?.slice(0, 8) // Show first 8 lots on mobile
                   ?.map((lot, index) => (
-                    <Grid item xs={12} key={lot.id}>
+                    <Box key={lot.id} sx={{ px: { xs: 1, sm: 2 } }}>
                       <Grow in timeout={800 + index * 100}>
                         <Card
                           elevation={2}
@@ -565,6 +457,7 @@ const HomePage = () => {
                             borderRadius: 3,
                             overflow: "hidden",
                             transition: "all 0.3s ease",
+                            height: { xs: 400, sm: 420 },
                             "&:hover": {
                               elevation: 8,
                               transform: "translateY(-5px)",
@@ -573,76 +466,110 @@ const HomePage = () => {
                         >
                           <CardMedia
                             component="img"
-                            height="200"
                             image={lot.lot_image || lotImage}
                             alt={`Lot ${lot.lot_number}`}
                             sx={{
+                              height: { xs: 180, sm: 200 },
+                              width: "100%",
+                              objectFit: "cover",
                               transition: "transform 0.3s ease",
                               "&:hover": {
                                 transform: "scale(1.1)",
                               },
                             }}
                           />
-                          <CardContent sx={{ p: 3 }}>
-                            <Box
-                              display="flex"
-                              justifyContent="space-between"
-                              alignItems="start"
-                              sx={{ mb: 2 }}
-                            >
+                          <CardContent
+                            sx={{
+                              p: { xs: 2, sm: 3 },
+                              height: { xs: 220, sm: 220 },
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Box>
+                              <Box
+                                display="flex"
+                                justifyContent="space-between"
+                                alignItems="start"
+                                sx={{ mb: 1 }}
+                              >
+                                <Typography
+                                  variant="h6"
+                                  sx={{
+                                    fontWeight: "bold",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    maxWidth: { xs: "180px", sm: "200px" },
+                                    pr: 1,
+                                  }}
+                                  title={`Lot ${lot.lot_number}`}
+                                >
+                                  Lot {lot.lot_number}
+                                </Typography>
+                                <Chip
+                                  label="Available"
+                                  color="success"
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              </Box>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{
+                                  minHeight: { xs: 36, sm: 40 },
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical",
+                                }}
+                                title={
+                                  lot.description ||
+                                  "Premium lot in a peaceful location with easy access."
+                                }
+                              >
+                                {lot.description ||
+                                  "Premium lot in a peaceful location with easy access."}
+                              </Typography>
+                            </Box>
+                            <Box>
                               <Typography
                                 variant="h6"
-                                sx={{ fontWeight: "bold" }}
+                                color="success.main"
+                                sx={{ fontWeight: "bold", mb: 2 }}
                               >
-                                Lot {lot.lot_number}
+                                ₱{Number(lot.price).toLocaleString()}
                               </Typography>
-                              <Chip
-                                label="Available"
-                                color="success"
-                                size="small"
-                                variant="outlined"
-                              />
+                              <Button
+                                component={RouterLink}
+                                to="/maps"
+                                variant="contained"
+                                fullWidth
+                                sx={{
+                                  bgcolor: "success.main",
+                                  py: 1.5,
+                                  fontWeight: "bold",
+                                  "&:hover": {
+                                    bgcolor: "success.dark",
+                                    transform: "translateY(-1px)",
+                                  },
+                                  transition: "all 0.3s ease",
+                                }}
+                                endIcon={<ArrowForward />}
+                              >
+                                Inquire Now
+                              </Button>
                             </Box>
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{ mb: 2 }}
-                            >
-                              {lot.description ||
-                                "Premium lot in a peaceful location with easy access."}
-                            </Typography>
-                            <Typography
-                              variant="h6"
-                              color="success.main"
-                              sx={{ fontWeight: "bold", mb: 2 }}
-                            >
-                              ₱{Number(lot.price).toLocaleString()}
-                            </Typography>
-                            <Button
-                              component={RouterLink}
-                              to="/maps"
-                              variant="contained"
-                              color="success"
-                              fullWidth
-                              sx={{
-                                py: 1.5,
-                                fontWeight: "bold",
-                                "&:hover": {
-                                  transform: "translateY(-1px)",
-                                },
-                                transition: "all 0.3s ease",
-                              }}
-                              endIcon={<ArrowForward />}
-                            >
-                              Inquire Now
-                            </Button>
                           </CardContent>
                         </Card>
                       </Grow>
-                    </Grid>
+                    </Box>
                   ))}
-              </Grid>
-            )}
+              </Slider>
+            </Box>
           </>
         )}
       </Container>
