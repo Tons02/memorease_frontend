@@ -47,6 +47,14 @@ export const apiReservation = apiSlice
         }),
         invalidatesTags: ["Reservation", "Lots"],
       }),
+      walkInReservation: builder.mutation({
+        query: (body) => ({
+          url: `/reservation-walk-in`,
+          method: "POST",
+          body: body,
+        }),
+        invalidatesTags: ["Reservation", "Lots"],
+      }),
       updateReservation: builder.mutation({
         query: ({ id, formData }) => ({
           url: `/reservation/${id}`,
@@ -95,6 +103,7 @@ export const {
   useGetReservationSalesQuery,
   useLazyGetReservationExportQuery,
   useAddReservationMutation,
+  useWalkInReservationMutation,
   useApproveReservationMutation,
   useCancelReservationMutation,
   useRejectReservationMutation,

@@ -203,7 +203,7 @@ const Dashboard = () => {
           <Typography variant="h4" sx={{ fontWeight: 600 }}>
             Dashboard
           </Typography>
-          {/* <Button
+          <Button
             size="small"
             variant="contained"
             color="success"
@@ -216,7 +216,7 @@ const Dashboard = () => {
             ) : (
               "Cemetery Information"
             )}
-          </Button> */}
+          </Button>
         </Box>
 
         {/* Stats Grid */}
@@ -315,7 +315,7 @@ const Dashboard = () => {
         isDirty={true}
       >
         <Controller
-          name="profile_picture" // ✅ Match backend expected key
+          name="profile_picture"
           control={control}
           defaultValue={null}
           render={({ field }) => (

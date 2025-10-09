@@ -53,6 +53,13 @@ export const apiSlice = createApi({
         body: body,
       }),
     }),
+    changeEmail: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/change-email/${id}`,
+        method: "PATCH",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -64,4 +71,5 @@ export const {
   useResendVerificationMutation,
   useLogoutMutation,
   useChangePasswordMutation,
+  useChangeEmailMutation,
 } = apiSlice;

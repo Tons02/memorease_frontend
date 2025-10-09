@@ -90,12 +90,20 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Dashboard />,
+        element: (
+          <AccessPermissionContext permission="admin" context="routing">
+            <Dashboard />,
+          </AccessPermissionContext>
+        ),
       },
       {
         path: "masterlist",
         index: true,
-        element: <Masterlist />,
+        element: (
+          <AccessPermissionContext permission="admin" context="routing">
+            <Masterlist />,
+          </AccessPermissionContext>
+        ),
       },
       {
         path: "masterlist/cemeteries",

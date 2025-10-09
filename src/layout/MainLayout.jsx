@@ -40,14 +40,18 @@ import {
   TextField,
   CircularProgress,
   Badge,
+  colors,
 } from "@mui/material";
 import {
   AccountCircle,
+  AdminPanelSettingsTwoTone,
   Dashboard,
+  Email,
   EventAvailable,
   ExpandLess,
   ExpandMore,
   Home,
+  House,
   Map,
   MapsUgc,
   MessageRounded,
@@ -59,13 +63,20 @@ import ShareLocationIcon from "@mui/icons-material/ShareLocation";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import GroupIcon from "@mui/icons-material/Group";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
-import { useChangePasswordMutation } from "../redux/slices/apiSlice";
+import {
+  useChangeEmailMutation,
+  useChangePasswordMutation,
+} from "../redux/slices/apiSlice";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { changePasswordSchema } from "../validations/validation";
+import {
+  changeEmailSchema,
+  changePasswordSchema,
+} from "../validations/validation";
 import DialogComponent from "../components/DialogComponent";
 import ChatPopup from "../pages/ChatMessage/ChatPopup";
 import GavelIcon from "@mui/icons-material/Gavel";
+import { toast } from "sonner";
 
 const drawerWidth = 240;
 
@@ -154,6 +165,8 @@ export default function MiniDrawer() {
   const [openModalChangePassword, setOpenModalChangePassword] = useState(false);
   const storedData = JSON.parse(localStorage.getItem("user"));
   const [anchorEl, setAnchorEl] = useState(null);
+
+  const [openModalChangeEmail, setOpenModalChangeEmail] = React.useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
@@ -176,6 +189,20 @@ export default function MiniDrawer() {
     resolver: yupResolver(changePasswordSchema),
   });
 
+  const {
+    register: registerEmail,
+    handleSubmit: handleSubmitChangeEmail,
+    reset: resetEmail,
+    formState: { errors: emailErrors },
+  } = useForm({
+    defaultValues: {
+      new_email: "",
+    },
+    resolver: yupResolver(changeEmailSchema),
+  });
+
+  const [changeEmail, { isLoading: isChangeEmailLoading }] =
+    useChangeEmailMutation();
   const LoginUserCount = JSON.parse(localStorage.getItem("user"));
   const { data: conversationCounts, refetch: conversationCountsRefetch } =
     useGetConversationCountsQuery();
@@ -221,6 +248,31 @@ export default function MiniDrawer() {
           message: inputError?.detail,
         })
       );
+    }
+  };
+
+  const handleChangeEmail = async (data) => {
+    try {
+      console.log("userId userId:", LoginUser.id);
+      const response = await changeEmail({
+        id: LoginUser.id,
+        email: data.new_email, // ✅ Use the form data instead
+      }).unwrap();
+
+      setOpenModalChangeEmail(false);
+      resetEmail(); // ✅ Reset the email form
+      console.log("response email:", response);
+      toast.success("Email Successfully Changed");
+    } catch (error) {
+      console.log("error in email", error);
+      error?.data?.errors?.forEach((inputError) => {
+        const field = cleanPointer(inputError?.source?.pointer);
+        setError(field, {
+          type: "manual",
+          message: inputError?.detail,
+        });
+      });
+      toast.error(error?.data?.errors?.[0]?.detail || "Failed to change email");
     }
   };
 
@@ -271,8 +323,6 @@ export default function MiniDrawer() {
   const handleAvatarClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
-
-  console.log("Drawer open:", open);
 
   return (
     <>
@@ -340,6 +390,23 @@ export default function MiniDrawer() {
                     .filter(Boolean)
                     .join(" ")}
                 </MenuItem>
+                <MenuItem onClick={() => handleNavigation("/")}>
+                  <ListItemIcon>
+                    <House fontSize="small" />
+                  </ListItemIcon>
+                  Homepage
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    setOpenModalChangeEmail(true);
+                    handleClose();
+                  }}
+                >
+                  <ListItemIcon>
+                    <Email fontSize="small" />
+                  </ListItemIcon>
+                  Change Email
+                </MenuItem>
                 {/* <MenuItem>
                   <ListItemIcon>
                     <PersonIcon fontSize="small" />
@@ -370,126 +437,165 @@ export default function MiniDrawer() {
             </Box>
           </Toolbar>
         </AppBar>
-        <Drawer variant="permanent" open={open}>
-          <DrawerHeader>
+        <Drawer
+          variant="permanent"
+          open={open}
+          sx={{
+            "& .MuiDrawer-paper": {
+              background: theme.palette.grey[100],
+              borderRight: "1px solid #b0b0b0ff",
+              boxShadow: open ? "4px 0 10px rgba(199, 193, 193, 0.05)" : "none",
+              transition: "all 0.3s ease",
+            },
+          }}
+        >
+          <Toolbar sx={{ justifyContent: "center" }}>
+            {open && (
+              <Typography
+                variant="h6"
+                onClick={open ? handleDrawerClose : handleDrawerOpen}
+                sx={{
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  cursor: "pointer",
+                  color: "#15803d", // your primary color
+                  transition: "0.3s",
+                  "&:hover": {
+                    color: "#0f5e2d",
+                    transform: "scale(1.05)",
+                    textDecoration: "underline",
+                  },
+                }}
+              >
+                ADMIN
+              </Typography>
+            )}
             <DrawerHeader>
               <IconButton onClick={open ? handleDrawerClose : handleDrawerOpen}>
-                {open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+                {open ? (
+                  ""
+                ) : (
+                  <AdminPanelSettingsTwoTone sx={{ color: "#15803d" }} />
+                )}
               </IconButton>
             </DrawerHeader>
-          </DrawerHeader>
+          </Toolbar>
           <Divider />
           <List>
-            <ListItem disablePadding sx={{ display: "block" }}>
-              <ListItemButton
-                sx={[
-                  {
-                    minHeight: 48,
-                    px: 2.5,
-                  },
-                  open
-                    ? {
-                        justifyContent: "initial",
-                      }
-                    : {
-                        justifyContent: "center",
-                      },
-                ]}
-                onClick={() => handleNavigation("/admin")}
-              >
-                <ListItemIcon
+            {accessPermissions.includes("admin") && (
+              <ListItem disablePadding sx={{ display: "block" }}>
+                <ListItemButton
                   sx={[
                     {
-                      minWidth: 0,
-                      justifyContent: "center",
+                      minHeight: 48,
+                      px: 2.5,
                     },
                     open
                       ? {
-                          mr: 2,
+                          justifyContent: "initial",
                         }
                       : {
-                          mr: "auto",
+                          justifyContent: "center",
                         },
                   ]}
+                  onClick={() => handleNavigation("/admin")}
                 >
-                  <DashboardIcon
-                    sx={{
-                      maxWidth: 275,
-                      cursor: "pointer",
-                      color: theme.palette.secondary.main,
-                    }}
-                  />
-                </ListItemIcon>
-
-                <ListItemText
-                  primary="Dashboard"
-                  sx={[
-                    open
-                      ? {
-                          opacity: 1,
-                        }
-                      : {
-                          opacity: 0,
-                        },
-                  ]}
-                />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding sx={{ display: "block" }}>
-              <ListItemButton
-                sx={[
-                  {
-                    minHeight: 48,
-                    px: 2.5,
-                  },
-                  open
-                    ? {
-                        justifyContent: "initial",
-                      }
-                    : {
+                  <ListItemIcon
+                    sx={[
+                      {
+                        minWidth: 0,
                         justifyContent: "center",
                       },
-                ]}
-                onClick={() => handleNavigation("/")}
-              >
-                <ListItemIcon
+                      open
+                        ? {
+                            mr: 2,
+                          }
+                        : {
+                            mr: "auto",
+                          },
+                    ]}
+                  >
+                    <DashboardIcon
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
+                  </ListItemIcon>
+
+                  <ListItemText
+                    primary="Dashboard"
+                    sx={[
+                      open
+                        ? {
+                            opacity: 1,
+                          }
+                        : {
+                            opacity: 0,
+                          },
+                    ]}
+                  />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {/* {accessPermissions.includes("admin") && (
+              <ListItem disablePadding sx={{ display: "block" }}>
+                <ListItemButton
                   sx={[
                     {
-                      minWidth: 0,
-                      justifyContent: "center",
+                      minHeight: 48,
+                      px: 2.5,
                     },
                     open
                       ? {
-                          mr: 2,
+                          justifyContent: "initial",
                         }
                       : {
-                          mr: "auto",
+                          justifyContent: "center",
                         },
                   ]}
+                  onClick={() => handleNavigation("/")}
                 >
-                  <Home
-                    sx={{
-                      maxWidth: 275,
-                      cursor: "pointer",
-                      color: theme.palette.secondary.main,
-                    }}
-                  />
-                </ListItemIcon>
+                  <ListItemIcon
+                    sx={[
+                      {
+                        minWidth: 0,
+                        justifyContent: "center",
+                      },
+                      open
+                        ? {
+                            mr: 2,
+                          }
+                        : {
+                            mr: "auto",
+                          },
+                    ]}
+                  >
+                    <Home
+                      sx={{
+                        maxWidth: 275,
+                        cursor: "pointer",
+                        color: theme.palette.secondary.main,
+                      }}
+                    />
+                  </ListItemIcon>
 
-                <ListItemText
-                  primary="HomePage"
-                  sx={[
-                    open
-                      ? {
-                          opacity: 1,
-                        }
-                      : {
-                          opacity: 0,
-                        },
-                  ]}
-                />
-              </ListItemButton>
-            </ListItem>
+                  <ListItemText
+                    primary="HomePage"
+                    sx={[
+                      open
+                        ? {
+                            opacity: 1,
+                          }
+                        : {
+                            opacity: 0,
+                          },
+                    ]}
+                  />
+                </ListItemButton>
+              </ListItem>
+            )} */}
             {accessPermissions.includes("admin") && (
               <ListItem disablePadding sx={{ display: "block" }}>
                 <ListItemButton
@@ -751,131 +857,144 @@ export default function MiniDrawer() {
                 </ListItemButton>
               )}
             </Collapse>
-
-            <ListItem disablePadding sx={{ display: "block" }}>
-              <ListItemButton
-                sx={[
-                  {
-                    minHeight: 48,
-                    px: 2.5,
-                  },
-                  open
-                    ? {
-                        justifyContent: "initial",
-                      }
-                    : {
-                        justifyContent: "center",
-                      },
-                ]}
-                onClick={() =>
-                  handleNavigation("/admin/user-management/user-accounts")
-                }
-              >
-                <ListItemIcon
+            {accessPermissions.includes("admin") && (
+              <ListItem disablePadding sx={{ display: "block" }}>
+                <ListItemButton
                   sx={[
                     {
-                      minWidth: 0,
-                      justifyContent: "center",
+                      minHeight: 48,
+                      px: 2.5,
                     },
                     open
                       ? {
-                          mr: 2,
+                          justifyContent: "initial",
                         }
                       : {
-                          mr: "auto",
+                          justifyContent: "center",
                         },
                   ]}
+                  onClick={() =>
+                    handleNavigation("/admin/user-management/user-accounts")
+                  }
                 >
-                  <GroupIcon
-                    sx={{
-                      maxWidth: 275,
-                      cursor: "pointer",
-                      color: theme.palette.secondary.main,
-                    }}
-                  />
-                </ListItemIcon>
-
-                <ListItemText
-                  primary="User Management"
-                  sx={[
-                    open
-                      ? {
-                          opacity: 1,
-                        }
-                      : {
-                          opacity: 0,
-                        },
-                  ]}
-                />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding sx={{ display: "block" }}>
-              <ListItemButton
-                sx={[
-                  {
-                    minHeight: 48,
-                    px: 2.5,
-                  },
-                  open
-                    ? {
-                        justifyContent: "initial",
-                      }
-                    : {
+                  <ListItemIcon
+                    sx={[
+                      {
+                        minWidth: 0,
                         justifyContent: "center",
                       },
-                ]}
-                onClick={() => handleNavigation("/admin/messages")}
-              >
-                <ListItemIcon
-                  sx={[
-                    {
-                      minWidth: 0,
-                      justifyContent: "center",
-                    },
-                    open
-                      ? {
-                          mr: 2,
-                        }
-                      : {
-                          mr: "auto",
-                        },
-                  ]}
-                >
-                  {/* 👇 Wrap icon in Badge when sidebar is closed */}
-                  <Badge
-                    badgeContent={conversationCounts?.data?.updated_count || 0}
-                    color="error"
+                      open
+                        ? {
+                            mr: 2,
+                          }
+                        : {
+                            mr: "auto",
+                          },
+                    ]}
                   >
-                    <MessageRounded
+                    <GroupIcon
                       sx={{
                         maxWidth: 275,
                         cursor: "pointer",
                         color: theme.palette.secondary.main,
                       }}
                     />
-                  </Badge>
-                </ListItemIcon>
+                  </ListItemIcon>
 
-                {/* 👇 Show count inline when sidebar is open */}
-                <ListItemText
-                  primary={`Messages`}
+                  <ListItemText
+                    primary="User Management"
+                    sx={[
+                      open
+                        ? {
+                            opacity: 1,
+                          }
+                        : {
+                            opacity: 0,
+                          },
+                    ]}
+                  />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {accessPermissions.includes("admin") && (
+              <ListItem disablePadding sx={{ display: "block" }}>
+                <ListItemButton
                   sx={[
+                    {
+                      minHeight: 48,
+                      px: 2.5,
+                    },
                     open
                       ? {
-                          opacity: 1,
+                          justifyContent: "initial",
                         }
                       : {
-                          opacity: 0,
+                          justifyContent: "center",
                         },
                   ]}
-                />
-              </ListItemButton>
-            </ListItem>
+                  onClick={() => handleNavigation("/admin/messages")}
+                >
+                  <ListItemIcon
+                    sx={[
+                      {
+                        minWidth: 0,
+                        justifyContent: "center",
+                      },
+                      open
+                        ? {
+                            mr: 2,
+                          }
+                        : {
+                            mr: "auto",
+                          },
+                    ]}
+                  >
+                    {/* 👇 Wrap icon in Badge when sidebar is closed */}
+                    <Badge
+                      badgeContent={
+                        conversationCounts?.data?.updated_count || 0
+                      }
+                      color="error"
+                    >
+                      <MessageRounded
+                        sx={{
+                          maxWidth: 275,
+                          cursor: "pointer",
+                          color: theme.palette.secondary.main,
+                        }}
+                      />
+                    </Badge>
+                  </ListItemIcon>
+
+                  {/* 👇 Show count inline when sidebar is open */}
+                  <ListItemText
+                    primary={`Messages`}
+                    sx={[
+                      open
+                        ? {
+                            opacity: 1,
+                          }
+                        : {
+                            opacity: 0,
+                          },
+                    ]}
+                  />
+                </ListItemButton>
+              </ListItem>
+            )}
           </List>
           <Divider />
           <List></List>
         </Drawer>
-        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            backgroundColor: "#f9fafb",
+            minHeight: "100vh",
+          }}
+        >
           <DrawerHeader />
           <Outlet />
         </Box>
@@ -973,6 +1092,33 @@ export default function MiniDrawer() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* change email  */}
+      <DialogComponent
+        open={openModalChangeEmail}
+        onClose={() => {
+          setOpenModalChangeEmail(false);
+          resetEmail();
+        }}
+        onSubmit={handleSubmitChangeEmail(handleChangeEmail)}
+        title="Change Email"
+        icon={<Email color="secondary" />}
+        isLoading={isChangeEmailLoading}
+        submitIcon={<Email />}
+        submitLabel="Confirm"
+        formMethods={{ handleSubmit: handleSubmitChangeEmail }}
+      >
+        <TextField
+          {...registerEmail("new_email")}
+          required
+          label="New Email"
+          margin="dense"
+          type="email"
+          fullWidth
+          error={!!emailErrors.new_email}
+          helperText={emailErrors.new_email?.message}
+        />
+      </DialogComponent>
 
       {/* Snackbar */}
       <Snackbar

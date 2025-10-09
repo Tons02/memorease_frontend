@@ -8,6 +8,7 @@ import {
   Box,
   Breadcrumbs,
   Button,
+  Chip,
   CircularProgress,
   Divider,
   FormControl,
@@ -50,7 +51,7 @@ import {
 import dayjs from "dayjs";
 
 const CustomerReservation = () => {
-  const [status, setStatus] = useState("pending");
+  const [status, setStatus] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [reason, setReason] = useState("");
@@ -215,8 +216,12 @@ const CustomerReservation = () => {
       field: "expires_at",
       headerName: "Expires At",
       align: "center",
-      valueGetter: (row) => dayjs(row.expires_at).format("MM/DD/YYYY hh:mm A"),
+      valueGetter: (row) =>
+        row.expires_at
+          ? dayjs(row.expires_at).format("MM/DD/YYYY hh:mm A")
+          : "N/A",
     },
+
     {
       field: "remarks",
       headerName: status === "canceled" ? "Reason" : "Remarks",
@@ -226,6 +231,29 @@ const CustomerReservation = () => {
       field: "status",
       headerName: "Status",
       align: "center",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const statusConfig = {
+          approved: { label: "Approved", color: "success" },
+          canceled: { label: "Canceled", color: "error" },
+          pending: { label: "Pending", color: "warning" },
+          rejected: { label: "Rejected", color: "error" },
+        };
+
+        const config = statusConfig[params.row.status?.toLowerCase()] || {
+          label: params.value,
+          color: "default",
+        };
+
+        return (
+          <Chip
+            label={config.label}
+            color={config.color}
+            size="small"
+            variant="outlined"
+          />
+        );
+      },
     },
     {
       field: "created_at",

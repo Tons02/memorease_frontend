@@ -34,13 +34,17 @@ import LockIcon from "@mui/icons-material/Lock";
 
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import {
+  useChangeEmailMutation,
   useChangePasswordMutation,
   useLogoutMutation,
 } from "../redux/slices/apiSlice";
 import pmpd_logo from "../assets/pmpd_logo.png";
-import { GppMaybe, VerifiedUser } from "@mui/icons-material";
+import { Email, GppMaybe, VerifiedUser } from "@mui/icons-material";
 import DialogComponent from "../components/DialogComponent";
-import { changePasswordSchema } from "../validations/validation";
+import {
+  changePasswordSchema,
+  changeEmailSchema,
+} from "../validations/validation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "sonner";
@@ -55,10 +59,11 @@ function HomePageLayOut(props) {
   const [openLogoutDialog, setOpenLogoutDialog] = React.useState(false);
   const [anchorElMaps, setAnchorElMaps] = React.useState(null);
   const [anchorElAvatar, setAnchorElAvatar] = React.useState(null);
+  const [userId, setUserId] = React.useState(null);
   const emailVerified = localStorage.getItem("email_verified");
   const [openModalChangePassword, setOpenModalChangePassword] =
     React.useState(false);
-  const [openModal, setOpenModal] = React.useState(false);
+  const [openModalChangeEmail, setOpenModalChangeEmail] = React.useState(false);
   const {
     register,
     reset,
@@ -73,6 +78,18 @@ function HomePageLayOut(props) {
       new_password_confirmation: "",
     },
     resolver: yupResolver(changePasswordSchema),
+  });
+
+  const {
+    register: registerEmail,
+    handleSubmit: handleSubmitChangeEmail,
+    reset: resetEmail,
+    formState: { errors: emailErrors },
+  } = useForm({
+    defaultValues: {
+      new_email: "",
+    },
+    resolver: yupResolver(changeEmailSchema), // ✅ Add validation
   });
 
   const navigate = useNavigate();
@@ -116,6 +133,8 @@ function HomePageLayOut(props) {
   };
 
   const [changePassword, { isLoading }] = useChangePasswordMutation();
+  const [changeEmail, { isLoading: isChangeEmailLoading }] =
+    useChangeEmailMutation();
 
   const handleMapsClick = (event) => {
     setAnchorElMaps(event.currentTarget);
@@ -143,6 +162,31 @@ function HomePageLayOut(props) {
   } catch (error) {
     console.error("Invalid user data in localStorage", error);
   }
+
+  const handleChangeEmail = async (data) => {
+    try {
+      console.log("userId userId:", userId);
+      const response = await changeEmail({
+        id: userId,
+        email: data.new_email, // ✅ Use the form data instead
+      }).unwrap();
+
+      setOpenModalChangeEmail(false);
+      resetEmail(); // ✅ Reset the email form
+      console.log("response email:", response);
+      toast.success("Email Successfully Changed");
+    } catch (error) {
+      console.log("error in email", error?.data?.errors?.[0]?.detail);
+      error?.data?.errors?.forEach((inputError) => {
+        const field = cleanPointer(inputError?.source?.pointer);
+        setError(field, {
+          type: "manual",
+          message: inputError?.detail,
+        });
+      });
+      toast.error(error?.data?.errors?.[0]?.detail || "Failed to change email");
+    }
+  };
 
   const navItems = [
     { name: "Home", path: "/" },
@@ -374,6 +418,17 @@ function HomePageLayOut(props) {
                   </MenuItem> */}
                   <MenuItem
                     onClick={() => {
+                      setOpenModalChangeEmail(true);
+                      handleAvatarClose();
+                    }}
+                  >
+                    <ListItemIcon>
+                      <Email fontSize="small" />
+                    </ListItemIcon>
+                    Change Email
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
                       setOpenModalChangePassword(true);
                       handleAvatarClose();
                     }}
@@ -383,6 +438,7 @@ function HomePageLayOut(props) {
                     </ListItemIcon>
                     Change Password
                   </MenuItem>
+
                   <MenuItem
                     onClick={() => {
                       setOpenLogoutDialog(true);
@@ -428,6 +484,7 @@ function HomePageLayOut(props) {
         <Outlet />
       </Box>
 
+      {/* change password  */}
       <DialogComponent
         open={openModalChangePassword}
         onClose={() => setOpenModalChangePassword(false)}
@@ -437,7 +494,7 @@ function HomePageLayOut(props) {
         isLoading={isLoading}
         submitIcon={<LogoutIcon />}
         submitLabel="Confirm"
-        formMethods={{ handleSubmit, reset }}
+        formMethods={{ handleSubmit }}
       >
         <Divider />
         <TextField
@@ -466,6 +523,33 @@ function HomePageLayOut(props) {
           fullWidth
           error={!!errors.new_password_confirmation}
           helperText={errors.new_password_confirmation?.message}
+        />
+      </DialogComponent>
+
+      {/* change email  */}
+      <DialogComponent
+        open={openModalChangeEmail}
+        onClose={() => {
+          setOpenModalChangeEmail(false);
+          resetEmail(); // ✅ Reset form on close
+        }}
+        onSubmit={handleSubmitChangeEmail(handleChangeEmail)}
+        title="Change Email"
+        icon={<Email color="secondary" />}
+        isLoading={isChangeEmailLoading}
+        submitIcon={<Email />} // ✅ Changed icon
+        submitLabel="Confirm"
+        formMethods={{ handleSubmit: handleSubmitChangeEmail }}
+      >
+        <TextField
+          {...registerEmail("new_email")} // ✅ Register with react-hook-form
+          required
+          label="New Email"
+          margin="dense"
+          type="email"
+          fullWidth
+          error={!!emailErrors.new_email} // ✅ Use correct error object
+          helperText={emailErrors.new_email?.message} // ✅ Use correct error object
         />
       </DialogComponent>
 

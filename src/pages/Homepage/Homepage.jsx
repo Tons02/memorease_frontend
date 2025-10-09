@@ -173,9 +173,7 @@ const HomePage = () => {
               left: 0,
               width: "100%",
               height: "100%",
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${
-                lotCemetery?.data[0]?.profile_picture || cemeteryBanner
-              })`,
+              backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${lotCemetery?.data[0]?.profile_picture})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundAttachment: isMobile ? "scroll" : "fixed",
@@ -194,7 +192,7 @@ const HomePage = () => {
                   textShadow: "2px 2px 4px rgba(0,0,0,0.7)",
                 }}
               >
-                {lotCemetery?.data[0]?.name || "Providence Memorial Park"}
+                {lotCemetery?.data[0]?.name || "Providence Memorial Parksss"}
               </Typography>
               <Typography
                 variant={isMobile ? "body1" : "h6"}
@@ -256,17 +254,36 @@ const HomePage = () => {
                   elevation={3}
                   sx={{ mb: 2, borderRadius: 3, overflow: "hidden" }}
                 >
-                  <CardMedia
-                    component="img"
-                    height={isMobile ? "250" : "350"}
-                    image={galleryImages[selectedImage]}
-                    alt="Cemetery view"
-                    sx={{
-                      cursor: "pointer",
-                      transition: "transform 0.3s ease",
-                      "&:hover": { transform: "scale(1.05)" },
-                    }}
-                  />
+                  {galleryImages[selectedImage].endsWith(".mp4") ? (
+                    <video
+                      width="100%"
+                      height={isMobile ? "250" : "350"}
+                      controls
+                      style={{
+                        cursor: "pointer",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    >
+                      <source
+                        src={galleryImages[selectedImage]}
+                        type="video/mp4"
+                      />
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <CardMedia
+                      component="img"
+                      height={isMobile ? "250" : "350"}
+                      image={galleryImages[selectedImage]}
+                      alt="Gallery view"
+                      sx={{
+                        cursor: "pointer",
+                        transition: "transform 0.3s ease",
+                        "&:hover": { transform: "scale(1.05)" },
+                      }}
+                    />
+                  )}
                 </Card>
               </Grow>
 
@@ -279,7 +296,7 @@ const HomePage = () => {
                         cursor: "pointer",
                         border:
                           selectedImage === index + 1
-                            ? `2px solid ${theme.palette.success.main}`
+                            ? "2px solid #4caf50"
                             : "none",
                         borderRadius: 2,
                         overflow: "hidden",
@@ -290,12 +307,22 @@ const HomePage = () => {
                       }}
                       onClick={() => setSelectedImage(index + 1)}
                     >
-                      <CardMedia
-                        component="img"
-                        height="80"
-                        image={image}
-                        alt={`Gallery ${index + 1}`}
-                      />
+                      {image.endsWith(".mp4") ? (
+                        <video
+                          width="100%"
+                          height="80"
+                          style={{ objectFit: "cover" }}
+                        >
+                          <source src={image} type="video/mp4" />
+                        </video>
+                      ) : (
+                        <CardMedia
+                          component="img"
+                          height="80"
+                          image={image}
+                          alt={`Gallery ${index + 1}`}
+                        />
+                      )}
                     </Card>
                   </Grid>
                 ))}
@@ -628,9 +655,7 @@ const HomePage = () => {
           minHeight: { xs: "60vh", md: "70vh" },
           display: "flex",
           alignItems: "center",
-          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%), url(${
-            lotCemetery?.data[0]?.profile_picture || cemeteryBanner
-          })`,
+          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%), url(${cemeteryBanner})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: isMobile ? "scroll" : "fixed",

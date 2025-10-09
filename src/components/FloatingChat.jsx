@@ -26,11 +26,6 @@ const FloatingChat = () => {
   const { data: conversationCounts, refetch: conversationCountsRefetch } =
     useGetConversationCountsQuery();
 
-  console.log("conversationCounts", conversationCounts?.data?.updated_count);
-  console.log("LoginUserCount", LoginUserCount);
-
-  // Real-time listener for new messages
-  console.log(LoginUserCount);
   useEffect(() => {
     if (!LoginUserCount?.id) return;
 

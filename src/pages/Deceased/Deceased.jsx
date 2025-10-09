@@ -2,6 +2,7 @@ import React from "react";
 import TableComponent from "../../components/TableComponent";
 import defaultImage from "../../assets/default-image.png";
 import {
+  Autocomplete,
   Box,
   Breadcrumbs,
   Button,
@@ -550,36 +551,42 @@ const Deceased = () => {
           defaultValue=""
           render={({ field }) => (
             <FormControl fullWidth sx={{ paddingTop: 1 }}>
-              <InputLabel id="lot-label" sx={{ paddingTop: 1 }}>
-                Lot
-              </InputLabel>
-              <Select
+              <Autocomplete
                 {...field}
-                labelId="lot-label"
-                id="lot_id"
-                label="lot_id"
-                error={!!errors.lot_id}
-              >
-                {isLotDataLoading ? (
-                  <MenuItem value="" disabled>
-                    Loading...
-                  </MenuItem>
-                ) : (
-                  lotData?.data?.map((lot) => (
-                    <MenuItem key={lot.id} value={lot.id}>
-                      {lot.lot_number}
-                    </MenuItem>
-                  ))
+                options={lotData?.data || []}
+                getOptionLabel={(option) =>
+                  typeof option === "string" ? option : option.lot_number || ""
+                }
+                loading={isLotDataLoading}
+                onChange={(_, value) => field.onChange(value ? value.id : "")}
+                value={
+                  lotData?.data?.find((lot) => lot.id === field.value) || null
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Lot"
+                    margin="dense"
+                    error={!!errors.lot_id}
+                    helperText={errors.lot_id?.message}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {isLotDataLoading ? (
+                            <CircularProgress color="inherit" size={20} />
+                          ) : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
                 )}
-              </Select>
-              {errors.lot_id && (
-                <Typography color="error" variant="caption">
-                  {errors.lot_id.message}
-                </Typography>
-              )}
+              />
             </FormControl>
           )}
         />
+
         <TextField
           {...register("fname")}
           label="First Name"

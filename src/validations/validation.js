@@ -174,3 +174,40 @@ export const rejectReservationSchema = yup.object({
 export const startConversationSchema = yup.object({
   user_id: yup.string().required("User is required"),
 });
+
+export const changeEmailSchema = yup.object().shape({
+  new_email: yup
+    .string()
+    .email("Invalid email format")
+    .required("Email is required"),
+});
+
+export const walkInSchema = yup.object({
+  lot_id: yup.string().required("Please select a lot"),
+  fname: yup.string().required("First Name is required"),
+  lname: yup.string().required("Last Name is required"),
+  gender: yup
+    .string()
+    .oneOf(["male", "female"], "Select a valid gender")
+    .required("Gender is required"),
+  mobile_number: yup
+    .string()
+    .required("Mobile number is required")
+    .matches(
+      /^\+63\d{10}$/,
+      "Mobile number must start with +63 and be 13 digits"
+    ),
+  address: yup.string().required("Address is required"),
+  username: yup.string().required("Username is required"),
+  proof_of_payment: yup
+    .mixed()
+    .required("Proof of Payment is required")
+    .test("fileType", "Only JPG, PNG, or WEBP images are allowed", (value) => {
+      if (typeof value === "string") return true; // allow URL string
+      return value && SUPPORTED_FORMATS.includes(value.type);
+    })
+    .test("fileSize", "Image must be less than 2MB", (value) => {
+      if (typeof value === "string") return true; // skip size check for URL
+      return value && value.size <= MAX_FILE_SIZE;
+    }),
+});

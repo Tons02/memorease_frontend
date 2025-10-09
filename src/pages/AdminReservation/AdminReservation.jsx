@@ -5,9 +5,11 @@ import defaultImage from "../../assets/default-image.png";
 import CloseIcon from "@mui/icons-material/Close";
 
 import {
+  Autocomplete,
   Box,
   Breadcrumbs,
   Button,
+  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -20,12 +22,15 @@ import {
   Link,
   Menu,
   MenuItem,
+  Select,
   TextField,
   Typography,
 } from "@mui/material";
 import {
   Add,
   CalendarMonth,
+  CalendarMonthOutlined,
+  CalendarMonthRounded,
   Check,
   Clear,
   Dashboard,
@@ -34,12 +39,19 @@ import {
   Female,
   FilterList,
   Male,
+  NordicWalking,
+  People,
+  SupervisedUserCircle,
+  VerifiedUser,
 } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import { useState } from "react";
 import DialogComponent from "../../components/DialogComponent";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { rejectReservationSchema } from "../../validations/validation";
+import {
+  rejectReservationSchema,
+  walkInSchema,
+} from "../../validations/validation";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { toast } from "sonner";
 import {
@@ -47,12 +59,15 @@ import {
   useGetReservationQuery,
   useApproveReservationMutation,
   useLazyGetReservationExportQuery,
+  useWalkInReservationMutation,
 } from "../../redux/slices/reservationSlice";
 import dayjs from "dayjs";
-import { useForm } from "react-hook-form";
+import { Controller, Form, useForm } from "react-hook-form";
+import { useGetLotQuery } from "../../redux/slices/apiLot";
+import FileUploadInput from "../../components/FileUploadInput";
 
 const AdminReservation = () => {
-  const [status, setStatus] = useState("pending");
+  const [status, setStatus] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState("");
@@ -61,11 +76,13 @@ const AdminReservation = () => {
   const [openModalFilter, setopenModalFilter] = useState(false);
   const [openModalAproved, setopenModalAproved] = useState(false);
   const [openModalReject, setOpenModalReject] = useState(false);
+  const [openWalkInModal, setOpenWalkInModal] = useState(false);
   const [selectedID, setSelectedID] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [tempStartDate, setTempStartDate] = useState("");
   const [tempEndDate, setTempEndDate] = useState("");
+  const [selectedLot, setSelectedLot] = useState(null);
 
   const handleImageClick = (imageUrl) => {
     setSelectedImage(imageUrl);
@@ -101,15 +118,42 @@ const AdminReservation = () => {
     resolver: yupResolver(rejectReservationSchema),
   });
 
+  // hook forms for walk in
+  const {
+    register: registerWalkIn,
+    handleSubmit: handleSubmitWalkIn,
+    reset: resetWalkIn,
+    isValid: isValidWalkIn,
+    isDirty: isDirtyWalkIn,
+    setValue: setWalkInValue,
+    formState: { errors: walkInErrors },
+    setError: setWalkErrors,
+    control,
+  } = useForm({
+    defaultValues: {
+      fname: "",
+      mi: "",
+      lname: "",
+      suffix: "",
+      gender: "",
+      birthday: "",
+      mobile_number: "",
+      email: "",
+      address: "",
+      username: "",
+      password: "",
+      lot_id: "",
+      proof_of_payment: null,
+    },
+    resolver: yupResolver(walkInSchema),
+  });
+
   const handleApply = () => {
-    // Commit the temporary dates to the real state
     setStartDate(tempStartDate);
     setEndDate(tempEndDate);
 
-    // Close dialog
     setopenModalFilter(false);
 
-    // Refetch API with new dates
     if (refetch)
       refetchApi({ start_date: tempStartDate, end_date: tempEndDate });
   };
@@ -119,6 +163,9 @@ const AdminReservation = () => {
 
   const [approveReservation, { isLoading: isApproveReservationLoading }] =
     useApproveReservationMutation();
+
+  const [walkInReservation, { isLoading: isWalkInReservationLoading }] =
+    useWalkInReservationMutation();
 
   const {
     data: reservationData,
@@ -134,6 +181,15 @@ const AdminReservation = () => {
     start_date: startDate,
     end_date: endDate,
   });
+
+  const today = new Date();
+  const eightYearsAgo = new Date(
+    today.getFullYear() - 8,
+    today.getMonth(),
+    today.getDate()
+  )
+    .toISOString()
+    .split("T")[0];
 
   // Lazy query
   const [triggerExport, { isLoading: isExportLoading }] =
@@ -170,6 +226,19 @@ const AdminReservation = () => {
       channel.stopListening(".LotReserved");
     };
   }, []);
+
+  const {
+    data: lotData,
+    isLoading: isLotDataLoading,
+    refetch: lotRefetch,
+  } = useGetLotQuery(
+    {
+      pagination: "none",
+      lot_status: "sold",
+      lot_status: "available",
+    },
+    []
+  );
 
   const columns = [
     { field: "id", headerName: "ID", align: "center" },
@@ -264,6 +333,29 @@ const AdminReservation = () => {
       field: "status",
       headerName: "Status",
       align: "center",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const statusConfig = {
+          approved: { label: "Approved", color: "success" },
+          canceled: { label: "Canceled", color: "error" },
+          pending: { label: "Pending", color: "warning" },
+          rejected: { label: "Rejected", color: "error" },
+        };
+
+        const config = statusConfig[params.row.status?.toLowerCase()] || {
+          label: params.value,
+          color: "default",
+        };
+
+        return (
+          <Chip
+            label={config.label}
+            color={config.color}
+            size="small"
+            variant="outlined"
+          />
+        );
+      },
     },
     {
       field: "created_at",
@@ -356,6 +448,46 @@ const AdminReservation = () => {
     }
   };
 
+  const handleWalkInReservation = async (data) => {
+    console.log("walkin");
+
+    const formData = new FormData();
+
+    Object.keys(data).forEach((key) => {
+      if (key === "birthday") {
+        formData.append(key, dayjs(data[key]).format("DD-MM-YYYY"));
+      } else if (key === "file" || data[key] instanceof File) {
+        formData.append(key, data[key]);
+      } else if (data[key] !== null && data[key] !== undefined) {
+        formData.append(key, data[key]);
+      }
+    });
+
+    try {
+      const response = await walkInReservation(formData).unwrap();
+
+      console.log("Formdata", FormData);
+      setOpenWalkInModal(false);
+      resetWalkIn();
+      lotRefetch();
+      toast.success("Walk in reservation successful!");
+    } catch (error) {
+      console.log(error?.data?.errors?.[0]?.detail);
+
+      if (error?.data?.errors) {
+        error.data.errors.forEach((e) => {
+          const pointer = e.source?.pointer || "";
+          const key = pointer.split("/").pop();
+          setWalkErrors(key, { type: "server", message: e.detail });
+        });
+      }
+      toast.error(
+        error?.data?.errors?.[0]?.detail ||
+          "Walk in reservation failed. Please try again."
+      );
+    }
+  };
+
   return (
     <>
       <Breadcrumbs aria-label="breadcrumb" sx={{ marginBottom: 1 }}>
@@ -400,6 +532,24 @@ const AdminReservation = () => {
 
         {/* Buttons grouped */}
         <Box display="flex" gap={1}>
+          <Button
+            size="medium"
+            variant="contained"
+            onClick={() => setOpenWalkInModal(true)}
+            disabled={isExportLoading} // disable while loading
+            color="success"
+            startIcon={<NordicWalking />}
+            sx={{
+              mt: 1,
+              borderRadius: "10px",
+              px: 3,
+              py: 1,
+              fontWeight: 600,
+              textTransform: "none",
+            }}
+          >
+            Walk in
+          </Button>
           <Button
             size="medium"
             variant="contained"
@@ -538,7 +688,7 @@ const AdminReservation = () => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <CalendarMonth color="action" />
+                  <CalendarMonthOutlined color="action" />
                 </InputAdornment>
               ),
             }}
@@ -555,7 +705,7 @@ const AdminReservation = () => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <CalendarMonth color="action" />
+                  <CalendarMonthRounded color="action" />
                 </InputAdornment>
               ),
             }}
@@ -583,6 +733,330 @@ const AdminReservation = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* walk in  */}
+      <DialogComponent
+        open={openWalkInModal}
+        onClose={() => {
+          setOpenWalkInModal(false);
+          resetWalkIn();
+          setSelectedID(null);
+        }}
+        onSubmit={handleSubmitWalkIn(handleWalkInReservation)}
+        title={"Walk in Reservation"}
+        icon={<Check color="success" />}
+        isLoading={isWalkInReservationLoading}
+        submitLabel={"Submit"}
+        submitIcon={<Check />}
+        maxWidth="md"
+        formMethods={{
+          handleSubmit: handleSubmitWalkIn,
+          reset: resetWalkIn,
+        }}
+        isValid={isValidWalkIn}
+        isDirty={isDirtyWalkIn}
+      >
+        <Box
+          display="grid"
+          gridTemplateColumns="1fr 1fr"
+          gap={2}
+          sx={{ mt: 1 }}
+        >
+          <TextField
+            {...registerWalkIn("fname")}
+            label="First Name"
+            fullWidth
+            error={!!walkInErrors.fname}
+            helperText={walkInErrors.fname?.message}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                backgroundColor: "white",
+              },
+            }}
+          />
+          <TextField
+            {...registerWalkIn("mi")}
+            label="Middle Initial"
+            fullWidth
+            error={!!walkInErrors.mi}
+            helperText={walkInErrors.mi?.message}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                backgroundColor: "white",
+              },
+            }}
+          />
+          <TextField
+            {...registerWalkIn("lname")}
+            label="Last Name"
+            fullWidth
+            error={!!walkInErrors.lname}
+            helperText={walkInErrors.lname?.message}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                backgroundColor: "white",
+              },
+            }}
+          />
+          <Controller
+            name="suffix"
+            control={control}
+            render={({ field }) => (
+              <FormControl
+                fullWidth
+                error={!!walkInErrors.suffix}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                  },
+                }}
+              >
+                <InputLabel id="suffix-label">Suffix</InputLabel>
+                <Select
+                  labelId="suffix-label"
+                  id="suffix"
+                  label="Suffix"
+                  {...field}
+                >
+                  <MenuItem value="">None</MenuItem>
+                  <MenuItem value="Jr">Jr.</MenuItem>
+                  <MenuItem value="Sr">Sr.</MenuItem>
+                  <MenuItem value="III">III</MenuItem>
+                  <MenuItem value="IV">IV</MenuItem>
+                  <MenuItem value="V">V</MenuItem>
+                </Select>
+                {walkInErrors.suffix && (
+                  <Typography color="error" variant="caption">
+                    {walkInErrors.suffix?.message}
+                  </Typography>
+                )}
+              </FormControl>
+            )}
+          />
+          <TextField
+            fullWidth
+            type="date"
+            label="Birthday"
+            variant="outlined"
+            {...registerWalkIn("birthday")}
+            error={!!walkInErrors.birthday}
+            helperText={walkInErrors.birthday?.message}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <CalendarMonthRounded />
+                </InputAdornment>
+              ),
+            }}
+            inputProps={{
+              max: eightYearsAgo, // 👈 only allows dates up to 8 years ago
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                backgroundColor: "white",
+              },
+            }}
+          />
+          <Controller
+            name="gender"
+            control={control}
+            render={({ field }) => (
+              <FormControl
+                fullWidth
+                error={!!walkInErrors.gender}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    backgroundColor: "white",
+                  },
+                }}
+              >
+                <InputLabel id="gender-label">Gender</InputLabel>
+                <Select
+                  labelId="gender-label"
+                  id="gender"
+                  label="Gender"
+                  {...field}
+                >
+                  <MenuItem value="">Select Gender</MenuItem>
+                  <MenuItem value="male">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Male fontSize="small" /> Male
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="female">
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Female fontSize="small" /> Female
+                    </Box>
+                  </MenuItem>
+                </Select>
+                {walkInErrors.gender && (
+                  <Typography color="error" variant="caption">
+                    {walkInErrors.gender.message}
+                  </Typography>
+                )}
+              </FormControl>
+            )}
+          />
+          <TextField
+            {...registerWalkIn("mobile_number")}
+            label="Mobile Number"
+            fullWidth
+            error={!!walkInErrors.mobile_number}
+            helperText={walkInErrors.mobile_number?.message}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                backgroundColor: "white",
+              },
+            }}
+          />
+          <TextField
+            {...registerWalkIn("username")}
+            label="Username"
+            fullWidth
+            error={!!walkInErrors.username}
+            helperText={walkInErrors.username?.message}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+                backgroundColor: "white",
+              },
+            }}
+          />
+        </Box>
+
+        <TextField
+          {...registerWalkIn("address")}
+          label="Address"
+          fullWidth
+          multiline
+          rows={2}
+          error={!!walkInErrors.address}
+          helperText={walkInErrors.address?.message}
+          sx={{
+            mt: 2,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "8px",
+              backgroundColor: "white",
+            },
+          }}
+        />
+
+        <TextField
+          {...registerWalkIn("email")}
+          label="Email"
+          fullWidth
+          error={!!walkInErrors.email}
+          helperText={walkInErrors.email?.message}
+          sx={{
+            mt: 2,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "8px",
+              backgroundColor: "white",
+            },
+          }}
+        />
+        <Controller
+          name="lot_id"
+          control={control}
+          defaultValue=""
+          render={({ field }) => (
+            <FormControl fullWidth sx={{ paddingTop: 1 }}>
+              <Autocomplete
+                {...field}
+                options={lotData?.data || []}
+                getOptionLabel={(option) =>
+                  typeof option === "string" ? option : option.lot_number || ""
+                }
+                loading={isLotDataLoading}
+                onChange={(_, value) => {
+                  field.onChange(value ? value.id : "");
+                  setSelectedLot(value || null); // 👈 store full lot object
+                }}
+                value={
+                  lotData?.data?.find((lot) => lot.id === field.value) || null
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Lot"
+                    margin="dense"
+                    error={!!walkInErrors.lot_id}
+                    helperText={walkInErrors.lot_id?.message}
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {isLotDataLoading ? (
+                            <CircularProgress color="inherit" size={20} />
+                          ) : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </FormControl>
+          )}
+        />
+
+        {/* Price Field */}
+        <TextField
+          label="Price"
+          fullWidth
+          sx={{
+            mt: 2,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "8px",
+              backgroundColor: "white",
+            },
+          }}
+          value={selectedLot?.price || ""}
+          disabled
+        />
+
+        {/* Downpayment Price Field */}
+        <TextField
+          label="Downpayment Price"
+          fullWidth
+          sx={{
+            mt: 2,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "8px",
+              backgroundColor: "white",
+            },
+          }}
+          value={selectedLot?.downpayment_price || ""}
+          disabled
+        />
+        <Controller
+          name="proof_of_payment"
+          control={control}
+          defaultValue={null}
+          render={({ field }) => (
+            <FileUploadInput
+              title="Proof of Payment"
+              name="proof_of_payment"
+              value={field.value}
+              onChange={field.onChange}
+              setValue={setWalkInValue}
+              previousImageUrl={defaultImage}
+              error={!!walkInErrors.proof_of_payment}
+              helperText={walkInErrors.proof_of_payment?.message}
+            />
+          )}
+        />
+      </DialogComponent>
     </>
   );
 };
