@@ -221,7 +221,6 @@ const CustomerReservation = () => {
           ? dayjs(row.expires_at).format("MM/DD/YYYY hh:mm A")
           : "N/A",
     },
-
     {
       field: "remarks",
       headerName: status === "canceled" ? "Reason" : "Remarks",

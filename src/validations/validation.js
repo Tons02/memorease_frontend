@@ -95,14 +95,17 @@ export const cemeterySchema = yup.object({
 
 export const lotSchema = yup.object({
   lot_number: yup.string().required("Lot Number is required"),
-  price: yup
-    .number()
-    .typeError("Price must be a number")
-    .required("Price is required")
-    .positive("Price must be greater than 0"),
+  // price: yup
+  //   .number()
+  //   .typeError("Price must be a number")
+  //   .required("Price is required")
+  //   .positive("Price must be greater than 0"),
   status: yup
     .string()
-    .oneOf(["available", "reserved", "sold"], "Select a valid status")
+    .oneOf(
+      ["available", "reserved", "sold", "land_mark"],
+      "Select a valid status"
+    )
     .required("Status is required"),
 });
 

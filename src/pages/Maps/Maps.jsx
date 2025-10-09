@@ -24,6 +24,7 @@ import {
   Checkbox,
   FormControlLabel,
   Link,
+  CircularProgress,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { reservationSchema } from "../../validations/validation";
@@ -138,6 +139,8 @@ const Cemeteries = () => {
         return "warning";
       case "sold":
         return "error";
+      case "land_mark":
+        return "info";
       default:
         return "default";
     }
@@ -146,13 +149,15 @@ const Cemeteries = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case "available":
-        return "🟢";
+        return "🟢"; // Green circle
       case "reserved":
-        return "🟡";
+        return "🟡"; // Yellow circle
       case "sold":
-        return "🔴";
+        return "🔴"; // Red circle
+      case "land_mark":
+        return "🔵"; // Blue circle (landmark)
       default:
-        return "⚪";
+        return "⚪"; // White circle
     }
   };
 
@@ -179,7 +184,11 @@ const Cemeteries = () => {
     formState: { errors },
   } = useForm({ resolver: yupResolver(reservationSchema) });
 
-  const { data: lotData, refetch: refetchLots } = useGetLotQuery({
+  const {
+    data: lotData,
+    isLoading: isLotLoading,
+    refetch: refetchLots,
+  } = useGetLotQuery({
     search: "",
     pagination: "none",
   });
@@ -296,459 +305,499 @@ const Cemeteries = () => {
             Map Cemetery
           </Typography>
         </Box>
-
-        <div style={{ height: "70vh", width: "100%" }}>
-          <MapContainer
-            center={center}
-            zoom={18}
-            maxZoom={19}
-            style={{ height: "100%" }}
-          >
-            <Autocomplete
-              options={lotData?.data || []}
-              getOptionLabel={(option) => option.lot_number || ""}
-              onChange={(event, selectedLot) => {
-                console.log("Selected Lot:", selectedLot);
-                if (selectedLot) {
-                  flyToLot(selectedLot);
-                }
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Search Lot"
-                  variant="outlined"
-                  size="small"
-                  sx={{
-                    backgroundColor: "transparent",
-                  }}
-                />
-              )}
-              sx={{
-                position: "absolute",
-                top: 10,
-                left: 50,
-                zIndex: 1000,
-                backgroundColor: "#fff",
-                width: 150,
-              }}
-            />
-            {!popupOpen && !openDialog && (
-              <Box
+        {isLotLoading ? (
+          <CircularProgress
+            color="secondary"
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "200px",
+              left: "50%",
+            }}
+          />
+        ) : (
+          <div style={{ height: "70vh", width: "100%" }}>
+            <MapContainer
+              center={center}
+              zoom={18}
+              maxZoom={19}
+              style={{ height: "100%" }}
+            >
+              <Autocomplete
+                options={lotData?.data || []}
+                getOptionLabel={(option) => option.lot_number || ""}
+                onChange={(event, selectedLot) => {
+                  console.log("Selected Lot:", selectedLot);
+                  if (selectedLot) {
+                    flyToLot(selectedLot);
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Search Lot"
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      backgroundColor: "transparent",
+                    }}
+                  />
+                )}
                 sx={{
                   position: "absolute",
-                  bottom: 16,
-                  right: 16,
+                  top: 10,
+                  left: 50,
                   zIndex: 1000,
                   backgroundColor: "#fff",
-                  padding: 2,
-                  borderRadius: 2,
-                  boxShadow: 3,
-                  fontSize: 14,
+                  width: 200,
                 }}
-              >
-                <Typography variant="subtitle2" gutterBottom>
-                  MAP LEGENDS
-                </Typography>
-                <Box display="flex" alignItems="center" mb={0.5}>
-                  <Box
-                    width={16}
-                    height={16}
-                    bgcolor="#15803d"
-                    borderRadius="50%"
-                    mr={1}
-                  />
-                  Available Lot
+              />
+              {!popupOpen && !openDialog && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: 16,
+                    right: 16,
+                    zIndex: 1000,
+                    backgroundColor: "#fff",
+                    padding: 2,
+                    borderRadius: 2,
+                    boxShadow: 3,
+                    fontSize: 14,
+                  }}
+                >
+                  <Typography variant="subtitle2" gutterBottom>
+                    MAP LEGENDS
+                  </Typography>
+                  <Box display="flex" alignItems="center" mb={0.5}>
+                    <Box
+                      width={16}
+                      height={16}
+                      bgcolor="#15803d"
+                      borderRadius="50%"
+                      mr={1}
+                    />
+                    Available Lot
+                  </Box>
+                  <Box display="flex" alignItems="center" mb={0.5}>
+                    <Box
+                      width={16}
+                      height={16}
+                      bgcolor="yellow"
+                      borderRadius="50%"
+                      mr={1}
+                    />
+                    Reserved Lot
+                  </Box>
+                  <Box display="flex" alignItems="center" mb={0.5}>
+                    <Box
+                      width={16}
+                      height={16}
+                      bgcolor="red"
+                      borderRadius="50%"
+                      mr={1}
+                    />
+                    Sold Lot
+                  </Box>
+                  <Box display="flex" alignItems="center" mb={0.5}>
+                    <Box
+                      width={16}
+                      height={16}
+                      bgcolor="blue"
+                      borderRadius="50%"
+                      mr={1}
+                    />
+                    Landmark
+                  </Box>
+                  {/* Your content here */}
                 </Box>
-                <Box display="flex" alignItems="center" mb={0.5}>
-                  <Box
-                    width={16}
-                    height={16}
-                    bgcolor="yellow"
-                    borderRadius="50%"
-                    mr={1}
-                  />
-                  Reserved Lot
-                </Box>
-                <Box display="flex" alignItems="center" mb={0.5}>
-                  <Box
-                    width={16}
-                    height={16}
-                    bgcolor="red"
-                    borderRadius="50%"
-                    mr={1}
-                  />
-                  Sold Lot
-                </Box>
-                {/* Your content here */}
-              </Box>
-            )}
-            <MapRefHandler
-              setMap={(mapInstance) => (mapRef.current = mapInstance)}
-            />
-            <TileLayer
-              attribution="&copy; OpenStreetMap"
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              maxZoom={19}
-            />
+              )}
+              <MapRefHandler
+                setMap={(mapInstance) => (mapRef.current = mapInstance)}
+              />
+              <TileLayer
+                attribution="&copy; OpenStreetMap"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                maxZoom={19}
+              />
 
-            {lotData?.data?.map((lot) => (
-              <Polygon
-                key={lot.id}
-                positions={lot.coordinates}
-                pathOptions={{
-                  color:
-                    lot.status === "available"
-                      ? "#15803d"
-                      : lot.status === "reserved"
-                      ? "orange"
-                      : "red",
-                  fillOpacity: 0.5,
-                }}
-              >
-                <PopupEventHandler />
-                <Popup maxWidth={350}>
-                  <Box
-                    sx={{
-                      width: "100%",
-                      maxWidth: "320px",
-                      minWidth: "250px",
-                      backgroundColor: "white",
-                      borderRadius: 2,
-                      boxShadow: 3,
-                      overflow: "hidden",
-                    }}
-                  >
-                    {/* Enhanced Image/Video Section */}
-                    <Box sx={{ position: "relative" }}>
-                      {(() => {
-                        const images = getDisplayMedia(lot);
-                        const currentIndex = currentImageIndex[lot.id] || 0;
-                        const currentMedia = images[currentIndex];
-                        const isVideo = isVideoFile(currentMedia);
+              {lotData?.data?.map((lot) => (
+                <Polygon
+                  key={lot.id}
+                  positions={lot.coordinates}
+                  pathOptions={{
+                    color:
+                      lot.status === "available"
+                        ? "#15803d"
+                        : lot.status === "reserved"
+                        ? "#ffcc00"
+                        : lot.status === "sold"
+                        ? "red"
+                        : lot.status === "land_mark"
+                        ? "#1e40af"
+                        : "gray",
+                    fillOpacity: 0.5,
+                  }}
+                >
+                  <PopupEventHandler />
+                  <Popup maxWidth={350}>
+                    <Box
+                      sx={{
+                        width: "100%",
+                        maxWidth: "320px",
+                        minWidth: "250px",
+                        backgroundColor: "white",
+                        borderRadius: 2,
+                        boxShadow: 3,
+                        overflow: "hidden",
+                      }}
+                    >
+                      {/* Enhanced Image/Video Section */}
+                      <Box sx={{ position: "relative" }}>
+                        {(() => {
+                          const images = getDisplayMedia(lot);
+                          const currentIndex = currentImageIndex[lot.id] || 0;
+                          const currentMedia = images[currentIndex];
+                          const isVideo = isVideoFile(currentMedia);
 
-                        return isVideo ? (
-                          <Box
-                            component="video"
-                            src={currentMedia}
-                            controls
-                            autoPlay={false}
-                            muted
-                            sx={{
-                              width: "100%",
-                              height: "180px",
-                              objectFit: "contain",
-                              backgroundColor: "#000",
-                            }}
-                            onError={(e) => {
-                              console.error(
-                                "Video failed to load:",
-                                currentMedia
-                              );
-                              console.error("Error details:", e);
-                            }}
-                          />
-                        ) : (
-                          <Box
-                            component="img"
-                            src={currentMedia}
-                            alt={`Lot ${lot.lot_number}`}
-                            sx={{
-                              width: "100%",
-                              height: "180px",
-                              objectFit: "contain",
-                              backgroundColor: "#f5f5f5",
-                            }}
-                            onError={(e) => {
-                              console.error(
-                                "Image failed to load:",
-                                currentMedia
-                              );
-                            }}
-                          />
-                        );
-                      })()}
-
-                      {/* Image/Video Navigation - Only show if more than 1 media */}
-                      {(() => {
-                        const images = getDisplayMedia(lot);
-                        if (images.length > 1) {
-                          return (
-                            <>
-                              <IconButton
-                                sx={{
-                                  position: "absolute",
-                                  left: 8,
-                                  top: "50%",
-                                  transform: "translateY(-50%)",
-                                  backgroundColor: "rgba(0, 0, 0, 0.5)",
-                                  color: "white",
-                                  "&:hover": {
-                                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                                  },
-                                  width: 32,
-                                  height: 32,
-                                }}
-                                onClick={() => prevImage(lot.id)}
-                                size="small"
-                              >
-                                <ChevronLeft fontSize="small" />
-                              </IconButton>
-
-                              <IconButton
-                                sx={{
-                                  position: "absolute",
-                                  right: 8,
-                                  top: "50%",
-                                  transform: "translateY(-50%)",
-                                  backgroundColor: "rgba(0, 0, 0, 0.5)",
-                                  color: "white",
-                                  "&:hover": {
-                                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                                  },
-                                  width: 32,
-                                  height: 32,
-                                }}
-                                onClick={() => nextImage(lot.id)}
-                                size="small"
-                              >
-                                <ChevronRight fontSize="small" />
-                              </IconButton>
-
-                              {/* Media Counter */}
-                              <Box
-                                sx={{
-                                  position: "absolute",
-                                  top: 8,
-                                  right: 8,
-                                  backgroundColor: "rgba(0, 0, 0, 0.6)",
-                                  color: "white",
-                                  px: 1,
-                                  py: 0.5,
-                                  borderRadius: 1,
-                                  fontSize: "0.75rem",
-                                }}
-                              >
-                                {(currentImageIndex[lot.id] || 0) + 1} /{" "}
-                                {images.length}
-                              </Box>
-
-                              {/* Media Indicators */}
-                              <Box
-                                sx={{
-                                  position: "absolute",
-                                  bottom: 8,
-                                  left: "50%",
-                                  transform: "translateX(-50%)",
-                                  display: "flex",
-                                  gap: 0.5,
-                                }}
-                              >
-                                {images.map((_, index) => (
-                                  <Box
-                                    key={index}
-                                    sx={{
-                                      width: 8,
-                                      height: 8,
-                                      borderRadius: "50%",
-                                      backgroundColor:
-                                        index ===
-                                        (currentImageIndex[lot.id] || 0)
-                                          ? "white"
-                                          : "rgba(255, 255, 255, 0.5)",
-                                      cursor: "pointer",
-                                      transition: "all 0.2s",
-                                    }}
-                                    onClick={() =>
-                                      setCurrentImageIndex((prev) => ({
-                                        ...prev,
-                                        [lot.id]: index,
-                                      }))
-                                    }
-                                  />
-                                ))}
-                              </Box>
-                            </>
+                          return isVideo ? (
+                            <Box
+                              component="video"
+                              src={currentMedia}
+                              controls
+                              autoPlay={false}
+                              muted
+                              sx={{
+                                width: "100%",
+                                height: "180px",
+                                objectFit: "contain",
+                                backgroundColor: "#000",
+                              }}
+                              onError={(e) => {
+                                console.error(
+                                  "Video failed to load:",
+                                  currentMedia
+                                );
+                                console.error("Error details:", e);
+                              }}
+                            />
+                          ) : (
+                            <Box
+                              component="img"
+                              src={currentMedia}
+                              alt={`Lot ${lot.lot_number}`}
+                              sx={{
+                                width: "100%",
+                                height: "180px",
+                                objectFit: "contain",
+                                backgroundColor: "#f5f5f5",
+                              }}
+                              onError={(e) => {
+                                console.error(
+                                  "Image failed to load:",
+                                  currentMedia
+                                );
+                              }}
+                            />
                           );
-                        }
-                        return null;
-                      })()}
-                    </Box>
+                        })()}
 
-                    {/* Content Section */}
-                    <Box sx={{ p: 1 }}>
-                      {/* Header with Lot Number and Status */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          mb: 1.5,
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            fontSize: "1.1rem",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          <Home fontSize="small" color="secondary" />
-                          {lot.lot_number}
-                        </Typography>
-                        <Box
-                          sx={{
-                            px: 1.5,
-                            py: 0.5,
-                            borderRadius: 2,
-                            backgroundColor:
-                              lot.status === "available"
-                                ? "#15803d"
-                                : lot.status === "reserved"
-                                ? "#f59e0b"
-                                : "#dc2626",
-                            color: "white",
-                            fontSize: "0.75rem",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          {getStatusIcon(lot.status)}{" "}
-                          {lot.status?.toUpperCase()}
-                        </Box>
+                        {/* Image/Video Navigation - Only show if more than 1 media */}
+                        {(() => {
+                          const images = getDisplayMedia(lot);
+                          if (images.length > 1) {
+                            return (
+                              <>
+                                <IconButton
+                                  sx={{
+                                    position: "absolute",
+                                    left: 8,
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                                    color: "white",
+                                    "&:hover": {
+                                      backgroundColor: "rgba(0, 0, 0, 0.7)",
+                                    },
+                                    width: 32,
+                                    height: 32,
+                                  }}
+                                  onClick={() => prevImage(lot.id)}
+                                  size="small"
+                                >
+                                  <ChevronLeft fontSize="small" />
+                                </IconButton>
+
+                                <IconButton
+                                  sx={{
+                                    position: "absolute",
+                                    right: 8,
+                                    top: "50%",
+                                    transform: "translateY(-50%)",
+                                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                                    color: "white",
+                                    "&:hover": {
+                                      backgroundColor: "rgba(0, 0, 0, 0.7)",
+                                    },
+                                    width: 32,
+                                    height: 32,
+                                  }}
+                                  onClick={() => nextImage(lot.id)}
+                                  size="small"
+                                >
+                                  <ChevronRight fontSize="small" />
+                                </IconButton>
+
+                                {/* Media Counter */}
+                                <Box
+                                  sx={{
+                                    position: "absolute",
+                                    top: 8,
+                                    right: 8,
+                                    backgroundColor: "rgba(0, 0, 0, 0.6)",
+                                    color: "white",
+                                    px: 1,
+                                    py: 0.5,
+                                    borderRadius: 1,
+                                    fontSize: "0.75rem",
+                                  }}
+                                >
+                                  {(currentImageIndex[lot.id] || 0) + 1} /{" "}
+                                  {images.length}
+                                </Box>
+
+                                {/* Media Indicators */}
+                                <Box
+                                  sx={{
+                                    position: "absolute",
+                                    bottom: 8,
+                                    left: "50%",
+                                    transform: "translateX(-50%)",
+                                    display: "flex",
+                                    gap: 0.5,
+                                  }}
+                                >
+                                  {images.map((_, index) => (
+                                    <Box
+                                      key={index}
+                                      sx={{
+                                        width: 8,
+                                        height: 8,
+                                        borderRadius: "50%",
+                                        backgroundColor:
+                                          index ===
+                                          (currentImageIndex[lot.id] || 0)
+                                            ? "white"
+                                            : "rgba(255, 255, 255, 0.5)",
+                                        cursor: "pointer",
+                                        transition: "all 0.2s",
+                                      }}
+                                      onClick={() =>
+                                        setCurrentImageIndex((prev) => ({
+                                          ...prev,
+                                          [lot.id]: index,
+                                        }))
+                                      }
+                                    />
+                                  ))}
+                                </Box>
+                              </>
+                            );
+                          }
+                          return null;
+                        })()}
                       </Box>
 
-                      {/* Description */}
-                      {lot.description && (
-                        <Box sx={{ mb: 1.5 }}>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{
-                              display: "flex",
-                              alignItems: "flex-start",
-                              gap: 1,
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            <Info fontSize="small" sx={{ mt: 0.1 }} />
-                            <span>{lot.description}</span>
-                          </Typography>
-                        </Box>
-                      )}
-
-                      <Divider />
-
-                      {/* Pricing Information */}
-                      <Box
-                        sx={{
-                          padding: 0,
-                        }}
-                      >
+                      {/* Content Section */}
+                      <Box sx={{ p: 1 }}>
+                        {/* Header with Lot Number and Status */}
                         <Box
                           sx={{
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
+                            mb: 1.5,
                           }}
                         >
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontWeight: "medium",
-                              margin: 0,
-                            }}
-                          >
-                            💰 Total Price:
-                          </Typography>
                           <Typography
                             variant="h6"
-                            fontWeight="bold"
-                            sx={{ fontSize: "1.1rem" }}
-                          >
-                            ₱{Number(lot.price).toLocaleString()}
-                          </Typography>
-                        </Box>
-
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography
-                            variant="body2"
-                            sx={{ fontWeight: "medium" }}
-                          >
-                            💳 Down Payment:
-                          </Typography>
-                          <Typography
-                            variant="body1"
-                            fontWeight="bold"
                             sx={{
-                              fontSize: "1rem",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              fontSize: "1.1rem",
+                              fontWeight: "bold",
                             }}
                           >
-                            ₱{Number(lot.downpayment_price).toLocaleString()}
+                            <Home fontSize="small" color="secondary" />
+                            {lot.lot_number}
                           </Typography>
+                          <Box
+                            sx={{
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 2,
+                              backgroundColor:
+                                lot.status === "available"
+                                  ? "#15803d" // green
+                                  : lot.status === "reserved"
+                                  ? "#f59e0b" // yellow-orange
+                                  : lot.status === "sold"
+                                  ? "#dc2626" // red
+                                  : lot.status === "land_mark"
+                                  ? "#1e40af" // blue for landmark
+                                  : "gray", // fallback
+                              color: "white",
+                              fontSize: "0.75rem",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            {getStatusIcon(lot.status)}{" "}
+                            {lot.status === "land_mark"
+                              ? "LANDMARK"
+                              : lot.status?.toUpperCase()}
+                          </Box>
                         </Box>
-                      </Box>
 
-                      {/* Action Button */}
-                      {lot.status === "available" && isLoggedIn && (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                          }}
-                        >
-                          {emailVerified !== null && (
-                            <Button
-                              variant="contained"
-                              color={emailVerified ? "success" : "warning"}
-                              size="medium"
-                              onClick={() => {
-                                if (emailVerified) {
-                                  setSelectedLot(lot);
-                                  setOpenDialog(true);
-                                }
-                              }}
-                              disabled={!emailVerified}
+                        {/* Description */}
+                        {lot.description && (
+                          <Box sx={{ mb: 1.5 }}>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
                               sx={{
-                                px: 3,
-                                py: 1,
-                                borderRadius: 2,
-                                fontWeight: "bold",
-                                boxShadow: 2,
-                                "&:hover": {
-                                  boxShadow: emailVerified ? 4 : 2,
-                                  transform: emailVerified
-                                    ? "translateY(-1px)"
-                                    : "none",
-                                },
-                                transition: "all 0.2s ease-in-out",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 1,
+                                fontSize: "0.875rem",
                               }}
                             >
-                              {emailVerified
-                                ? "View"
-                                : "Please verify your email first"}
-                            </Button>
-                          )}
-                        </Box>
-                      )}
+                              <Info fontSize="small" sx={{ mt: 0.1 }} />
+                              <span>{lot.description}</span>
+                            </Typography>
+                          </Box>
+                        )}
+
+                        <Divider />
+
+                        {/* Pricing Information */}
+                        {lot.is_land_mark == "0" && (
+                          <Box
+                            sx={{
+                              padding: 0,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontWeight: "medium",
+                                  margin: 0,
+                                }}
+                              >
+                                💰 Total Price:
+                              </Typography>
+                              <Typography
+                                variant="h6"
+                                fontWeight="bold"
+                                sx={{ fontSize: "1.1rem" }}
+                              >
+                                ₱{Number(lot.price).toLocaleString()}
+                              </Typography>
+                            </Box>
+
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                sx={{ fontWeight: "medium" }}
+                              >
+                                💳 Down Payment:
+                              </Typography>
+                              <Typography
+                                variant="body1"
+                                fontWeight="bold"
+                                sx={{
+                                  fontSize: "1rem",
+                                }}
+                              >
+                                ₱
+                                {Number(lot.downpayment_price).toLocaleString()}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
+
+                        {/* Action Button */}
+                        {lot.status === "available" && isLoggedIn && (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {emailVerified !== null && (
+                              <Button
+                                variant="contained"
+                                color={emailVerified ? "success" : "warning"}
+                                size="medium"
+                                onClick={() => {
+                                  if (emailVerified) {
+                                    setSelectedLot(lot);
+                                    setOpenDialog(true);
+                                  }
+                                }}
+                                disabled={!emailVerified}
+                                sx={{
+                                  px: 3,
+                                  py: 1,
+                                  borderRadius: 2,
+                                  fontWeight: "bold",
+                                  boxShadow: 2,
+                                  "&:hover": {
+                                    boxShadow: emailVerified ? 4 : 2,
+                                    transform: emailVerified
+                                      ? "translateY(-1px)"
+                                      : "none",
+                                  },
+                                  transition: "all 0.2s ease-in-out",
+                                }}
+                              >
+                                {emailVerified
+                                  ? "View"
+                                  : "Please verify your email first"}
+                              </Button>
+                            )}
+                          </Box>
+                        )}
+                      </Box>
                     </Box>
-                  </Box>
-                </Popup>
-              </Polygon>
-            ))}
-          </MapContainer>
-          <div
-            style={{ position: "absolute", top: 100, left: 150, zIndex: 1000 }}
-          ></div>
-        </div>
+                  </Popup>
+                </Polygon>
+              ))}
+            </MapContainer>
+            <div
+              style={{
+                position: "absolute",
+                top: 100,
+                left: 150,
+                zIndex: 1000,
+              }}
+            ></div>
+          </div>
+        )}
       </Box>
 
       <DialogComponent

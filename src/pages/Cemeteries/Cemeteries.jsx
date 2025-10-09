@@ -127,11 +127,12 @@ const Cemeteries = () => {
       promo_price: "",
       promo_until: "",
       is_featured: "",
+      is_land_mark: 0,
     },
     resolver: yupResolver(lotSchema),
   });
 
-  const isFeatured = watch("is_featured") === 1;
+  const isLandMark = watch("is_land_mark", "0");
 
   const {
     data: lotData,
@@ -193,11 +194,13 @@ const Cemeteries = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case "available":
-        return "success";
+        return "success"; // Green (#15803d)
       case "reserved":
-        return "warning";
+        return "warning"; // Yellow
       case "sold":
-        return "error";
+        return "error"; // Red
+      case "land_mark":
+        return "info"; // Blue for landmark
       default:
         return "default";
     }
@@ -206,13 +209,15 @@ const Cemeteries = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case "available":
-        return "🟢";
+        return "🟢"; // Green circle
       case "reserved":
-        return "🟡";
+        return "🟡"; // Yellow circle
       case "sold":
-        return "🔴";
+        return "🔴"; // Red circle
+      case "land_mark":
+        return "🔵"; // Blue circle (landmark)
       default:
-        return "⚪";
+        return "⚪"; // White circle
     }
   };
 
@@ -251,11 +256,11 @@ const Cemeteries = () => {
       setValue("description", data.description);
       setValue("price", data.price);
       setValue("status", data.status);
+      setValue("is_land_mark", data.is_land_mark);
       setValue("downpayment_price", data.downpayment_price);
       setValue("reserved_until", data.reserved_until || "");
       setValue("promo_price", data.promo_price || "");
       setValue("promo_until", data.promo_until || "");
-      setValue("is_featured", data.is_featured ? 1 : 0);
       setSelectedID(data.id);
     } else {
       reset({
@@ -267,6 +272,7 @@ const Cemeteries = () => {
         fourth_lot_image: null,
         price: "",
         status: "available",
+        is_land_mark: 0,
         reserved_until: "",
         promo_price: "",
         promo_until: "",
@@ -285,9 +291,9 @@ const Cemeteries = () => {
     const payload = {
       ...formData,
       price: parseFloat(formData.price),
-      promo_price: formData.promo_price || "",
-      promo_until: formData.promo_until || "",
-      is_featured: parseInt(formData.is_featured),
+      promo_price: formData.promo_price || null,
+      promo_until: formData.promo_until || null,
+      is_land_mark: parseInt(formData.is_land_mark),
       coordinates: coords,
     };
 
@@ -310,6 +316,7 @@ const Cemeteries = () => {
       formData.append("promo_price", payload.promo_price);
       formData.append("promo_until", payload.promo_until);
       formData.append("is_featured", payload.is_featured);
+      formData.append("is_land_mark", payload.is_land_mark);
 
       if (payload.lot_image instanceof File) {
         formData.append("lot_image", payload.lot_image);
@@ -451,6 +458,14 @@ const Cemeteries = () => {
     }
   };
 
+  useEffect(() => {
+    if (isLandMark === "1") {
+      setValue("price", 0); // or null if preferred
+      setValue("downpayment_price", 0); // or null
+      setValue("status", "land_mark");
+    }
+  }, [isLandMark, setValue]);
+
   return (
     <>
       <Breadcrumbs aria-label="breadcrumb" sx={{ marginBottom: 1 }}>
@@ -556,7 +571,7 @@ const Cemeteries = () => {
                   left: 50,
                   zIndex: 1000,
                   backgroundColor: "#ffff", // for Autocomplete container
-                  width: 150,
+                  width: 200,
                 }}
               />
               <MapRefHandler
@@ -643,8 +658,12 @@ const Cemeteries = () => {
                         lot.status === "available"
                           ? "#15803d"
                           : lot.status === "reserved"
-                          ? "orange"
-                          : "red",
+                          ? "#ffcc00"
+                          : lot.status === "sold"
+                          ? "red"
+                          : lot.status === "land_mark"
+                          ? "#1e40af"
+                          : "gray",
                       fillOpacity: 0.5,
                     }}
                   >
@@ -821,9 +840,11 @@ const Cemeteries = () => {
                               {lot.lot_number}
                             </Typography>
                             <Chip
-                              label={`${getStatusIcon(
-                                lot.status
-                              )} ${lot.status?.toUpperCase()}`}
+                              label={`${getStatusIcon(lot.status)} ${
+                                lot.status === "land_mark"
+                                  ? "LANDMARK"
+                                  : lot.status?.toUpperCase()
+                              }`}
                               color={getStatusColor(lot.status)}
                               size="small"
                               variant="filled"
@@ -832,7 +853,6 @@ const Cemeteries = () => {
                               }}
                             />
                           </Box>
-
                           {/* Description */}
                           {lot.description && (
                             <Box sx={{ mb: 1.5 }}>
@@ -856,67 +876,71 @@ const Cemeteries = () => {
                           )}
 
                           <Divider sx={{ my: 1 }} />
-
                           {/* Pricing Information */}
-                          <Box sx={{ mb: 1.5 }}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: 0.5,
-                              }}
-                            >
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
+
+                          {lot.is_land_mark == "0" && (
+                            <Box sx={{ mb: 1.5 }}>
+                              <Box
                                 sx={{
                                   display: "flex",
+                                  justifyContent: "space-between",
                                   alignItems: "center",
-                                  gap: 0.5,
-                                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                                  mb: 0.5,
                                 }}
                               >
-                                Total Price:
-                              </Typography>
-                              <Typography
-                                variant="h6"
-                                fontWeight="bold"
-                                sx={{
-                                  fontSize: { xs: "1rem", sm: "1.25rem" },
-                                }}
-                              >
-                                ₱{Number(lot.price).toLocaleString()}
-                              </Typography>
-                            </Box>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 0.5,
+                                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                                  }}
+                                >
+                                  Total Price:
+                                </Typography>
+                                <Typography
+                                  variant="h6"
+                                  fontWeight="bold"
+                                  sx={{
+                                    fontSize: { xs: "1rem", sm: "1.25rem" },
+                                  }}
+                                >
+                                  ₱{Number(lot.price).toLocaleString()}
+                                </Typography>
+                              </Box>
 
-                            <Box
-                              sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                              }}
-                            >
-                              <Typography
-                                variant="body2"
+                              <Box
                                 sx={{
-                                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
                                 }}
                               >
-                                Down Payment:
-                              </Typography>
-                              <Typography
-                                variant="body1"
-                                fontWeight="medium"
-                                sx={{
-                                  fontSize: { xs: "0.875rem", sm: "1rem" },
-                                }}
-                              >
-                                ₱
-                                {Number(lot.downpayment_price).toLocaleString()}
-                              </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                                  }}
+                                >
+                                  Down Payment:
+                                </Typography>
+                                <Typography
+                                  variant="body1"
+                                  fontWeight="medium"
+                                  sx={{
+                                    fontSize: { xs: "0.875rem", sm: "1rem" },
+                                  }}
+                                >
+                                  ₱
+                                  {Number(
+                                    lot.downpayment_price
+                                  ).toLocaleString()}
+                                </Typography>
+                              </Box>
                             </Box>
-                          </Box>
+                          )}
 
                           {/* Action Buttons */}
                           <Box
@@ -1086,10 +1110,34 @@ const Cemeteries = () => {
         <Typography variant="h6" gutterBottom>
           📋 Basic Information
         </Typography>
+
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={4}>
+            <Controller
+              name="is_land_mark"
+              control={control}
+              defaultValue="0"
+              render={({ field }) => (
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Landmark</InputLabel>
+                  <Select
+                    {...field}
+                    label="Landmark"
+                    sx={{
+                      width: 100,
+                    }}
+                  >
+                    <MenuItem value="0">No</MenuItem>
+                    <MenuItem value="1">Yes</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
             <TextField
-              label="Lot Number"
+              label={isLandMark === "0" ? "Lot Number" : "Landmark Name"}
               fullWidth
               margin="normal"
               {...register("lot_number")}
@@ -1097,23 +1145,26 @@ const Cemeteries = () => {
               helperText={errors.lot_number?.message}
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
-            <Controller
-              name="status"
-              control={control}
-              defaultValue="available"
-              render={({ field }) => (
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>Status</InputLabel>
-                  <Select {...field} label="Status">
-                    <MenuItem value="available">Available</MenuItem>
-                    <MenuItem value="reserved">Reserved</MenuItem>
-                    <MenuItem value="sold">Sold</MenuItem>
-                  </Select>
-                </FormControl>
-              )}
-            />
-          </Grid>
+          {isLandMark === "0" && (
+            <Grid item xs={12} sm={4}>
+              <Controller
+                name="status"
+                control={control}
+                defaultValue={isLandMark === "0" ? "available" : "land_mark"}
+                render={({ field }) => (
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>Status</InputLabel>
+                    <Select {...field} label="Status">
+                      <MenuItem value="available">Available</MenuItem>
+                      <MenuItem value="reserved">Reserved</MenuItem>
+                      <MenuItem value="sold">Sold</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
+              />
+            </Grid>
+          )}
+
           <Grid item xs={12} sm={4}>
             <TextField
               label="Description"
@@ -1128,62 +1179,20 @@ const Cemeteries = () => {
           </Grid>
         </Grid>
 
-        <Divider sx={{ my: 3 }} />
-
-        {/* Pricing Section */}
-        <Typography variant="h6" gutterBottom>
-          💰 Pricing Details
-        </Typography>
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Price"
-              type="number"
-              fullWidth
-              margin="normal"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">₱</InputAdornment>
-                ),
-              }}
-              {...register("price")}
-              error={!!errors.price}
-              helperText={errors.price?.message}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Down Payment Price"
-              type="number"
-              fullWidth
-              margin="normal"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">₱</InputAdornment>
-                ),
-              }}
-              {...register("downpayment_price")}
-              error={!!errors.downpayment_price}
-              helperText={errors.downpayment_price?.message}
-            />
-          </Grid>
-        </Grid>
-
-        {/* Promotional Section - Only show if featured */}
-        {isFeatured && (
+        {/* Only show pricing if not a landmark */}
+        {isLandMark == "0" && (
           <>
             <Divider sx={{ my: 3 }} />
-            <Typography
-              variant="h6"
-              gutterBottom
-              sx={{ mb: 2, color: "secondary.main" }}
-            >
-              🏷️ Promotional Pricing
+
+            {/* Pricing Section */}
+            <Typography variant="h6" gutterBottom>
+              💰 Pricing Details
             </Typography>
-            <Grid container spacing={2}>
+
+            <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Promo Price"
+                  label="Price"
                   type="number"
                   fullWidth
                   margin="normal"
@@ -1192,17 +1201,26 @@ const Cemeteries = () => {
                       <InputAdornment position="start">₱</InputAdornment>
                     ),
                   }}
-                  {...register("promo_price")}
+                  {...register("price")}
+                  error={!!errors.price}
+                  helperText={errors.price?.message}
                 />
               </Grid>
+
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Promo Until"
-                  type="date"
+                  label="Down Payment Price"
+                  type="number"
                   fullWidth
                   margin="normal"
-                  InputLabelProps={{ shrink: true }}
-                  {...register("promo_until")}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">₱</InputAdornment>
+                    ),
+                  }}
+                  {...register("downpayment_price")}
+                  error={!!errors.downpayment_price}
+                  helperText={errors.downpayment_price?.message}
                 />
               </Grid>
             </Grid>

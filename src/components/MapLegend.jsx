@@ -30,6 +30,9 @@ const MapLegend = () => {
           <div style="display: flex; align-items: center;">
             <span style="background:red;width:14px;height:14px;display:inline-block;margin-right:6px;border-radius:2px;"></span>Sold
           </div>
+           <div style="display: flex; align-items: center;">
+            <span style="background:#1e40af;width:14px;height:14px;display:inline-block;margin-right:6px;border-radius:2px;"></span>Landmark
+          </div>
         </div>
       `;
       return div;
