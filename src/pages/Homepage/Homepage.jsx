@@ -403,7 +403,7 @@ const HomePage = () => {
               Why Choose Our Memorial Park
             </Typography>
           </Box>
-          <Grid container spacing={3}>
+          <Grid container spacing={3} justifyContent={"center"}>
             {features.map((feature, index) => (
               <Grid item xs={12} sm={6} md={3} key={index}>
                 <Grow in timeout={800 + index * 200}>
@@ -659,6 +659,7 @@ const HomePage = () => {
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: isMobile ? "scroll" : "fixed",
+          paddingTop: "20px",
           color: "#fff",
           overflow: "hidden",
           "&::before": {

@@ -459,7 +459,7 @@ const Cemeteries = () => {
   };
 
   useEffect(() => {
-    if (isLandMark === "1") {
+    if (isLandMark == "1") {
       setValue("price", 0); // or null if preferred
       setValue("downpayment_price", 0); // or null
       setValue("status", "land_mark");

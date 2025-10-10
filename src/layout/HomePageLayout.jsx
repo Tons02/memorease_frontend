@@ -153,6 +153,7 @@ function HomePageLayOut(props) {
   const isLoggedIn = !!localStorage.getItem("token");
   let storedData = null;
   let roleName = null;
+  let LoginUser = JSON.parse(localStorage.getItem("user"));
 
   try {
     const userData = localStorage.getItem("user");
@@ -235,6 +236,19 @@ function HomePageLayOut(props) {
         {/* ✅ Add avatar menu in drawer for mobile */}
         {isLoggedIn && (
           <>
+            <MenuItem>
+              <ListItemIcon>
+                <PersonIcon fontSize="small" />
+              </ListItemIcon>
+              {[
+                LoginUser.fname,
+                LoginUser.mi,
+                LoginUser.lname,
+                LoginUser.suffix,
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            </MenuItem>
             {roleName === "admin" && (
               <ListItem disablePadding>
                 <ListItemButton component={Link} to="/admin">
@@ -377,7 +391,19 @@ function HomePageLayOut(props) {
                       Admin
                     </MenuItem>
                   )}
-
+                  <MenuItem>
+                    <ListItemIcon>
+                      <PersonIcon fontSize="small" />
+                    </ListItemIcon>
+                    {[
+                      LoginUser.fname,
+                      LoginUser.mi,
+                      LoginUser.lname,
+                      LoginUser.suffix,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  </MenuItem>
                   {roleName !== "admin" && (
                     <>
                       {emailVerified !== null &&
