@@ -491,20 +491,58 @@ const HomePage = () => {
                             },
                           }}
                         >
-                          <CardMedia
-                            component="img"
-                            image={lot.lot_image || lotImage}
-                            alt={`Lot ${lot.lot_number}`}
-                            sx={{
-                              height: { xs: 180, sm: 200 },
-                              width: "100%",
-                              objectFit: "cover",
-                              transition: "transform 0.3s ease",
-                              "&:hover": {
-                                transform: "scale(1.1)",
-                              },
-                            }}
-                          />
+                          {lot.lot_image ? (
+                            lot.lot_image.match(/\.(mp4|webm|ogg)$/i) ? (
+                              <CardMedia
+                                component="video"
+                                src={lot.lot_image}
+                                controls
+                                muted
+                                autoPlay
+                                loop
+                                alt={`Lot ${lot.lot_number}`}
+                                sx={{
+                                  height: { xs: 180, sm: 200 },
+                                  width: "100%",
+                                  objectFit: "cover",
+                                  transition: "transform 0.3s ease",
+                                  "&:hover": {
+                                    transform: "scale(1.05)",
+                                  },
+                                }}
+                              />
+                            ) : (
+                              <CardMedia
+                                component="img"
+                                image={lot.lot_image}
+                                alt={`Lot ${lot.lot_number}`}
+                                sx={{
+                                  height: { xs: 180, sm: 200 },
+                                  width: "100%",
+                                  objectFit: "cover",
+                                  transition: "transform 0.3s ease",
+                                  "&:hover": {
+                                    transform: "scale(1.05)",
+                                  },
+                                }}
+                              />
+                            )
+                          ) : (
+                            <CardMedia
+                              component="img"
+                              image={lotImage}
+                              alt={`Lot ${lot.lot_number}`}
+                              sx={{
+                                height: { xs: 180, sm: 200 },
+                                width: "100%",
+                                objectFit: "cover",
+                                transition: "transform 0.3s ease",
+                                "&:hover": {
+                                  transform: "scale(1.05)",
+                                },
+                              }}
+                            />
+                          )}
                           <CardContent
                             sx={{
                               p: { xs: 2, sm: 3 },

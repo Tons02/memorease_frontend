@@ -1137,7 +1137,7 @@ const Cemeteries = () => {
 
           <Grid item xs={12} sm={4}>
             <TextField
-              label={isLandMark === "0" ? "Lot Number" : "Landmark Name"}
+              label={isLandMark == "0" ? "Lot Number" : "Landmark Name"}
               fullWidth
               margin="normal"
               {...register("lot_number")}
@@ -1150,11 +1150,17 @@ const Cemeteries = () => {
               <Controller
                 name="status"
                 control={control}
-                defaultValue={isLandMark === "0" ? "available" : "land_mark"}
+                defaultValue={isLandMark == "0" ? "available" : "land_mark"}
                 render={({ field }) => (
                   <FormControl fullWidth margin="normal">
                     <InputLabel>Status</InputLabel>
-                    <Select {...field} label="Status">
+                    <Select
+                      {...field}
+                      label="Status"
+                      sx={{
+                        width: 150,
+                      }}
+                    >
                       <MenuItem value="available">Available</MenuItem>
                       <MenuItem value="reserved">Reserved</MenuItem>
                       <MenuItem value="sold">Sold</MenuItem>
