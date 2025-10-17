@@ -163,12 +163,12 @@ function HomePageLayOut(props) {
   } catch (error) {
     console.error("Invalid user data in localStorage", error);
   }
-
   const handleChangeEmail = async (data) => {
+    console.log("userDataasdadad", storedData?.id);
     try {
-      console.log("userId userId:", userId);
+      console.log("userId userId:", storedData?.id);
       const response = await changeEmail({
-        id: userId,
+        id: storedData?.id,
         email: data.new_email, // ✅ Use the form data instead
       }).unwrap();
 
