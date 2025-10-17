@@ -1145,7 +1145,7 @@ const Cemeteries = () => {
               helperText={errors.lot_number?.message}
             />
           </Grid>
-          {isLandMark === "0" && (
+          {isLandMark == "0" && (
             <Grid item xs={12} sm={4}>
               <Controller
                 name="status"
