@@ -16,6 +16,7 @@ import {
   Fade,
   Grow,
   Stack,
+  CircularProgress,
 } from "@mui/material";
 import {
   LocationOn,
@@ -67,12 +68,14 @@ const HomePage = () => {
   });
 
   // Mock images for gallery - replace with actual cemetery images
-  const galleryImages = [
-    lotCemetery?.data[0]?.profile_picture || cemeteryBanner,
-    lotImage,
-    background,
-    lotCemetery?.data[0]?.profile_picture || cemeteryBanner,
-  ];
+  const galleryImages = isCemeteryLoading
+    ? [lotImage, lotImage, background, lotImage] // Fallback images while loading
+    : [
+        lotCemetery?.data[0]?.profile_picture,
+        lotImage,
+        background,
+        lotCemetery?.data[0]?.profile_picture,
+      ];
 
   const features = [
     {
@@ -252,15 +255,42 @@ const HomePage = () => {
               <Grow in timeout={800}>
                 <Card
                   elevation={3}
-                  sx={{ mb: 2, borderRadius: 3, overflow: "hidden" }}
+                  sx={{
+                    mb: 2,
+                    borderRadius: 3,
+                    overflow: "hidden",
+                    position: "relative",
+                  }}
                 >
-                  {galleryImages[selectedImage].endsWith(".mp4") ? (
+                  {/* Loading Overlay */}
+                  {isCemeteryLoading && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        inset: 0,
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        bgcolor: "rgba(255,255,255,0.8)",
+                        zIndex: 10,
+                        backdropFilter: "blur(4px)",
+                      }}
+                    >
+                      <Box sx={{ textAlign: "center" }}>
+                        <CircularProgress color="success" />
+                        <Typography sx={{ mt: 2, color: "text.secondary" }}>
+                          Loading gallery...
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {!isCemeteryLoading &&
+                  galleryImages[selectedImage]?.endsWith(".mp4") ? (
                     <video
-                      key={galleryImages[selectedImage]} // 👈 re-render video when changed
                       width="100%"
                       height={isMobile ? "250" : "350"}
                       controls
-                      autoPlay
                       style={{
                         cursor: "pointer",
                         objectFit: "cover",
@@ -289,6 +319,7 @@ const HomePage = () => {
                 </Card>
               </Grow>
 
+              {/* Thumbnail Gallery */}
               <Grid container spacing={1}>
                 {galleryImages.slice(1).map((image, index) => (
                   <Grid item xs={4} key={index + 1}>
@@ -303,13 +334,19 @@ const HomePage = () => {
                         borderRadius: 2,
                         overflow: "hidden",
                         transition: "all 0.3s ease",
+                        opacity: isCemeteryLoading ? 0.6 : 1,
+                        pointerEvents: isCemeteryLoading ? "none" : "auto",
                         "&:hover": {
-                          transform: "translateY(-2px)",
+                          transform: !isCemeteryLoading
+                            ? "translateY(-2px)"
+                            : "none",
                         },
                       }}
-                      onClick={() => setSelectedImage(index + 1)}
+                      onClick={() =>
+                        !isCemeteryLoading && setSelectedImage(index + 1)
+                      }
                     >
-                      {image.endsWith(".mp4") ? (
+                      {image?.endsWith(".mp4") ? (
                         <video
                           width="100%"
                           height="80"
