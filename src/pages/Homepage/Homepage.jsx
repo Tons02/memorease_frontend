@@ -287,22 +287,36 @@ const HomePage = () => {
 
                   {!isCemeteryLoading &&
                   galleryImages[selectedImage]?.endsWith(".mp4") ? (
-                    <video
-                      width="100%"
-                      height={isMobile ? "250" : "350"}
-                      controls
-                      style={{
-                        cursor: "pointer",
-                        objectFit: "cover",
-                        display: "block",
+                    <Box
+                      sx={{
+                        width: "100%",
+                        height: { xs: "250px", sm: "350px" },
+                        bgcolor: "#000",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      <source
-                        src={galleryImages[selectedImage]}
-                        type="video/mp4"
-                      />
-                      Your browser does not support the video tag.
-                    </video>
+                      <video
+                        controls
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <source
+                          src={galleryImages[selectedImage]}
+                          type="video/mp4"
+                        />
+                        Your browser does not support the video tag.
+                      </video>
+                    </Box>
                   ) : (
                     <CardMedia
                       component="img"
@@ -347,13 +361,28 @@ const HomePage = () => {
                       }
                     >
                       {image?.endsWith(".mp4") ? (
-                        <video
-                          width="100%"
-                          height="80"
-                          style={{ objectFit: "cover" }}
+                        <Box
+                          sx={{
+                            width: "100%",
+                            height: "80px",
+                            bgcolor: "#000",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
                         >
-                          <source src={image} type="video/mp4" />
-                        </video>
+                          <video
+                            muted
+                            playsInline
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                          >
+                            <source src={image} type="video/mp4" />
+                          </video>
+                        </Box>
                       ) : (
                         <CardMedia
                           component="img"
