@@ -256,9 +256,11 @@ const HomePage = () => {
                 >
                   {galleryImages[selectedImage].endsWith(".mp4") ? (
                     <video
+                      key={galleryImages[selectedImage]} // 👈 re-render video when changed
                       width="100%"
                       height={isMobile ? "250" : "350"}
                       controls
+                      autoPlay
                       style={{
                         cursor: "pointer",
                         objectFit: "cover",
