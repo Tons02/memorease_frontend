@@ -70,12 +70,7 @@ const HomePage = () => {
   // Mock images for gallery - replace with actual cemetery images
   const galleryImages = isCemeteryLoading
     ? [lotImage, lotImage, background, lotImage] // Fallback images while loading
-    : [
-        lotCemetery?.data[0]?.profile_picture,
-        lotImage,
-        background,
-        lotCemetery?.data[0]?.profile_picture,
-      ];
+    : [lotImage, lotImage, background, lotCemetery?.data[0]?.profile_picture];
 
   const features = [
     {
