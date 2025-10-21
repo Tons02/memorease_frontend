@@ -460,9 +460,13 @@ const Cemeteries = () => {
 
   useEffect(() => {
     if (isLandMark == "1") {
-      setValue("price", 0); // or null if preferred
-      setValue("downpayment_price", 0); // or null
+      // Landmark logic
+      setValue("price", 0);
+      setValue("downpayment_price", 0);
       setValue("status", "land_mark");
+    } else if (isLandMark == "0") {
+      // Normal lot logic
+      setValue("status", "available");
     }
   }, [isLandMark, setValue]);
 
