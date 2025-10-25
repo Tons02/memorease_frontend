@@ -46,6 +46,14 @@ export const apiUser = apiSlice
         }),
         invalidatesTags: ["Users"],
       }),
+      deleteUser: builder.mutation({
+        query: ({ id }) => ({
+          url: `/user/${id}`,
+          method: "DELETE",
+          body: id,
+        }),
+        invalidatesTags: ["Users"],
+      }),
     }),
   });
 
@@ -55,4 +63,5 @@ export const {
   useUpdateUserMutation,
   useResetPasswordMutation,
   useArchivedUserMutation,
+  useDeleteUserMutation,
 } = apiUser;

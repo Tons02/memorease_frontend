@@ -61,6 +61,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import {
   useAddUserMutation,
   useArchivedUserMutation,
+  useDeleteUserMutation,
   useGetUserQuery,
   useResetPasswordMutation,
   useUpdateUserMutation,
@@ -82,6 +83,7 @@ const User = () => {
   const [selectedID, setSelectedID] = useState(null);
   const [openResetPasswordDialog, setOpenResetPasswordDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openConfirmDeleteDialog, setConfirmOpenDeleteDialog] = useState(false);
   const [restoreUser, setRestoreUser] = useState(false);
 
   const formMethods = useForm({
@@ -130,6 +132,7 @@ const User = () => {
   const [addUser, { isLoading: isAdding }] = useAddUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [archiveUser, { isLoading: isArchiving }] = useArchivedUserMutation();
+  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
   const [resetPassword, { isLoading: isReseting }] = useResetPasswordMutation();
 
   // Handle Create User
@@ -225,6 +228,20 @@ const User = () => {
     }
   };
 
+  //force delete
+  const handleConfirmDeleteUser = async () => {
+    try {
+      const response = await deleteUser({ id: selectedID }).unwrap();
+      console.log("User Deleted Successfully:", response);
+      setConfirmOpenDeleteDialog(false);
+      refetch();
+      toast.success(response?.message);
+    } catch (errors) {
+      console.error("Error deleting user:", errors?.data?.errors[0]?.title);
+      toast.error(errors?.data?.errors[0]?.title);
+    }
+  };
+
   const handleResetPasswordUser = async () => {
     try {
       const response = await resetPassword({ id: selectedID }).unwrap();
@@ -232,7 +249,10 @@ const User = () => {
       setOpenResetPasswordDialog(false);
       toast.success(response?.message);
     } catch (errors) {
-      console.error("Error archiving user:", errors?.data?.errors[0]?.title);
+      console.error(
+        "Error reset password user:",
+        errors?.data?.errors[0]?.title
+      );
       toast.error(errors?.data?.errors[0]?.title);
     }
   };
@@ -250,6 +270,11 @@ const User = () => {
   const handleDeleteClick = (row) => {
     setSelectedID(row.id);
     setOpenDeleteDialog(true);
+  };
+
+  const handleConfirmDeleteClick = (row) => {
+    setSelectedID(row.id);
+    setConfirmOpenDeleteDialog(true);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -307,6 +332,7 @@ const User = () => {
     setRestoreUser(false);
     setOpenDeleteDialog(false);
     setOpenResetPasswordDialog(false);
+    setConfirmOpenDeleteDialog(false);
   };
 
   const getInitials = (fname, lname) => {
@@ -886,22 +912,39 @@ const User = () => {
                             </MenuItem>
                           </>
                         ) : (
-                          <MenuItem
-                            onClick={() => {
-                              handleCloseDropDown();
-                              handleDeleteClick(row);
-                              setRestoreUser(true);
-                            }}
-                            sx={{
-                              "&:hover": {
-                                backgroundColor: "#f0fdf4",
-                                color: "#16a34a",
-                              },
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            Restore
-                          </MenuItem>
+                          <>
+                            <MenuItem
+                              onClick={() => {
+                                handleCloseDropDown();
+                                handleDeleteClick(row);
+                                setRestoreUser(true);
+                              }}
+                              sx={{
+                                "&:hover": {
+                                  backgroundColor: "#f0fdf4",
+                                  color: "#16a34a",
+                                },
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              Restore
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                handleCloseDropDown();
+                                handleConfirmDeleteClick(row);
+                              }}
+                              sx={{
+                                "&:hover": {
+                                  backgroundColor: "#f0fdf4",
+                                  color: "#16a34a",
+                                },
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              Delete
+                            </MenuItem>
+                          </>
                         )}
                       </Menu>
                     </TableCell>
@@ -1347,6 +1390,43 @@ const User = () => {
             Are you sure you want to {restoreUser ? "restore" : "archive"} this
             user?
             {!restoreUser && " This action will deactivate the user account."}
+          </Typography>
+        </Box>
+      </DialogComponent>
+
+      <DialogComponent
+        open={openConfirmDeleteDialog}
+        onClose={handleClose}
+        onSubmit={handleConfirmDeleteUser}
+        title={"Delete User"}
+        isLoading={isArchiving}
+        submitLabel={"Delete"}
+        submitIcon={<Check />}
+        maxWidth="sm"
+        isArchived={true}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+            py: 2,
+          }}
+        >
+          <Box
+            sx={{
+              fontSize: "4rem",
+              opacity: 0.5,
+            }}
+          >
+            {restoreUser ? "🔄" : "🗑️"}
+          </Box>
+          <Typography variant="h6" fontWeight={600} textAlign="center">
+            Are you sure?
+          </Typography>
+          <Typography color="text.secondary" textAlign="center">
+            This action will delete the user account.
           </Typography>
         </Box>
       </DialogComponent>
