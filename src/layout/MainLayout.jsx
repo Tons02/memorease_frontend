@@ -23,6 +23,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import LogoutIcon from "@mui/icons-material/Logout";
 import pmpd_logo from "../assets/pmpd_logo.png";
+import default_avatar from "../assets/defaultAvatar.jpg";
 import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import CloseIcon from "@mui/icons-material/Close";
 import {
@@ -358,8 +359,8 @@ export default function MiniDrawer() {
             <Box>
               <IconButton onClick={handleAvatarClick}>
                 <Avatar
-                  src="https://i.pravatar.cc/150?img=3" // your avatar image here
-                  alt="Profile"
+                  src={default_avatar}
+                  alt="Providence Memorial Park Logo"
                   sx={{ width: 40, height: 40 }}
                 />
               </IconButton>

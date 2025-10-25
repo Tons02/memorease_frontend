@@ -92,7 +92,7 @@ const router = createBrowserRouter([
         index: true,
         element: (
           <AccessPermissionContext permission="admin" context="routing">
-            <Dashboard />,
+            <Dashboard />
           </AccessPermissionContext>
         ),
       },
@@ -101,7 +101,7 @@ const router = createBrowserRouter([
         index: true,
         element: (
           <AccessPermissionContext permission="admin" context="routing">
-            <Masterlist />,
+            <Masterlist />
           </AccessPermissionContext>
         ),
       },

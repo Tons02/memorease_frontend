@@ -31,6 +31,7 @@ import WarningAmberRoundedIcon from "@mui/icons-material/WarningAmberRounded";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import LockIcon from "@mui/icons-material/Lock";
+import default_avatar from "../assets/defaultAvatar.jpg";
 
 import { Outlet, Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -361,8 +362,8 @@ function HomePageLayOut(props) {
               <Box>
                 <IconButton onClick={handleAvatarClick}>
                   <Avatar
-                    src="https://i.pravatar.cc/150?img=3"
-                    alt="Profile"
+                    src={default_avatar}
+                    alt="Providence Memorial Park Logo"
                     sx={{ width: 40, height: 40 }}
                   />
                 </IconButton>
