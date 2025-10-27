@@ -1027,9 +1027,10 @@ const Cemeteries = () => {
           margin="normal"
           value={selectedLot?.status}
         />
-        {/* <TextField
+        <TextField
           label="Price"
           fullWidth
+          sx={{ display: "none" }}
           disabled
           margin="normal"
           value={selectedLot?.price}
@@ -1037,11 +1038,12 @@ const Cemeteries = () => {
         <TextField
           label="Downpayment_price"
           fullWidth
+          sx={{ display: "none" }}
           disabled
           margin="normal"
           value={selectedLot?.downpayment_price}
           {...register("total_downpayment_price")}
-        /> */}
+        />
 
         <InstallmentCalculator
           selectedLot={selectedLot}
