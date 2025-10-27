@@ -33,7 +33,8 @@ import {
 } from "@mui/icons-material";
 import { Link as RouterLink } from "react-router-dom";
 import background from "../../assets/background.png";
-import lotImage from "../../assets/lot-a1.jpg";
+import lotImage from "../../assets/default-image.png";
+import aboutBanner from "../../assets/default-image.png";
 import cemeteryBanner from "../../assets/cemetery-banner.jpg";
 import Slider from "react-slick";
 import { useGetLotQuery } from "../../redux/slices/apiLot";

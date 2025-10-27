@@ -49,6 +49,7 @@ import FileUploadInput from "../../components/FileUploadInput";
 import { toast } from "sonner";
 import Echo from "laravel-echo";
 import { Card } from "stream-chat-react";
+import InstallmentCalculator from "../../components/InstallmentCalculator";
 
 const Cemeteries = () => {
   const isLoggedIn = !!localStorage.getItem("token");
@@ -1026,7 +1027,7 @@ const Cemeteries = () => {
           margin="normal"
           value={selectedLot?.status}
         />
-        <TextField
+        {/* <TextField
           label="Price"
           fullWidth
           disabled
@@ -1040,6 +1041,12 @@ const Cemeteries = () => {
           margin="normal"
           value={selectedLot?.downpayment_price}
           {...register("total_downpayment_price")}
+        /> */}
+
+        <InstallmentCalculator
+          selectedLot={selectedLot}
+          register={register}
+          setValue={setValue}
         />
 
         {/* Enhanced GCash Section */}
