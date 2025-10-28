@@ -223,6 +223,21 @@ export default function MiniDrawer() {
     };
   }, [LoginUserCount?.id]);
 
+  // Real-time listener for new messages
+  useEffect(() => {
+    if (!LoginUser?.id) return;
+
+    const channel = window.Echo.private(`user.${LoginUser.id}`);
+
+    channel.listen(".message.sent", (e) => {
+      console.log("New message received", e.message);
+      conversationRefetch?.();
+      if (e.message.conversation_id === selectedUser?.conversationId) {
+        messageRefetch?.();
+      }
+    });
+  });
+
   const [changePassword, { isLoading }] = useChangePasswordMutation();
 
   function cleanPointer(pointer) {
