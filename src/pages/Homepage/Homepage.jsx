@@ -46,10 +46,6 @@ const HomePage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
 
-  const LoginUser = JSON.parse(localStorage.getItem("user"));
-  const contactPath =
-    LoginUser?.role_type === "admin" ? "/admin/messages" : "/contact";
-
   const {
     data: lotCemetery,
     refetch: refetchCemetery,
@@ -363,8 +359,8 @@ const HomePage = () => {
                       {image?.endsWith(".mp4") ? (
                         <Box
                           sx={{
-                            width: "100%",
-                            height: "80px",
+                            width: "175px",
+                            height: "100px",
                             bgcolor: "#000",
                             display: "flex",
                             alignItems: "center",
@@ -375,8 +371,8 @@ const HomePage = () => {
                             muted
                             playsInline
                             style={{
-                              width: "100%",
-                              height: "100%",
+                              width: "100px",
+                              height: "100px",
                               objectFit: "cover",
                             }}
                           >
@@ -387,6 +383,10 @@ const HomePage = () => {
                         <CardMedia
                           component="img"
                           height="80"
+                          style={{
+                            width: "160px",
+                            height: "100px",
+                          }}
                           image={image}
                           alt={`Gallery ${index + 1}`}
                         />
@@ -891,8 +891,6 @@ const HomePage = () => {
                   <Button
                     variant="outlined"
                     size="large"
-                    component={RouterLink}
-                    to={contactPath}
                     sx={{
                       color: "white",
                       borderColor: "rgba(255, 255, 255, 0.8)",
