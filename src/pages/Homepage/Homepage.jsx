@@ -62,7 +62,7 @@ const HomePage = () => {
     isLoading: isLotLoading,
   } = useGetLotQuery({
     search: "",
-    per_page: "8",
+    per_page: "20",
     page: "1",
     pagination: "",
     status: "available",
@@ -113,24 +113,10 @@ const HomePage = () => {
     dots: true,
     infinite: true,
     speed: 500,
-    slidesToShow: isMobile ? 1 : isTablet ? 2 : 4,
+    slidesToShow: isMobile ? 1 : 4,
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 3000,
-    responsive: [
-      {
-        breakpoint: 960,
-        settings: {
-          slidesToShow: 2,
-        },
-      },
-      {
-        breakpoint: 600,
-        settings: {
-          slidesToShow: 1,
-        },
-      },
-    ],
   };
 
   return (
