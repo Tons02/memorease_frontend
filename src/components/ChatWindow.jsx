@@ -247,11 +247,11 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
       >
         {messages.map((msg) => (
           <MessageBubble
-            key={msg.id}
-            text={msg.body}
-            isOwn={msg.sender_id === LoginUser.id}
-            timestamp={msg.created_at}
-            attachments={msg.attachments}
+            key={msg?.id}
+            text={msg?.body}
+            isOwn={msg?.sender_id === LoginUser?.id}
+            timestamp={msg?.created_at}
+            attachments={msg?.attachments}
           />
         ))}
         <div ref={messagesEndRef} />

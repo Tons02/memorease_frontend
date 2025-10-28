@@ -39,7 +39,7 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
   const [receivedMessageCount] = useReceivedMessageCountMutation();
 
   useEffect(() => {
-    if (LoginUser?.id && currentUser !== LoginUser.id) {
+    if (LoginUser?.id && currentUser !== LoginUser?.id) {
       setCurrentUser(LoginUser.id);
       refetch();
     }
@@ -88,11 +88,11 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
 
     const users = conversations.data.map((conversation) => {
       const otherUser = conversation.users.find(
-        (user) => user.id !== LoginUser.id
+        (user) => user?.id !== LoginUser.id
       );
 
       const pivot = conversation.users.find(
-        (u) => u.id === LoginUser.id
+        (u) => u.id === LoginUser?.id
       )?.pivot;
 
       const lastMessage =
@@ -109,17 +109,17 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
         conversation.message_status?.receiver?.new_message === "1";
 
       return {
-        id: otherUser.id,
+        id: otherUser?.id,
         name: [
-          otherUser.fname,
-          otherUser.mi ? `${otherUser.mi}.` : null,
-          otherUser.lname,
-          otherUser.suffix,
+          otherUser?.fname,
+          otherUser?.mi ? `${otherUser.mi}.` : null,
+          otherUser?.lname,
+          otherUser?.suffix,
         ]
           .filter(Boolean)
           .join(" "),
-        avatar: otherUser.profile_picture,
-        conversationId: conversation.id,
+        avatar: otherUser?.profile_picture,
+        conversationId: conversation?.id,
         lastMessage: lastMessage?.attachments
           ? "📎 Attachment"
           : lastMessage?.body || "No messages yet",
@@ -136,7 +136,7 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
       const dateB = new Date(b.lastMessageTime || 0);
       return dateB - dateA; // Descending order (newest first)
     });
-  }, [conversations?.data, LoginUser.id]);
+  }, [conversations?.data, LoginUser?.id]);
 
   // Filter users based on search query
   const filteredUsers = useMemo(() => {
@@ -322,9 +322,9 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
             </Box>
           ) : (
             filteredUsers.map((user) => (
-              <ListItem key={user.id} disablePadding>
+              <ListItem key={user?.id} disablePadding>
                 <ListItemButton
-                  selected={selectedUser?.id === user.id}
+                  selected={selectedUser?.id === user?.id}
                   onClick={() => handleUserSelect(user)}
                   sx={{
                     py: isMobile ? 1 : 1.5,
