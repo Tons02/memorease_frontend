@@ -46,6 +46,10 @@ const HomePage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isTablet = useMediaQuery(theme.breakpoints.down("lg"));
 
+  const LoginUser = JSON.parse(localStorage.getItem("user"));
+  const contactPath =
+    LoginUser?.role_type === "admin" ? "/admin/messages" : "/contact";
+
   const {
     data: lotCemetery,
     refetch: refetchCemetery,
@@ -887,6 +891,8 @@ const HomePage = () => {
                   <Button
                     variant="outlined"
                     size="large"
+                    component={RouterLink}
+                    to={contactPath}
                     sx={{
                       color: "white",
                       borderColor: "rgba(255, 255, 255, 0.8)",
