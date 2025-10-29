@@ -198,9 +198,18 @@ const HomePage = () => {
                 size="large"
                 sx={{
                   bgcolor: "success.main",
-                  px: 4,
-                  py: 1.5,
-                  fontSize: "1.1rem",
+                  px: { xs: 2, sm: 4 },
+                  py: { xs: 1, sm: 1.5 },
+                  width: {
+                    xs: "160px", // smaller on mobile
+                    sm: "255px",
+                    md: "255px",
+                    lg: "255px",
+                  },
+                  fontSize: { xs: "0.85rem", sm: "1.1rem" },
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   "&:hover": {
                     bgcolor: "success.dark",
                     transform: "translateY(-2px)",
@@ -209,7 +218,21 @@ const HomePage = () => {
                 }}
                 endIcon={<ArrowForward />}
               >
-                Explore Our Lots
+                {/* Short label on mobile, full label on larger screens */}
+                <Typography
+                  sx={{
+                    display: { xs: "none", sm: "inline" },
+                  }}
+                >
+                  Explore Our Lots
+                </Typography>
+                <Typography
+                  sx={{
+                    display: { xs: "inline", sm: "none" },
+                  }}
+                >
+                  Explore
+                </Typography>
               </Button>
             </Box>
           </Fade>
@@ -345,7 +368,12 @@ const HomePage = () => {
                       {image?.endsWith(".mp4") ? (
                         <Box
                           sx={{
-                            width: "175px",
+                            width: {
+                              xs: "87px", // mobile ≤375
+                              sm: "73px", // ≥768
+                              md: "125px", // ≥1024
+                              lg: "166px", // ≥1440
+                            },
                             height: "100px",
                             bgcolor: "#000",
                             display: "flex",
@@ -357,8 +385,8 @@ const HomePage = () => {
                             muted
                             playsInline
                             style={{
-                              width: "100px",
-                              height: "100px",
+                              width: "100%",
+                              height: "100%",
                               objectFit: "cover",
                             }}
                           >
@@ -368,13 +396,18 @@ const HomePage = () => {
                       ) : (
                         <CardMedia
                           component="img"
-                          height="80"
-                          style={{
-                            width: "160px",
+                          alt={`Gallery ${index + 1}`}
+                          sx={{
+                            width: {
+                              xs: "87px",
+                              sm: "73px",
+                              md: "125px",
+                              lg: "166px",
+                            },
                             height: "100px",
+                            objectFit: "cover",
                           }}
                           image={image}
-                          alt={`Gallery ${index + 1}`}
                         />
                       )}
                     </Card>

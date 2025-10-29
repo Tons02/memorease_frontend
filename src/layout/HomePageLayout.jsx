@@ -40,7 +40,7 @@ import {
   useLogoutMutation,
 } from "../redux/slices/apiSlice";
 import pmpd_logo from "../assets/pmpd_logo.png";
-import { Email, GppMaybe, VerifiedUser } from "@mui/icons-material";
+import { Email, GppMaybe, Map, VerifiedUser } from "@mui/icons-material";
 import DialogComponent from "../components/DialogComponent";
 import {
   changePasswordSchema,
@@ -202,79 +202,379 @@ function HomePageLayOut(props) {
   ].filter(Boolean);
 
   const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
-      <Typography variant="h6" sx={{ my: 2 }}>
-        PMP
-      </Typography>
-      <Divider />
-      <List>
+    <Box
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: "background.paper",
+      }}
+    >
+      {/* Header Section */}
+      <Box
+        sx={{
+          background: "linear-gradient(#faf7c0)",
+          color: "white",
+          py: 3,
+          px: 2,
+          textAlign: "center",
+          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+        }}
+      >
+        <img
+          src={pmpd_logo}
+          alt="PMP Logo"
+          style={{ width: 80, marginBottom: 8 }}
+        />
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: 600, letterSpacing: 1 }}
+          color="success.main"
+        >
+          PMP
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{ opacity: 0.9 }}
+          color="success.main"
+        >
+          Providence Memorial Park
+        </Typography>
+      </Box>
+
+      {/* User Profile Section (if logged in) */}
+      {isLoggedIn && (
+        <Box
+          sx={{
+            px: 2,
+            py: 2.5,
+            bgcolor: "grey.50",
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Avatar
+              src={default_avatar}
+              alt="User Avatar"
+              sx={{
+                width: 48,
+                height: 48,
+                border: "2px solid",
+                borderColor: "success.main",
+              }}
+            />
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {[
+                  LoginUser?.fname,
+                  LoginUser?.mi,
+                  LoginUser?.lname,
+                  LoginUser?.suffix,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  mt: 0.5,
+                }}
+              >
+                {roleName === "admin" ? (
+                  <>
+                    <VerifiedUser
+                      sx={{ fontSize: 14, color: "success.main" }}
+                    />
+                    <Typography variant="caption" color="success.main">
+                      Admin
+                    </Typography>
+                  </>
+                ) : emailVerified ? (
+                  <>
+                    <VerifiedUser
+                      sx={{ fontSize: 14, color: "success.main" }}
+                    />
+                    <Typography variant="caption" color="success.main">
+                      Verified
+                    </Typography>
+                  </>
+                ) : (
+                  <>
+                    <GppMaybe sx={{ fontSize: 14, color: "warning.main" }} />
+                    <Typography variant="caption" color="warning.main">
+                      Not Verified
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
+      {/* Navigation Items */}
+      <List sx={{ flex: 1, py: 1 }}>
         {navItems.map((item) => {
           if (item.name === "MapsDropdown") {
             return (
               <React.Fragment key="maps-mobile">
-                <ListItem disablePadding>
-                  <ListItemButton component={Link} to="/maps">
-                    <ListItemText primary="Reservation Maps" />
+                {!emailVerified && (
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      component={Link}
+                      to="/verification"
+                      onClick={handleDrawerToggle}
+                      sx={{
+                        mx: 1,
+                        borderRadius: 2,
+                        "&:hover": {
+                          bgcolor: "primary.light",
+                          "& .MuiListItemText-primary": { color: "white" },
+                          "& .MuiListItemIcon-root": { color: "white" },
+                        },
+                      }}
+                    >
+                      <ListItemText
+                        primary="Not Verified"
+                        primaryTypographyProps={{
+                          fontSize: 14,
+                          fontWeight: 500,
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                )}
+
+                <ListItem disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemButton
+                    component={Link}
+                    to="/maps"
+                    onClick={handleDrawerToggle}
+                    sx={{
+                      mx: 1,
+                      borderRadius: 2,
+                      "&:hover": {
+                        bgcolor: "primary.light",
+                        "& .MuiListItemText-primary": { color: "white" },
+                        "& .MuiListItemIcon-root": { color: "white" },
+                      },
+                    }}
+                  >
+                    <ListItemText
+                      primary="Reservation Maps"
+                      primaryTypographyProps={{
+                        fontSize: 14,
+                        fontWeight: 500,
+                      }}
+                    />
                   </ListItemButton>
                 </ListItem>
-                <ListItem disablePadding>
-                  <ListItemButton component={Link} to="/maps-deceased-viewing">
-                    <ListItemText primary="Deceased Maps" />
+                <ListItem disablePadding sx={{ mb: 0.5 }}>
+                  <ListItemButton
+                    component={Link}
+                    to="/maps-deceased-viewing"
+                    onClick={handleDrawerToggle}
+                    sx={{
+                      mx: 1,
+                      borderRadius: 2,
+                      "&:hover": {
+                        bgcolor: "primary.light",
+                        "& .MuiListItemText-primary": { color: "white" },
+                        "& .MuiListItemIcon-root": { color: "white" },
+                      },
+                    }}
+                  >
+                    <ListItemText
+                      primary="Deceased Maps"
+                      primaryTypographyProps={{
+                        fontSize: 14,
+                        fontWeight: 500,
+                      }}
+                    />
                   </ListItemButton>
                 </ListItem>
               </React.Fragment>
             );
           }
           return (
-            <ListItem key={item.name} disablePadding>
-              <ListItemButton component={Link} to={item.path}>
-                <ListItemText primary={item.name} />
+            <ListItem key={item.name} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                component={Link}
+                to={item.path}
+                onClick={handleDrawerToggle}
+                sx={{
+                  mx: 1,
+                  borderRadius: 2,
+                  "&:hover": {
+                    bgcolor: "primary.light",
+                    "& .MuiListItemText-primary": { color: "white" },
+                  },
+                }}
+              >
+                <ListItemText
+                  primary={item.name}
+                  primaryTypographyProps={{
+                    fontSize: 14,
+                    fontWeight: 500,
+                  }}
+                />
               </ListItemButton>
             </ListItem>
           );
         })}
 
-        {/* ✅ Add avatar menu in drawer for mobile */}
-        {isLoggedIn && (
+        {/* Admin Menu Item */}
+        {isLoggedIn && roleName === "admin" && (
           <>
-            <MenuItem>
-              <ListItemIcon>
-                <PersonIcon fontSize="small" />
-              </ListItemIcon>
-              {[
-                LoginUser.fname,
-                LoginUser.mi,
-                LoginUser.lname,
-                LoginUser.suffix,
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            </MenuItem>
-            {roleName === "admin" && (
-              <ListItem disablePadding>
-                <ListItemButton component={Link} to="/admin">
-                  <ListItemText primary="Admin" />
-                </ListItemButton>
-              </ListItem>
-            )}
-            {/* <ListItem disablePadding>
-              <ListItemButton>
-                <ListItemText primary="Change Profile" />
-              </ListItemButton>
-            </ListItem> */}
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => setOpenModalChangePassword(true)}>
-                <ListItemText primary="Change Password" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton onClick={() => setOpenLogoutDialog(true)}>
-                <ListItemText primary="Logout" />
+            <Divider sx={{ my: 1 }} />
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                component={Link}
+                to="/admin"
+                onClick={handleDrawerToggle}
+                sx={{
+                  mx: 1,
+                  borderRadius: 2,
+                  bgcolor: "success.light",
+                  "&:hover": {
+                    bgcolor: "success.main",
+                    "& .MuiListItemText-primary, & .MuiListItemIcon-root": {
+                      color: "white",
+                    },
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <VerifiedUser />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Admin Panel"
+                  primaryTypographyProps={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                />
               </ListItemButton>
             </ListItem>
           </>
         )}
       </List>
+
+      {/* Account Actions (if logged in) */}
+      {isLoggedIn && (
+        <Box sx={{ borderTop: "1px solid", borderColor: "divider", py: 1 }}>
+          {roleName !== "admin" && emailVerified === false && (
+            <ListItem disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                component={Link}
+                to="/verification"
+                onClick={handleDrawerToggle}
+                sx={{
+                  mx: 1,
+                  borderRadius: 2,
+                  bgcolor: "warning.light",
+                  "&:hover": {
+                    bgcolor: "warning.main",
+                    "& .MuiListItemText-primary, & .MuiListItemIcon-root": {
+                      color: "white",
+                    },
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <GppMaybe />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Verify Account"
+                  primaryTypographyProps={{
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          )}
+
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={() => {
+                setOpenModalChangeEmail(true);
+                handleDrawerToggle();
+              }}
+              sx={{
+                mx: 1,
+                borderRadius: 2,
+                "&:hover": {
+                  bgcolor: "grey.200",
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <Email fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Change Email"
+                primaryTypographyProps={{ fontSize: 14 }}
+              />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={() => {
+                setOpenModalChangePassword(true);
+                handleDrawerToggle();
+              }}
+              sx={{
+                mx: 1,
+                borderRadius: 2,
+                "&:hover": {
+                  bgcolor: "grey.200",
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <LockIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Change Password"
+                primaryTypographyProps={{ fontSize: 14 }}
+              />
+            </ListItemButton>
+          </ListItem>
+
+          <ListItem disablePadding sx={{ mb: 1 }}>
+            <ListItemButton
+              onClick={() => {
+                setOpenLogoutDialog(true);
+                handleDrawerToggle();
+              }}
+              sx={{
+                mx: 1,
+                borderRadius: 2,
+                bgcolor: "error.light",
+                "&:hover": {
+                  bgcolor: "error.main",
+                  "& .MuiListItemText-primary, & .MuiListItemIcon-root": {
+                    color: "white",
+                  },
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <LogoutIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Logout"
+                primaryTypographyProps={{ fontSize: 14, fontWeight: 600 }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </Box>
+      )}
     </Box>
   );
 
@@ -622,7 +922,7 @@ function HomePageLayOut(props) {
             fullWidth
             startIcon={<LogoutIcon />}
           >
-            Log Out
+            Logout
           </Button>
         </DialogActions>
       </Dialog>
