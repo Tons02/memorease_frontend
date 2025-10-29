@@ -408,7 +408,7 @@ function HomePageLayOut(props) {
                   mx: 1,
                   borderRadius: 2,
                   "&:hover": {
-                    bgcolor: "primary.light",
+                    bgcolor: "success.main",
                     "& .MuiListItemText-primary": { color: "white" },
                   },
                 }}
@@ -437,7 +437,7 @@ function HomePageLayOut(props) {
                 sx={{
                   mx: 1,
                   borderRadius: 2,
-                  bgcolor: "success.light",
+                  bgcolor: "success.main",
                   "&:hover": {
                     bgcolor: "success.main",
                     "& .MuiListItemText-primary, & .MuiListItemIcon-root": {
