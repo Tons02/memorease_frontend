@@ -331,8 +331,8 @@ function HomePageLayOut(props) {
                         mx: 1,
                         borderRadius: 2,
                         "&:hover": {
-                          bgcolor: "primary.light",
-                          "& .MuiListItemText-primary": { color: "white" },
+                          bgcolor: "success.main",
+                          "& .MuiListItemText-secondary": { color: "white" },
                           "& .MuiListItemIcon-root": { color: "white" },
                         },
                       }}
@@ -356,7 +356,7 @@ function HomePageLayOut(props) {
                       mx: 1,
                       borderRadius: 2,
                       "&:hover": {
-                        bgcolor: "primary.light",
+                        bgcolor: "success.main",
                         "& .MuiListItemText-primary": { color: "white" },
                         "& .MuiListItemIcon-root": { color: "white" },
                       },
@@ -380,7 +380,7 @@ function HomePageLayOut(props) {
                       mx: 1,
                       borderRadius: 2,
                       "&:hover": {
-                        bgcolor: "primary.light",
+                        bgcolor: "success.main",
                         "& .MuiListItemText-primary": { color: "white" },
                         "& .MuiListItemIcon-root": { color: "white" },
                       },
