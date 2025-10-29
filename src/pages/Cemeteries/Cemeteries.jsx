@@ -313,7 +313,7 @@ const Cemeteries = () => {
       formData.append("description", payload.description);
       formData.append("coordinates", JSON.stringify(payload.coordinates || []));
       formData.append("status", payload.status);
-      formData.append("reserved_until", payload.reserved_until);
+      formData.append("reserved_until", payload.reserved_until || "");
       formData.append("price", payload.price);
       formData.append("downpayment_price", payload.downpayment_price);
       formData.append("promo_price", payload.promo_price);
