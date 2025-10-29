@@ -321,7 +321,7 @@ function HomePageLayOut(props) {
           if (item.name === "MapsDropdown") {
             return (
               <React.Fragment key="maps-mobile">
-                {!emailVerified && (
+                {isLoggedIn && !emailVerified && (
                   <ListItem disablePadding sx={{ mb: 0.5 }}>
                     <ListItemButton
                       component={Link}
@@ -347,7 +347,6 @@ function HomePageLayOut(props) {
                     </ListItemButton>
                   </ListItem>
                 )}
-
                 <ListItem disablePadding sx={{ mb: 0.5 }}>
                   <ListItemButton
                     component={Link}
