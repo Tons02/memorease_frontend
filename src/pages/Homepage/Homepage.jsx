@@ -35,6 +35,9 @@ import { Link as RouterLink } from "react-router-dom";
 import background from "../../assets/background.png";
 import lotImage from "../../assets/default-image.png";
 import aboutBanner from "../../assets/default-image.png";
+import aboutPhoto from "../../assets/about1.jpg";
+import secondAboutPhoto from "../../assets/about2.jpg";
+import thirdAboutPhoto from "../../assets/about3.jpg";
 import cemeteryBanner from "../../assets/cemetery-banner.jpg";
 import Slider from "react-slick";
 import { useGetLotQuery } from "../../redux/slices/apiLot";
@@ -70,8 +73,13 @@ const HomePage = () => {
 
   // Mock images for gallery - replace with actual cemetery images
   const galleryImages = isCemeteryLoading
-    ? [lotImage, lotImage, background, lotImage] // Fallback images while loading
-    : [lotImage, lotImage, background, lotCemetery?.data[0]?.profile_picture];
+    ? [aboutPhoto, aboutPhoto, secondAboutPhoto, thirdAboutPhoto] // Fallback images while loading
+    : [
+        aboutPhoto,
+        aboutPhoto,
+        secondAboutPhoto,
+        lotCemetery?.data[0]?.profile_picture,
+      ];
 
   const features = [
     {
@@ -780,7 +788,7 @@ const HomePage = () => {
           minHeight: { xs: "60vh", md: "70vh" },
           display: "flex",
           alignItems: "center",
-          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%), url(${cemeteryBanner})`,
+          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%), url(${aboutPhoto})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: isMobile ? "scroll" : "fixed",
