@@ -29,7 +29,7 @@ const FloatingChat = () => {
   useEffect(() => {
     if (!LoginUserCount?.id) return;
 
-    const channel = window.Echo.private(`user.${LoginUserCount.id}`);
+    const channel = window.Echo.private(`user.${LoginUserCount?.id}`);
 
     channel.listen(".message.sent", (e) => {
       console.log("New message received", e.message);
@@ -38,7 +38,7 @@ const FloatingChat = () => {
     });
 
     return () => {
-      window.Echo.leave(`user.${LoginUserCount.id}`);
+      window.Echo.leave(`user.${LoginUserCount?.id}`);
     };
   }, [LoginUserCount?.id, conversationCountsRefetch]);
 

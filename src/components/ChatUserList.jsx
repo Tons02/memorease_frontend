@@ -39,7 +39,7 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
   const [receivedMessageCount] = useReceivedMessageCountMutation();
 
   useEffect(() => {
-    if (LoginUser?.id && currentUser !== LoginUser.id) {
+    if (LoginUser?.id && currentUser !== LoginUser?.id) {
       setCurrentUser(LoginUser.id);
       refetch();
     }
@@ -87,12 +87,13 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
     if (!conversations?.data) return [];
 
     const users = conversations.data.map((conversation) => {
+      // Find the other user (not the logged-in user)
       const otherUser = conversation.users.find(
-        (user) => user.id !== LoginUser.id
+        (user) => user?.id !== LoginUser.id && user?.id !== undefined
       );
 
       const pivot = conversation.users.find(
-        (u) => u.id === LoginUser.id
+        (u) => u.id === LoginUser?.id
       )?.pivot;
 
       const lastMessage =
@@ -109,21 +110,28 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
         conversation.message_status?.receiver?.new_message === "1";
 
       return {
-        id: otherUser.id,
-        name: [
-          otherUser.fname,
-          otherUser.mi ? `${otherUser.mi}.` : null,
-          otherUser.lname,
-          otherUser.suffix,
-        ]
-          .filter(Boolean)
-          .join(" "),
-        avatar: otherUser.profile_picture,
-        conversationId: conversation.id,
+        id: otherUser?.id || `deleted-${conversation.id}`,
+        name:
+          otherUser && otherUser.id
+            ? [
+                otherUser?.fname,
+                otherUser?.mi ? `${otherUser.mi}.` : null,
+                otherUser?.lname,
+                otherUser?.suffix,
+              ]
+                .filter(Boolean)
+                .join(" ")
+            : `${conversation?.name} - Deleted User`,
+        avatar: otherUser?.profile_picture,
+        conversationId: conversation?.id,
         lastMessage: lastMessage?.attachments
           ? "📎 Attachment"
           : lastMessage?.body || "No messages yet",
-        lastMessageTime: lastMessage?.created_at,
+        lastMessageTime:
+          lastMessage?.created_at ||
+          conversation.created_at ||
+          conversation.updated_at ||
+          new Date().toISOString(),
         hasUnread,
         unreadCount,
         hasNewMessage, // Additional flag if you want to use it
@@ -132,11 +140,11 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
 
     // Sort by last message time (most recent first)
     return users.sort((a, b) => {
-      const dateA = new Date(a.lastMessageTime || 0);
-      const dateB = new Date(b.lastMessageTime || 0);
+      const dateA = new Date(a.lastMessageTime);
+      const dateB = new Date(b.lastMessageTime);
       return dateB - dateA; // Descending order (newest first)
     });
-  }, [conversations?.data, LoginUser.id]);
+  }, [conversations?.data, LoginUser?.id]);
 
   // Filter users based on search query
   const filteredUsers = useMemo(() => {
@@ -322,9 +330,9 @@ const ChatUserList = ({ onSelectUser, selectedUser }) => {
             </Box>
           ) : (
             filteredUsers.map((user) => (
-              <ListItem key={user.id} disablePadding>
+              <ListItem key={user?.id} disablePadding>
                 <ListItemButton
-                  selected={selectedUser?.id === user.id}
+                  selected={selectedUser?.id === user?.id}
                   onClick={() => handleUserSelect(user)}
                   sx={{
                     py: isMobile ? 1 : 1.5,

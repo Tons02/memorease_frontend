@@ -8,6 +8,7 @@ import {
   TextField,
   IconButton,
   Chip,
+  Alert,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
@@ -37,12 +38,20 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
   } = useGetSpecificMessageQuery({ id: conversationId });
 
   // Get conversations query to refetch conversation list
-  const { refetch: conversationRefetch } = useGetConversationQuery();
+  const { data: conversationsData, refetch: conversationRefetch } =
+    useGetConversationQuery();
 
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
   const [receivedMessageCount] = useReceivedMessageCountMutation();
 
   const messages = messagesData?.data?.messages || [];
+
+  // Find the current conversation and check if other user is deleted
+  const currentConversation = conversationsData?.data?.find(
+    (conv) => conv.id === conversationId
+  );
+  const conversationUsers = currentConversation?.users || [];
+  const isOtherUserDeleted = conversationUsers.length === 1;
 
   // Mark messages as read when conversation is opened or messages are loaded
   useEffect(() => {
@@ -247,11 +256,11 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
       >
         {messages.map((msg) => (
           <MessageBubble
-            key={msg.id}
-            text={msg.body}
-            isOwn={msg.sender_id === LoginUser.id}
-            timestamp={msg.created_at}
-            attachments={msg.attachments}
+            key={msg?.id}
+            text={msg?.body}
+            isOwn={msg?.sender_id === LoginUser?.id}
+            timestamp={msg?.created_at}
+            attachments={msg?.attachments}
           />
         ))}
         <div ref={messagesEndRef} />
@@ -259,6 +268,13 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
 
       {/* Message Input */}
       <Box component={Paper} square sx={{ p: 2 }}>
+        {/* Show alert if other user is deleted */}
+        {isOtherUserDeleted && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            This user is no longer available. You cannot send messages.
+          </Alert>
+        )}
+
         {/* Attachment Preview - Messenger Style */}
         {attachments.length > 0 && (
           <Box
@@ -342,34 +358,42 @@ const ChatWindow = ({ selectedUser, conversationId }) => {
             onChange={handleFileSelect}
           />
 
-          {/* Attach File Button */}
+          {/* Attach File Button - Disabled if user deleted */}
           <IconButton
             color="secondary"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isSending}
+            disabled={isSending || isOtherUserDeleted}
             sx={{ mr: 1 }}
           >
             <AttachFileIcon />
           </IconButton>
 
-          {/* Text Input */}
+          {/* Text Input - Disabled if user deleted */}
           <TextField
             fullWidth
             variant="outlined"
-            placeholder="Type a message..."
+            placeholder={
+              isOtherUserDeleted
+                ? "Cannot send messages to deleted user"
+                : "Type a message..."
+            }
             value={text}
-            disabled={isSending}
+            disabled={isSending || isOtherUserDeleted}
             onChange={handleTextChange}
             onFocus={handleTextFieldFocus}
             onKeyPress={handleKeyPress}
             multiline
           />
 
-          {/* Send Button */}
+          {/* Send Button - Disabled if user deleted */}
           <IconButton
             color="secondary"
             onClick={handleSend}
-            disabled={isSending || (!text.trim() && attachments.length === 0)}
+            disabled={
+              isSending ||
+              isOtherUserDeleted ||
+              (!text.trim() && attachments.length === 0)
+            }
           >
             {isSending ? (
               <CircularProgress size={20} color="secondary" />

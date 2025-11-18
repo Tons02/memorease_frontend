@@ -35,6 +35,9 @@ import { Link as RouterLink } from "react-router-dom";
 import background from "../../assets/background.png";
 import lotImage from "../../assets/default-image.png";
 import aboutBanner from "../../assets/default-image.png";
+import aboutPhoto from "../../assets/about1.jpg";
+import secondAboutPhoto from "../../assets/about2.jpg";
+import thirdAboutPhoto from "../../assets/about3.jpg";
 import cemeteryBanner from "../../assets/cemetery-banner.jpg";
 import Slider from "react-slick";
 import { useGetLotQuery } from "../../redux/slices/apiLot";
@@ -62,7 +65,7 @@ const HomePage = () => {
     isLoading: isLotLoading,
   } = useGetLotQuery({
     search: "",
-    per_page: "8",
+    per_page: "20",
     page: "1",
     pagination: "",
     status: "available",
@@ -70,8 +73,13 @@ const HomePage = () => {
 
   // Mock images for gallery - replace with actual cemetery images
   const galleryImages = isCemeteryLoading
-    ? [lotImage, lotImage, background, lotImage] // Fallback images while loading
-    : [lotImage, lotImage, background, lotCemetery?.data[0]?.profile_picture];
+    ? [aboutPhoto, aboutPhoto, secondAboutPhoto, thirdAboutPhoto] // Fallback images while loading
+    : [
+        aboutPhoto,
+        aboutPhoto,
+        secondAboutPhoto,
+        lotCemetery?.data[0]?.profile_picture,
+      ];
 
   const features = [
     {
@@ -113,24 +121,10 @@ const HomePage = () => {
     dots: true,
     infinite: true,
     speed: 500,
-    slidesToShow: isMobile ? 1 : isTablet ? 2 : 4,
+    slidesToShow: isMobile ? 1 : 4,
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 3000,
-    responsive: [
-      {
-        breakpoint: 960,
-        settings: {
-          slidesToShow: 2,
-        },
-      },
-      {
-        breakpoint: 600,
-        settings: {
-          slidesToShow: 1,
-        },
-      },
-    ],
   };
 
   return (
@@ -212,9 +206,18 @@ const HomePage = () => {
                 size="large"
                 sx={{
                   bgcolor: "success.main",
-                  px: 4,
-                  py: 1.5,
-                  fontSize: "1.1rem",
+                  px: { xs: 2, sm: 4 },
+                  py: { xs: 1, sm: 1.5 },
+                  width: {
+                    xs: "160px", // smaller on mobile
+                    sm: "255px",
+                    md: "255px",
+                    lg: "255px",
+                  },
+                  fontSize: { xs: "0.85rem", sm: "1.1rem" },
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   "&:hover": {
                     bgcolor: "success.dark",
                     transform: "translateY(-2px)",
@@ -223,7 +226,21 @@ const HomePage = () => {
                 }}
                 endIcon={<ArrowForward />}
               >
-                Explore Our Lots
+                {/* Short label on mobile, full label on larger screens */}
+                <Typography
+                  sx={{
+                    display: { xs: "none", sm: "inline" },
+                  }}
+                >
+                  Explore Our Lots
+                </Typography>
+                <Typography
+                  sx={{
+                    display: { xs: "inline", sm: "none" },
+                  }}
+                >
+                  Explore
+                </Typography>
               </Button>
             </Box>
           </Fade>
@@ -359,8 +376,13 @@ const HomePage = () => {
                       {image?.endsWith(".mp4") ? (
                         <Box
                           sx={{
-                            width: "100%",
-                            height: "80px",
+                            width: {
+                              xs: "87px", // mobile ≤375
+                              sm: "73px", // ≥768
+                              md: "125px", // ≥1024
+                              lg: "166px", // ≥1440
+                            },
+                            height: "100px",
                             bgcolor: "#000",
                             display: "flex",
                             alignItems: "center",
@@ -382,9 +404,18 @@ const HomePage = () => {
                       ) : (
                         <CardMedia
                           component="img"
-                          height="80"
-                          image={image}
                           alt={`Gallery ${index + 1}`}
+                          sx={{
+                            width: {
+                              xs: "87px",
+                              sm: "73px",
+                              md: "125px",
+                              lg: "166px",
+                            },
+                            height: "100px",
+                            objectFit: "cover",
+                          }}
+                          image={image}
                         />
                       )}
                     </Card>
@@ -757,7 +788,7 @@ const HomePage = () => {
           minHeight: { xs: "60vh", md: "70vh" },
           display: "flex",
           alignItems: "center",
-          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%), url(${cemeteryBanner})`,
+          backgroundImage: `linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%), url(${aboutPhoto})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: isMobile ? "scroll" : "fixed",
