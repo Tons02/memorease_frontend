@@ -91,18 +91,15 @@ const Cemeteries = () => {
 
   // Lot size configuration
   const [drawMode, setDrawMode] = useState("preset"); // 'preset' or 'custom'
-  const [selectedPresetSize, setSelectedPresetSize] = useState("small");
-  const [customWidth, setCustomWidth] = useState(2);
-  const [customLength, setCustomLength] = useState(2);
+  const [selectedPresetSize, setSelectedPresetSize] = useState("singleLot");
+  const [customWidth, setCustomWidth] = useState(5);
+  const [customLength, setCustomLength] = useState(4);
 
   // Predefined lot sizes (in meters) - common cemetery lot sizes
   const presetSizes = {
-    small: { width: 2, length: 2, label: "Small (2m × 2m)" },
-    medium: { width: 2.5, length: 2.5, label: "Medium (2.5m × 2.5m)" },
-    standard: { width: 3, length: 3, label: "Standard (3m × 3m)" },
-    large: { width: 4, length: 3, label: "Large (4m × 3m)" },
-    family: { width: 5, length: 4, label: "Family (5m × 4m)" },
-    premium: { width: 6, length: 5, label: "Premium (6m × 5m)" },
+    singleLot: { width: 5, length: 4, label: "Single Lot (5m × 4m)" },
+    companionLot: { width: 5, length: 10, label: "Companion plots (5m × 8m)" },
+    FamilyLots: { width: 10, length: 10, label: "Mausoleum plot (10m × 10m)" },
   };
 
   const cemeteryBoundaryLatLng = [
@@ -817,7 +814,7 @@ const Cemeteries = () => {
                 <EditControl
                   position="topright"
                   draw={{
-                    rectangle: drawMode === "freehand",
+                    rectangle: false,
                     circle: false,
                     circlemarker: false,
                     marker: false,
