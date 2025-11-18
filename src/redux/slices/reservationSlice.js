@@ -2,7 +2,7 @@ import { apiSlice } from "./apiSlice";
 
 export const apiReservation = apiSlice
   .enhanceEndpoints({
-    addTagTypes: ["Reservation", "Lots"],
+    addTagTypes: ["Reservation", "Lots", "AuditTrail", "Deceased"],
   })
   .injectEndpoints({
     endpoints: (builder) => ({
@@ -94,11 +94,28 @@ export const apiReservation = apiSlice
         }),
         invalidatesTags: ["Reservation"],
       }),
+      getAuditTrail: builder.query({
+        query: (params) => ({
+          url: "/audit_trail",
+          params,
+        }),
+        method: "GET",
+        invalidatesTags: ["AuditTrail", "Deceased"],
+      }),
+      transferLot: builder.mutation({
+        query: ({ id, body }) => ({
+          url: `/transfer_lot/${id}`,
+          method: "PATCH",
+          body: body,
+        }),
+        invalidatesTags: ["AuditTrail", "Deceased"],
+      }),
     }),
   });
 
 export const {
   useGetReservationQuery,
+  useGetAuditTrailQuery,
   useGetReservationCountsQuery,
   useGetReservationSalesQuery,
   useLazyGetReservationExportQuery,
@@ -109,4 +126,5 @@ export const {
   useRejectReservationMutation,
   useUpdateReservationMutation,
   useArchivedReservationMutation,
+  useTransferLotMutation,
 } = apiReservation;

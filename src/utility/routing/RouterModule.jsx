@@ -27,6 +27,7 @@ import VerificationPage from "../../pages/VerificationPage";
 import TermsAndAgreement from "../../pages/TermsAndAgreement/TermsAndAgreement";
 import TermsAndAgreementCustomer from "../../pages/TermsAndAgreementCustomer";
 import CustomerDeceased from "../../pages/CustomerDeceased/CustomerDeceased";
+import CustomerLot from "../../pages/CustomerLot/CustomerLot";
 
 const router = createBrowserRouter([
   {
@@ -56,6 +57,10 @@ const router = createBrowserRouter([
       {
         path: "/customer-deceased",
         element: <CustomerDeceased />,
+      },
+      {
+        path: "/customer-lot",
+        element: <CustomerLot />,
       },
       {
         path: "/contact",

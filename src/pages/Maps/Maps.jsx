@@ -725,7 +725,7 @@ const Cemeteries = () => {
                                 variant="body2"
                                 sx={{ fontWeight: "medium" }}
                               >
-                                💳 Down Payment:
+                                💳 Reservation Price:
                               </Typography>
                               <Typography
                                 variant="body1"

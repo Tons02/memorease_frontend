@@ -214,3 +214,11 @@ export const walkInSchema = yup.object({
       return value && value.size <= MAX_FILE_SIZE;
     }),
 });
+
+export const transferLotSchema = yup.object({
+  new_owner_id: yup
+    .number()
+    .typeError("Lot ID must be a number")
+    .integer("Lot ID must be an integer")
+    .required("Lot ID is required"),
+});

@@ -39,6 +39,7 @@ import {
   CardContent,
   Chip,
   IconButton,
+  Paper,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { cemeterySchema, lotSchema } from "../../validations/validation";
@@ -58,6 +59,7 @@ import {
   Info,
   Map,
   Remove,
+  Straighten,
 } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import FileUploadInput from "../../components/FileUploadInput";
@@ -80,12 +82,29 @@ const Cemeteries = () => {
   const [coords, setCoords] = useState([]);
   const mapRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [formType, setFormType] = useState("create"); // 'create' or 'edit'
+  const [formType, setFormType] = useState("create");
   const [selectedLot, setSelectedLot] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openCemeteryInformation, setOpenCemeteryInformation] = useState(false);
   const [selectedID, setSelectedID] = useState(null);
+
+  // Lot size configuration
+  const [drawMode, setDrawMode] = useState("preset"); // 'preset' or 'custom'
+  const [selectedPresetSize, setSelectedPresetSize] = useState("small");
+  const [customWidth, setCustomWidth] = useState(2);
+  const [customLength, setCustomLength] = useState(2);
+
+  // Predefined lot sizes (in meters) - common cemetery lot sizes
+  const presetSizes = {
+    small: { width: 2, length: 2, label: "Small (2m × 2m)" },
+    medium: { width: 2.5, length: 2.5, label: "Medium (2.5m × 2.5m)" },
+    standard: { width: 3, length: 3, label: "Standard (3m × 3m)" },
+    large: { width: 4, length: 3, label: "Large (4m × 3m)" },
+    family: { width: 5, length: 4, label: "Family (5m × 4m)" },
+    premium: { width: 6, length: 5, label: "Premium (6m × 5m)" },
+  };
+
   const cemeteryBoundaryLatLng = [
     [14.292776, 120.971491],
     [14.292642, 120.971628],
@@ -136,6 +155,90 @@ const Cemeteries = () => {
   const cemeteryPolygon = turf.polygon([
     cemeteryBoundaryLatLng.map(([lat, lng]) => [lng, lat]),
   ]);
+
+  // Helper function to create rectangle coordinates from center point
+  const createRectangleFromCenter = (
+    centerLat,
+    centerLng,
+    widthMeters,
+    lengthMeters
+  ) => {
+    const latOffset = lengthMeters / 2 / 111320;
+    const lngOffset =
+      widthMeters / 2 / (111320 * Math.cos((centerLat * Math.PI) / 180));
+
+    return [
+      [centerLat + latOffset, centerLng - lngOffset],
+      [centerLat + latOffset, centerLng + lngOffset],
+      [centerLat - latOffset, centerLng + lngOffset],
+      [centerLat - latOffset, centerLng - lngOffset],
+    ];
+  };
+
+  const handleMapClick = (e) => {
+    if (drawMode === "freehand") return; // Skip for freehand drawing
+
+    const { lat, lng } = e.latlng;
+
+    // Get dimensions based on mode
+    let width, length;
+    if (drawMode === "preset") {
+      const size = presetSizes[selectedPresetSize];
+      width = size.width;
+      length = size.length;
+    } else if (drawMode === "custom") {
+      width = parseFloat(customWidth);
+      length = parseFloat(customLength);
+
+      // Validate custom dimensions
+      if (!width || !length || width <= 0 || length <= 0) {
+        toast.error("Please enter valid width and length values.");
+        return;
+      }
+    }
+
+    const coords = createRectangleFromCenter(lat, lng, width, length);
+
+    // Convert to [lng, lat] and close loop for turf
+    const lotPolygon = turf.polygon([
+      coords
+        .map(([lat, lng]) => [lng, lat])
+        .concat([[coords[0][1], coords[0][0]]]),
+    ]);
+
+    // Check if inside cemetery boundary
+    const isInside = turf.booleanWithin(lotPolygon, cemeteryPolygon);
+    if (!isInside) {
+      toast.error("Cannot place lot outside cemetery boundary.");
+      return;
+    }
+
+    // Check overlap with existing lots
+    const isOverlapping = lotData?.data?.some((lot) => {
+      if (!lot?.coordinates?.length) return false;
+      const lotPoly = turf.polygon([
+        lot.coordinates
+          .map(([lat, lng]) => [lng, lat])
+          .concat([[lot.coordinates[0][1], lot.coordinates[0][0]]]),
+      ]);
+      return turf.booleanIntersects(lotPolygon, lotPoly);
+    });
+
+    if (isOverlapping) {
+      toast.error("Cannot overlap with existing lot.");
+      return;
+    }
+
+    onDrawComplete(coords);
+  };
+
+  // Map click handler component
+  const MapClickHandler = () => {
+    useMapEvents({
+      click: handleMapClick,
+    });
+    return null;
+  };
 
   const {
     register,
@@ -195,7 +298,6 @@ const Cemeteries = () => {
   const [deleteLot, { isLoading: isDeleteLot }] = useArchivedLotMutation();
   const [currentImageIndex, setCurrentImageIndex] = useState({});
 
-  // Helper functions (add these in your component)
   const nextImage = (lotId) => {
     setCurrentImageIndex((prev) => ({
       ...prev,
@@ -228,13 +330,13 @@ const Cemeteries = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case "available":
-        return "success"; // Green (#15803d)
+        return "success";
       case "reserved":
-        return "warning"; // Yellow
+        return "warning";
       case "sold":
-        return "error"; // Red
+        return "error";
       case "land_mark":
-        return "info"; // Blue for landmark
+        return "info";
       default:
         return "default";
     }
@@ -243,15 +345,15 @@ const Cemeteries = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case "available":
-        return "🟢"; // Green circle
+        return "🟢";
       case "reserved":
-        return "🟡"; // Yellow circle
+        return "🟡";
       case "sold":
-        return "🔴"; // Red circle
+        return "🔴";
       case "land_mark":
-        return "🔵"; // Blue circle (landmark)
+        return "🔵";
       default:
-        return "⚪"; // White circle
+        return "⚪";
     }
   };
 
@@ -267,16 +369,12 @@ const Cemeteries = () => {
   }, [cemeteryData, resetCemeteryForm]);
 
   function cleanPointer(pointer) {
-    return pointer?.replace(/^\//, ""); // Removes the leading '/'
+    return pointer?.replace(/^\//, "");
   }
 
-  // const center = cemeteryData?.data?.[0]?.coordinates ?? [
-  //   14.288794, 120.970325,
-  // ];
   const center = [14.288794, 120.970325];
 
   const openForm = (type, data = null, coordinates = []) => {
-    console.log(data?.is_featured);
     setFormType(type);
     setCoords(coordinates);
 
@@ -335,11 +433,9 @@ const Cemeteries = () => {
       const formData = new FormData();
 
       if (formType === "edit") {
-        console.log("selected id", selectedID);
         formData.append("_method", "PATCH");
       }
 
-      // Common fields for both add and edit
       formData.append("lot_number", payload.lot_number);
       formData.append("description", payload.description);
       formData.append("coordinates", JSON.stringify(payload.coordinates || []));
@@ -367,6 +463,7 @@ const Cemeteries = () => {
       if (payload.fourth_lot_image instanceof File) {
         formData.append("fourth_lot_image", payload.fourth_lot_image);
       }
+
       if (formType === "edit") {
         await updateLot({ id: selectedID, lot: formData }).unwrap();
         toast.success("Lot updated successfully");
@@ -410,7 +507,6 @@ const Cemeteries = () => {
     const map = mapRef.current;
     if (!map || !lot?.coordinates?.length) return;
 
-    // Disable map interactions
     map.dragging.disable();
     map.touchZoom.disable();
     map.doubleClickZoom.disable();
@@ -418,10 +514,9 @@ const Cemeteries = () => {
     map.boxZoom.disable();
     map.keyboard.disable();
 
-    if (map.tap) map.tap.disable(); // only if tap is available (for touch devices)
+    if (map.tap) map.tap.disable();
 
     const reversedCoords = lot.coordinates.map(([lat, lng]) => [lng, lat]);
-
     const lotPolygon = turf.polygon([[...reversedCoords, reversedCoords[0]]]);
     const center = turf.center(lotPolygon).geometry.coordinates;
     const [lng, lat] = center;
@@ -438,10 +533,8 @@ const Cemeteries = () => {
       fillOpacity: 0.6,
     }).addTo(map);
 
-    // Re-enable map interactions after 3 seconds
     setTimeout(() => {
       map.removeLayer(marker);
-
       map.dragging.enable();
       map.touchZoom.enable();
       map.doubleClickZoom.enable();
@@ -466,8 +559,6 @@ const Cemeteries = () => {
     try {
       const cemeteryId = cemeteryData?.data?.[0]?.id;
 
-      console.log("Submitted profile_picture:", data.profile_picture);
-      console.log("Is File:", data.profile_picture instanceof File);
       if (!cemeteryId) return;
 
       const formData = new FormData();
@@ -475,13 +566,9 @@ const Cemeteries = () => {
       formData.append("name", data?.name || "");
       formData.append("description", data?.description || "");
       formData.append("location", data?.location || "");
-      // ✅ Only append file if it exists
+
       if (data.profile_picture) {
         formData.append("profile_picture", data.profile_picture);
-      }
-
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
       }
 
       await updateCemetery({ id: cemeteryId, formData }).unwrap();
@@ -494,12 +581,10 @@ const Cemeteries = () => {
 
   useEffect(() => {
     if (isLandMark == "1") {
-      // Landmark logic
       setValue("price", 0);
       setValue("downpayment_price", 0);
       setValue("status", "land_mark");
     } else if (isLandMark == "0") {
-      // Normal lot logic
       setValue("status", "available");
     }
   }, [isLandMark, setValue]);
@@ -539,6 +624,7 @@ const Cemeteries = () => {
           Map
         </Typography>
       </Breadcrumbs>
+
       <Box
         display="flex"
         alignItems="center"
@@ -554,7 +640,6 @@ const Cemeteries = () => {
           variant="contained"
           color="success"
           onClick={() => setOpenCemeteryInformation(true)}
-          sx={{ mt: 1 }}
           disabled={isGetLoadingCemetery}
         >
           {isGetLoadingCemetery ? (
@@ -565,14 +650,121 @@ const Cemeteries = () => {
         </Button>
       </Box>
 
-      <Box height="100%" position="relative">
+      {/* Lot Size Configuration Panel */}
+      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
+        <Box display="flex" flexDirection="column" gap={2}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Straighten color="secondary" />
+            <Typography variant="h6" fontWeight={600}>
+              Lot Size Configuration
+            </Typography>
+          </Box>
+
+          {/* Draw Mode Selection */}
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Drawing Mode</InputLabel>
+            <Select
+              value={drawMode}
+              onChange={(e) => setDrawMode(e.target.value)}
+              label="Drawing Mode"
+            >
+              <MenuItem value="preset">📐 Preset Sizes</MenuItem>
+              <MenuItem value="custom">✏️ Custom Size</MenuItem>
+              <MenuItem value="freehand">🖊️ Freehand Draw</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Preset Size Selection */}
+          {drawMode === "preset" && (
+            <Box>
+              <FormControl fullWidth size="small">
+                <InputLabel>Select Preset Size</InputLabel>
+                <Select
+                  value={selectedPresetSize}
+                  onChange={(e) => setSelectedPresetSize(e.target.value)}
+                  label="Select Preset Size"
+                >
+                  {Object.entries(presetSizes).map(([key, value]) => (
+                    <MenuItem key={key} value={key}>
+                      {value.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 1, display: "block" }}
+              >
+                💡 Click anywhere on the map to place a lot with the selected
+                size
+              </Typography>
+            </Box>
+          )}
+
+          {/* Custom Size Input */}
+          {drawMode === "custom" && (
+            <Box>
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <TextField
+                    label="Width (meters)"
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={customWidth}
+                    onChange={(e) => setCustomWidth(e.target.value)}
+                    InputProps={{
+                      inputProps: { min: 0.5, step: 0.5 },
+                      endAdornment: (
+                        <InputAdornment position="end">m</InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    label="Length (meters)"
+                    type="number"
+                    size="small"
+                    fullWidth
+                    value={customLength}
+                    onChange={(e) => setCustomLength(e.target.value)}
+                    InputProps={{
+                      inputProps: { min: 0.5, step: 0.5 },
+                      endAdornment: (
+                        <InputAdornment position="end">m</InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              </Grid>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 1, display: "block" }}
+              >
+                💡 Enter custom dimensions, then click on the map to place the
+                lot
+              </Typography>
+            </Box>
+          )}
+
+          {/* Freehand Instructions */}
+          {drawMode === "freehand" && (
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                💡 Use the drawing tools on the right side of the map to draw
+                irregular shapes or polygons
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Paper>
+
+      <Box position="relative">
         {isLotLoading ? (
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            height="100%"
-          >
+          <Box display="flex" justifyContent="center" alignItems="center">
             <CircularProgress color="success" />
           </Box>
         ) : (
@@ -587,7 +779,6 @@ const Cemeteries = () => {
                 options={lotData?.data || []}
                 getOptionLabel={(option) => option.lot_number || ""}
                 onChange={(event, selectedLot) => {
-                  console.log("Selected Lot:", selectedLot);
                   if (selectedLot) {
                     flyToLot(selectedLot);
                   }
@@ -599,7 +790,7 @@ const Cemeteries = () => {
                     variant="outlined"
                     size="small"
                     sx={{
-                      backgroundColor: "transparent", // input field background
+                      backgroundColor: "transparent",
                     }}
                   />
                 )}
@@ -608,13 +799,14 @@ const Cemeteries = () => {
                   top: 10,
                   left: 50,
                   zIndex: 1000,
-                  backgroundColor: "#ffff", // for Autocomplete container
+                  backgroundColor: "#ffff",
                   width: 200,
                 }}
               />
               <MapRefHandler
                 setMap={(mapInstance) => (mapRef.current = mapInstance)}
               />
+              <MapClickHandler />
               <TileLayer
                 attribution="&copy; OpenStreetMap"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -625,29 +817,27 @@ const Cemeteries = () => {
                 <EditControl
                   position="topright"
                   draw={{
-                    rectangle: false,
+                    rectangle: drawMode === "freehand",
                     circle: false,
                     circlemarker: false,
                     marker: false,
                     polyline: false,
-                    polygon: true,
+                    polygon: drawMode === "freehand",
                   }}
                   onCreated={(e) => {
                     const layer = e.layer;
-                    const latlngs = layer.getLatLngs()[0]; // Only first ring for simple polygon
+                    const latlngs = layer.getLatLngs()[0];
                     const coords = latlngs.map((latlng) => [
                       latlng.lat,
                       latlng.lng,
                     ]);
 
-                    // Convert to [lng, lat] and close loop
                     const lotPolygon = turf.polygon([
                       coords
                         .map(([lat, lng]) => [lng, lat])
                         .concat([[coords[0][1], coords[0][0]]]),
                     ]);
 
-                    // Cemetery polygon defined globally or above
                     const isInside = turf.booleanWithin(
                       lotPolygon,
                       cemeteryPolygon
@@ -655,12 +845,11 @@ const Cemeteries = () => {
 
                     if (!isInside) {
                       toast.error(
-                        "You can only draw within the cemetery and not over existing lots."
+                        "You can only draw within the cemetery boundary."
                       );
                       return;
                     }
 
-                    // Check if overlapping with any existing lot
                     const isOverlapping = lotData?.data?.some((lot) => {
                       if (!lot?.coordinates?.length) return false;
 
@@ -723,7 +912,7 @@ const Cemeteries = () => {
                                 currentMedia.endsWith(".mov") ||
                                 currentMedia.endsWith(".avi") ||
                                 currentMedia.endsWith(".mkv") ||
-                                currentMedia.includes("video")); // optional MIME-type check
+                                currentMedia.includes("video"));
 
                             if (isVideo) {
                               return (
@@ -1032,14 +1221,6 @@ const Cemeteries = () => {
               })}
               <MapLegend />
             </MapContainer>
-            <div
-              style={{
-                position: "absolute",
-                top: 100,
-                left: 150,
-                zIndex: 1000,
-              }}
-            ></div>
           </div>
         )}
       </Box>
@@ -1057,7 +1238,7 @@ const Cemeteries = () => {
         formMethods={{ handleSubmit, reset }}
         isValid={true}
         isDirty={true}
-        maxWidth="md" // Increased from default to accommodate better layout
+        maxWidth="md"
       >
         {/* Image Upload Section */}
         <Typography variant="h6" gutterBottom>
@@ -1285,28 +1466,8 @@ const Cemeteries = () => {
         formMethods={{ handleSubmit }}
         isArchived={true}
       >
-        <Typography>Are you sure you want to detele this record?</Typography>
+        <Typography>Are you sure you want to delete this record?</Typography>
       </DialogComponent>
-      {/* <Dialog open={openDeleteDialog}>
-        <DialogTitle>Delete</DialogTitle>
-        <Divider />
-        <DialogContent>
-          <Typography>Are you sure you want to detele this record?</Typography>
-        </DialogContent>
-        <Divider />
-        <DialogActions>
-          <Button
-            onClick={() => setOpenDeleteDialog(false)}
-            variant="contained"
-            color="error"
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleDeleteLot} color="success" variant="contained">
-            {isDeleteLot ? <CircularProgress size={20} /> : "Yes"}
-          </Button>
-        </DialogActions>
-      </Dialog> */}
 
       {/* Edit Information Dialog*/}
       <DialogComponent
@@ -1324,7 +1485,7 @@ const Cemeteries = () => {
         reset
       >
         <Controller
-          name="profile_picture" // ✅ Match backend expected key
+          name="profile_picture"
           control={control}
           defaultValue={null}
           render={({ field }) => (

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import TableComponent from "../../components/TableComponent";
 import defaultImage from "../../assets/default-image.png";
 import {
@@ -107,6 +107,10 @@ const CustomerDeceased = () => {
     is_customer: true,
     user_id: LoginUser?.id,
   });
+
+  useEffect(() => {
+    refetch(); // Refetch when page loads
+  }, [refetch]);
 
   console.log("LoginUser", LoginUser);
 

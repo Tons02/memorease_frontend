@@ -54,7 +54,7 @@ const InstallmentCalculator = ({ selectedLot, register }) => {
       />
 
       <TextField
-        label="Downpayment Price"
+        label="Reservation Price"
         fullWidth
         disabled
         margin="normal"
@@ -146,7 +146,7 @@ const InstallmentCalculator = ({ selectedLot, register }) => {
           </Typography>
 
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-            <Typography variant="body2">Downpayment:</Typography>
+            <Typography variant="body2">Reservation Price:</Typography>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               ₱
               {parseFloat(selectedLot.downpayment_price).toLocaleString(
