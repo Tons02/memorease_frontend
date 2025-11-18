@@ -104,13 +104,47 @@ const Cemeteries = () => {
 
   const cemeteryBoundaryLatLng = [
     [14.292776, 120.971491],
+    [14.292642, 120.971628],
     [14.292266, 120.971781],
+    [14.291931, 120.971727],
     [14.291476, 120.97162],
     [14.289574, 120.971824],
+    [14.289574, 120.971824],
+    [14.289985, 120.97176],
     [14.28921, 120.971609],
+    [14.28822, 120.971692],
+    [14.287349, 120.971935],
+    [14.286792, 120.97218],
+    [14.286591, 120.972018],
+    [14.285762, 120.971949],
     [14.285103, 120.971974],
     [14.284999, 120.970676],
-    [14.289584, 120.968186],
+    [14.285106, 120.970709],
+    [14.285213, 120.970629],
+    [14.285322, 120.970549],
+    [14.285478, 120.970437],
+    [14.285733, 120.970257],
+    [14.285954, 120.970118],
+    [14.28615, 120.969991],
+    [14.286371, 120.969865],
+    [14.286618, 120.969726],
+    [14.286874, 120.969569],
+    [14.287126, 120.969427],
+    [14.287303, 120.969337],
+    [14.287572, 120.969182],
+    [14.287919, 120.968985],
+    [14.288256, 120.968777],
+    [14.288551, 120.968603],
+    [14.2888, 120.968462],
+    [14.289119, 120.968457],
+    [14.289213, 120.968452],
+    [14.289388, 120.96836],
+    [14.289633, 120.96824],
+    [14.29003, 120.968594],
+    [14.290471, 120.969072],
+    [14.291004, 120.969645],
+    [14.291559, 120.970267],
+    [14.292298, 120.970934],
     [14.292776, 120.971427],
     [14.292776, 120.971491],
   ];
@@ -369,7 +403,6 @@ const Cemeteries = () => {
         status: "available",
         is_land_mark: 0,
         reserved_until: "",
-        downpayment_price: "",
         promo_price: "",
         promo_until: "",
         is_featured: 0,
@@ -393,8 +426,6 @@ const Cemeteries = () => {
       coordinates: coords,
     };
 
-    console.log("Payload before submission:", payload);
-
     try {
       const formData = new FormData();
 
@@ -406,7 +437,7 @@ const Cemeteries = () => {
       formData.append("description", payload.description);
       formData.append("coordinates", JSON.stringify(payload.coordinates || []));
       formData.append("status", payload.status);
-      formData.append("reserved_until", payload.reserved_until || "");
+      formData.append("reserved_until", payload.reserved_until);
       formData.append("price", payload.price);
       formData.append("downpayment_price", payload.downpayment_price);
       formData.append("promo_price", payload.promo_price);
@@ -547,17 +578,11 @@ const Cemeteries = () => {
 
   useEffect(() => {
     if (isLandMark == "1") {
-<<<<<<< HEAD
       setValue("price", 0);
       setValue("downpayment_price", 0);
       setValue("status", "land_mark");
     } else if (isLandMark == "0") {
       setValue("status", "available");
-=======
-      setValue("price", 0); // or null if preferred
-      setValue("downpayment_price", 0); // or null
-      setValue("status", "land_mark");
->>>>>>> d3a74e67339ee773055db37865ae793fbd3e834f
     }
   }, [isLandMark, setValue]);
 
