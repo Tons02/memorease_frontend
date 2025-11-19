@@ -134,21 +134,22 @@ const CustomerLot = () => {
       headerName: "Lot Image",
       align: "center",
       width: 100,
-      renderCell: ({ row }) =>
-        row.lot?.lot_image ? (
-          <img
-            src={row.lot.lot_image}
-            alt="Lot"
-            style={{
-              width: 60,
-              height: 60,
-              objectFit: "cover",
-              borderRadius: 8,
-            }}
-          />
-        ) : (
-          "N/A"
-        ),
+      valueGetter: (row) =>
+        row?.lot?.lot_image
+          ? (console.log(row),
+            (
+              <img
+                src={`https://memorease-pmpdasma.com/storage/${row?.lot?.lot_image}`}
+                alt="Lot"
+                style={{
+                  width: 60,
+                  height: 60,
+                  objectFit: "cover",
+                  borderRadius: 8,
+                }}
+              />
+            ))
+          : "N/A",
     },
     {
       field: "current_owner",
