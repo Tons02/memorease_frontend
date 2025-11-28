@@ -740,9 +740,17 @@ const Cemeteries = () => {
                   min={0}
                   max={180}
                   step={1}
+                  track="inverted"
                   valueLabelDisplay="auto"
                   valueLabelFormat={(value) => `${value}°`}
-                  sx={{ width: "100%", maxWidth: 300 }}
+                  sx={{
+                    width: "100%",
+                    maxWidth: 300,
+                    display: "block",
+                    "& .MuiSlider-thumb": {
+                      marginRight: "-20px", // Fine-tune thumb vertical position
+                    },
+                  }}
                 />
                 <Box
                   display="flex"
@@ -861,9 +869,17 @@ const Cemeteries = () => {
                   min={0}
                   max={180}
                   step={1}
+                  track="inverted"
                   valueLabelDisplay="auto"
                   valueLabelFormat={(value) => `${value}°`}
-                  sx={{ maxWidth: 300 }}
+                  sx={{
+                    width: "100%",
+                    maxWidth: 300,
+                    display: "block",
+                    "& .MuiSlider-thumb": {
+                      marginRight: "-20px", // Fine-tune thumb vertical position
+                    },
+                  }}
                 />
                 <Box
                   display="flex"
