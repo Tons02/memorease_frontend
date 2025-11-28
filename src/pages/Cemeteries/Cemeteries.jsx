@@ -40,6 +40,7 @@ import {
   Chip,
   IconButton,
   Paper,
+  Slider,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { cemeterySchema, lotSchema } from "../../validations/validation";
@@ -60,6 +61,7 @@ import {
   Map,
   Remove,
   Straighten,
+  RotateRight,
 } from "@mui/icons-material";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import FileUploadInput from "../../components/FileUploadInput";
@@ -94,6 +96,7 @@ const Cemeteries = () => {
   const [selectedPresetSize, setSelectedPresetSize] = useState("singleLot");
   const [customWidth, setCustomWidth] = useState(5);
   const [customLength, setCustomLength] = useState(4);
+  const [rotationAngle, setRotationAngle] = useState(0); // Rotation angle in degrees
 
   // Predefined lot sizes (in meters) - common cemetery lot sizes
   const presetSizes = {
@@ -153,23 +156,50 @@ const Cemeteries = () => {
     cemeteryBoundaryLatLng.map(([lat, lng]) => [lng, lat]),
   ]);
 
-  // Helper function to create rectangle coordinates from center point
+  // Helper function to rotate a point around a center
+  // Helper function to rotate a point around a center - FIXED VERSION
+  const rotatePoint = (point, center, angle) => {
+    const angleRad = (-angle * Math.PI) / 180; // Added negative sign to reverse direction
+    const cosAngle = Math.cos(angleRad);
+    const sinAngle = Math.sin(angleRad);
+
+    const x = point[1] - center[1];
+    const y = point[0] - center[0];
+
+    const rotatedX = x * cosAngle - y * sinAngle;
+    const rotatedY = x * sinAngle + y * cosAngle;
+
+    return [center[0] + rotatedY, center[1] + rotatedX];
+  };
+
+  // Helper function to create rectangle coordinates from center point with rotation
   const createRectangleFromCenter = (
     centerLat,
     centerLng,
     widthMeters,
-    lengthMeters
+    lengthMeters,
+    angle = 0
   ) => {
     const latOffset = lengthMeters / 2 / 111320;
     const lngOffset =
       widthMeters / 2 / (111320 * Math.cos((centerLat * Math.PI) / 180));
 
-    return [
-      [centerLat + latOffset, centerLng - lngOffset],
-      [centerLat + latOffset, centerLng + lngOffset],
-      [centerLat - latOffset, centerLng + lngOffset],
-      [centerLat - latOffset, centerLng - lngOffset],
+    // Create unrotated rectangle corners
+    const corners = [
+      [centerLat + latOffset, centerLng - lngOffset], // Top-left
+      [centerLat + latOffset, centerLng + lngOffset], // Top-right
+      [centerLat - latOffset, centerLng + lngOffset], // Bottom-right
+      [centerLat - latOffset, centerLng - lngOffset], // Bottom-left
     ];
+
+    // If no rotation, return original corners
+    if (angle === 0) {
+      return corners;
+    }
+
+    // Rotate each corner around the center
+    const center = [centerLat, centerLng];
+    return corners.map((corner) => rotatePoint(corner, center, angle));
   };
 
   const handleMapClick = (e) => {
@@ -194,7 +224,13 @@ const Cemeteries = () => {
       }
     }
 
-    const coords = createRectangleFromCenter(lat, lng, width, length);
+    const coords = createRectangleFromCenter(
+      lat,
+      lng,
+      width,
+      length,
+      rotationAngle
+    );
 
     // Convert to [lng, lat] and close loop for turf
     const lotPolygon = turf.polygon([
@@ -688,13 +724,86 @@ const Cemeteries = () => {
                   ))}
                 </Select>
               </FormControl>
+
+              {/* Rotation Control */}
+              <Box sx={{ mt: 2 }}>
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <RotateRight color="secondary" />
+                  <Typography variant="body2" fontWeight={500}>
+                    Rotation Angle: {rotationAngle}°
+                  </Typography>
+                </Box>
+                <Slider
+                  color="secondary"
+                  value={rotationAngle}
+                  onChange={(e, newValue) => setRotationAngle(newValue)}
+                  min={0}
+                  max={180}
+                  step={1}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={(value) => `${value}°`}
+                  sx={{ width: "100%", maxWidth: 300 }}
+                />
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  sx={{ width: "100%", maxWidth: 300, mt: 1, gap: 0.5 }}
+                >
+                  <Button
+                    size="small"
+                    onClick={() => setRotationAngle(0)}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ minWidth: "auto", px: 0.5, flex: 1 }}
+                  >
+                    0°
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setRotationAngle(45)}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ minWidth: "auto", px: 0.5, flex: 1 }}
+                  >
+                    45°
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setRotationAngle(90)}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ minWidth: "auto", px: 0.5, flex: 1 }}
+                  >
+                    90°
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setRotationAngle(135)}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ minWidth: "auto", px: 0.5, flex: 1 }}
+                  >
+                    135°
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setRotationAngle(180)}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ minWidth: "auto", px: 0.5, flex: 1 }}
+                  >
+                    180°
+                  </Button>
+                </Box>
+              </Box>
+
               <Typography
                 variant="caption"
                 color="text.secondary"
                 sx={{ mt: 1, display: "block" }}
               >
                 💡 Click anywhere on the map to place a lot with the selected
-                size
+                size and rotation
               </Typography>
             </Box>
           )}
@@ -736,13 +845,86 @@ const Cemeteries = () => {
                   />
                 </Grid>
               </Grid>
+
+              {/* Rotation Control for Custom Size */}
+              <Box sx={{ mt: 2 }}>
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <RotateRight color="secondary" />
+                  <Typography variant="body2" fontWeight={500}>
+                    Rotation Angle: {rotationAngle}°
+                  </Typography>
+                </Box>
+                <Slider
+                  color="secondary"
+                  value={rotationAngle}
+                  onChange={(e, newValue) => setRotationAngle(newValue)}
+                  min={0}
+                  max={180}
+                  step={1}
+                  valueLabelDisplay="auto"
+                  valueLabelFormat={(value) => `${value}°`}
+                  sx={{ maxWidth: 300 }}
+                />
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  sx={{ maxWidth: 300, mt: 1, gap: 0.5 }}
+                >
+                  <Button
+                    size="small"
+                    onClick={() => setRotationAngle(0)}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ minWidth: "auto", px: 1, flex: 1 }}
+                  >
+                    0°
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setRotationAngle(45)}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ minWidth: "auto", px: 1, flex: 1 }}
+                  >
+                    45°
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setRotationAngle(90)}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ minWidth: "auto", px: 1, flex: 1 }}
+                  >
+                    90°
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setRotationAngle(135)}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ minWidth: "auto", px: 1, flex: 1 }}
+                  >
+                    135°
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setRotationAngle(180)}
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ minWidth: "auto", px: 1, flex: 1 }}
+                  >
+                    180°
+                  </Button>
+                </Box>
+              </Box>
+
               <Typography
                 variant="caption"
                 color="text.secondary"
                 sx={{ mt: 1, display: "block" }}
               >
-                💡 Enter custom dimensions, then click on the map to place the
-                lot
+                💡 Enter custom dimensions and rotation, then click on the map
+                to place the lot
               </Typography>
             </Box>
           )}
@@ -759,6 +941,7 @@ const Cemeteries = () => {
         </Box>
       </Paper>
 
+      {/* Rest of the component remains the same... */}
       <Box position="relative">
         {isLotLoading ? (
           <Box display="flex" justifyContent="center" alignItems="center">
@@ -869,6 +1052,8 @@ const Cemeteries = () => {
                   }}
                 />
               </FeatureGroup>
+
+              {/* Rest of the map components remain the same... */}
               {lotData?.data?.map((lot) => {
                 const displayImages = getDisplayImages(lot);
                 const currentIndex = currentImageIndex[lot.id] || 0;
@@ -1222,6 +1407,7 @@ const Cemeteries = () => {
         )}
       </Box>
 
+      {/* The rest of your dialogs and form components remain unchanged */}
       {/* Form Dialog */}
       <DialogComponent
         open={openDialog}

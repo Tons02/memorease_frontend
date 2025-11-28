@@ -111,7 +111,6 @@ const MessengerPage = () => {
     const channel = window.Echo.private(`chat.${LoginUser.id}`);
 
     channel.listen(".conversation.created", (e) => {
-      console.log("🟢 New conversation received via socket:", e);
       conversationRefetch?.();
       toast.success(`New chat started with ${e.conversation.name}`);
     });

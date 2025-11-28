@@ -207,6 +207,7 @@ export default function MiniDrawer() {
   const LoginUserCount = JSON.parse(localStorage.getItem("user"));
   const { data: conversationCounts, refetch: conversationCountsRefetch } =
     useGetConversationCountsQuery();
+
   // Real-time listener for new messages
   useEffect(() => {
     if (!LoginUserCount?.id) return;
