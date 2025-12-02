@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import TableComponent from "../../components/TableComponent";
 import defaultImage from "../../assets/default-image.png";
 import {
@@ -16,13 +16,14 @@ import {
   Menu,
   MenuItem,
   Select,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from "@mui/material";
 import { Add, Check } from "@mui/icons-material";
 import { useGetDeceasedQuery } from "../../redux/slices/deceasedSlice";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { useState } from "react";
 import DialogComponent from "../../components/DialogComponent";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
@@ -32,11 +33,13 @@ import { toast } from "sonner";
 import {
   useGetAuditTrailQuery,
   useTransferLotMutation,
+  useGetActivityLogQuery,
 } from "../../redux/slices/reservationSlice";
 import { useGetUserQuery } from "../../redux/slices/userSlice";
 
 const CustomerLot = () => {
-  const [status, setStatus] = useState("active");
+  const [tabValue, setTabValue] = useState(0);
+  // Removed status state since it's not needed
   const LoginUser = JSON.parse(localStorage.getItem("user"));
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -45,6 +48,11 @@ const CustomerLot = () => {
   const [selectedLotData, setSelectedLotData] = useState(null);
   const [openPreviousOwners, setOpenPreviousOwners] = useState(false);
   const [selectedPreviousOwners, setSelectedPreviousOwners] = useState([]);
+
+  // Activity Log state
+  const [activityPage, setActivityPage] = useState(0);
+  const [activityRowsPerPage, setActivityRowsPerPage] = useState(10);
+  const [activitySearch, setActivitySearch] = useState("");
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -57,6 +65,10 @@ const CustomerLot = () => {
 
   const handleCloseDropDown = () => {
     setAnchorEl(null);
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
   };
 
   const { data: userData, isLoading: isUserDataLoading } = useGetUserQuery({
@@ -76,8 +88,22 @@ const CustomerLot = () => {
     search,
     page: page + 1,
     per_page: rowsPerPage,
-    status,
+    // Removed status parameter
     customer_id: LoginUser?.id,
+  });
+
+  const {
+    data: activityLogData,
+    isLoading: isActivityLogLoading,
+    isError: isActivityLogError,
+    error: activityLogError,
+    refetch: refetchActivityLog,
+  } = useGetActivityLogQuery({
+    pagination: "paginate",
+    page: activityPage + 1,
+    per_page: activityRowsPerPage,
+    search: activitySearch, // ✅ FIXED: Now passing the search parameter
+    user_id: LoginUser?.id,
   });
 
   const {
@@ -118,7 +144,8 @@ const CustomerLot = () => {
     });
   };
 
-  const columns = [
+  // Lot columns
+  const lotColumns = [
     { field: "id", headerName: "ID", align: "center", width: 70 },
     {
       field: "lot_number",
@@ -225,6 +252,41 @@ const CustomerLot = () => {
     },
   ];
 
+  // Activity Log columns
+  const activityLogColumns = [
+    { field: "id", headerName: "ID", align: "center", width: 70 },
+    {
+      field: "action",
+      headerName: "Action",
+      align: "center",
+      flex: 1,
+    },
+    {
+      field: "user",
+      headerName: "User",
+      align: "center",
+      flex: 1,
+      valueGetter: (params) => {
+        const user = params?.user;
+        if (!user) return "—";
+
+        return `${user.fname} ${user.mi ? user.mi + " " : ""}${user.lname}${
+          user.suffix ? " " + user.suffix : ""
+        }`.trim();
+      },
+    },
+    {
+      field: "created_at",
+      headerName: "Date & Time",
+      align: "center",
+      flex: 1,
+      valueGetter: (params) => {
+        if (!params.created_at) return "—";
+        return new Date(params.created_at).toLocaleString();
+      },
+    },
+  ];
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -232,6 +294,15 @@ const CustomerLot = () => {
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
+  };
+
+  const handleActivityChangePage = (event, newPage) => {
+    setActivityPage(newPage);
+  };
+
+  const handleActivityChangeRowsPerPage = (event) => {
+    setActivityRowsPerPage(parseInt(event.target.value, 10));
+    setActivityPage(0);
   };
 
   const handleTransferLot = async (data) => {
@@ -246,6 +317,7 @@ const CustomerLot = () => {
 
       toast.success(response.message || "Lot transferred successfully!");
       handleCloseModal();
+      refetchActivityLog();
       refetch();
     } catch (error) {
       toast.error(error?.data?.message || "Failed to transfer lot");
@@ -254,8 +326,9 @@ const CustomerLot = () => {
   };
 
   useEffect(() => {
-    refetch(); // Refetch when page loads
-  }, [refetch]);
+    refetch();
+    refetchActivityLog();
+  }, [refetch, refetchActivityLog]);
 
   // Filter out the current owner from the user list
   const availableUsers =
@@ -274,23 +347,80 @@ const CustomerLot = () => {
           mt={2}
         >
           <Typography variant="h4" sx={{ mr: 2, fontWeight: 600 }}>
-            Lot
+            Audit Trail
           </Typography>
         </Box>
-        <TableComponent
-          columns={columns}
-          data={auditTrailData?.data?.data || []}
-          isLoading={isLoading}
-          isError={isError}
-          error={error}
-          setSearch={setSearch}
-          setStatus={setStatus}
-          status={status}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          handleChangePage={handleChangePage}
-          handleChangeRowsPerPage={handleChangeRowsPerPage}
-        />
+
+        {/* Tabs */}
+        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            sx={{
+              "& .MuiTabs-indicator": {
+                backgroundColor: "#15803d",
+              },
+            }}
+          >
+            <Tab
+              label="Lot"
+              sx={{
+                color: "#555",
+                "&.Mui-selected": {
+                  color: "#15803d",
+                },
+                "&:hover": {
+                  color: "#15803d",
+                },
+              }}
+            />
+            <Tab
+              label="Activity Log"
+              sx={{
+                color: "#555",
+                "&.Mui-selected": {
+                  color: "#15803d",
+                },
+                "&:hover": {
+                  color: "#15803d",
+                },
+              }}
+            />
+          </Tabs>
+        </Box>
+
+        {/* Tab Panel 0 - Lot */}
+        {tabValue === 0 && (
+          <TableComponent
+            columns={lotColumns}
+            data={auditTrailData?.data?.data || []}
+            isLoading={isLoading}
+            isError={isError}
+            error={error}
+            setSearch={setSearch}
+            // Removed status and setStatus props
+            page={page}
+            rowsPerPage={rowsPerPage}
+            handleChangePage={handleChangePage}
+            handleChangeRowsPerPage={handleChangeRowsPerPage}
+          />
+        )}
+
+        {/* Tab Panel 1 - Activity Log */}
+        {tabValue === 1 && (
+          <TableComponent
+            columns={activityLogColumns}
+            data={activityLogData?.data?.data || []}
+            isLoading={isActivityLogLoading}
+            isError={isActivityLogError}
+            error={activityLogError}
+            setSearch={setActivitySearch} // ✅ This now properly updates activitySearch
+            page={activityPage}
+            rowsPerPage={activityRowsPerPage}
+            handleChangePage={handleActivityChangePage}
+            handleChangeRowsPerPage={handleActivityChangeRowsPerPage}
+          />
+        )}
       </Box>
 
       {/* Transfer Lot Dialog */}

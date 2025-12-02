@@ -197,7 +197,7 @@ function HomePageLayOut(props) {
     // { name: "Contact", path: "/contact" },
     !isLoggedIn ? null : { name: "Reservation", path: "/customer-reservation" },
     !isLoggedIn ? null : { name: "Deceased", path: "/customer-deceased" },
-    !isLoggedIn ? null : { name: "Lot", path: "/customer-lot" },
+    !isLoggedIn ? null : { name: "Audit Trail", path: "/customer-lot" },
     // No more Logout here
     isLoggedIn ? null : { name: "Login", path: "/login" },
   ].filter(Boolean);

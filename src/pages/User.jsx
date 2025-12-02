@@ -127,7 +127,14 @@ const User = () => {
     status,
   });
 
-  console.log(role?.data?.total);
+  const today = new Date();
+  const eightYearsAgo = new Date(
+    today.getFullYear() - 18,
+    today.getMonth(),
+    today.getDate()
+  )
+    .toISOString()
+    .split("T")[0];
 
   const [addUser, { isLoading: isAdding }] = useAddUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
@@ -1161,6 +1168,9 @@ const User = () => {
                   <CalendarMonthRounded />
                 </InputAdornment>
               ),
+            }}
+            inputProps={{
+              max: eightYearsAgo,
             }}
             sx={{
               "& .MuiOutlinedInput-root": {

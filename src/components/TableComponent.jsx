@@ -67,87 +67,92 @@ const TableComponent = ({
           borderBottom: "1px solid #e5e7eb",
         }}
       >
-        {status !== "active" && status !== "inactive" ? (
-          <FormControl
-            sx={{
-              width: 160,
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "8px",
-                height: 45,
-              },
-            }}
-          >
-            <InputLabel id="status-label">
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <FilterListIcon sx={{ fontSize: 16 }} />
-                Status
-              </Box>
-            </InputLabel>
-            <Select
-              labelId="status-label"
-              value={status}
-              label="Status"
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <MenuItem value="approved">
-                <Chip
-                  label="Approved"
-                  color="success"
-                  size="small"
-                  variant="outlined"
-                />
-              </MenuItem>
-              <MenuItem value="canceled">
-                <Chip
-                  label="Canceled"
-                  color="error"
-                  size="small"
-                  variant="outlined"
-                />
-              </MenuItem>
-              <MenuItem value="pending">
-                <Chip
-                  label="Pending"
-                  color="warning"
-                  size="small"
-                  variant="outlined"
-                />
-              </MenuItem>
-              <MenuItem value="rejected">
-                <Chip
-                  label="Rejected"
-                  color="error"
-                  size="small"
-                  variant="outlined"
-                />
-              </MenuItem>
-            </Select>
-          </FormControl>
-        ) : (
-          <FormControlLabel
-            control={
-              <Checkbox
-                color="success"
-                checked={status === "inactive"}
-                onChange={(e) =>
-                  setStatus(e.target.checked ? "inactive" : "active")
-                }
+        {/* Only render status filter if status and setStatus props are provided */}
+        {status !== undefined && setStatus !== undefined && (
+          <>
+            {status !== "active" && status !== "inactive" ? (
+              <FormControl
                 sx={{
-                  "&.Mui-checked": {
-                    color: "#10b981",
+                  width: 160,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "8px",
+                    height: 45,
                   },
                 }}
+              >
+                <InputLabel id="status-label">
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <FilterListIcon sx={{ fontSize: 16 }} />
+                    Status
+                  </Box>
+                </InputLabel>
+                <Select
+                  labelId="status-label"
+                  value={status}
+                  label="Status"
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <MenuItem value="approved">
+                    <Chip
+                      label="Approved"
+                      color="success"
+                      size="small"
+                      variant="outlined"
+                    />
+                  </MenuItem>
+                  <MenuItem value="canceled">
+                    <Chip
+                      label="Canceled"
+                      color="error"
+                      size="small"
+                      variant="outlined"
+                    />
+                  </MenuItem>
+                  <MenuItem value="pending">
+                    <Chip
+                      label="Pending"
+                      color="warning"
+                      size="small"
+                      variant="outlined"
+                    />
+                  </MenuItem>
+                  <MenuItem value="rejected">
+                    <Chip
+                      label="Rejected"
+                      color="error"
+                      size="small"
+                      variant="outlined"
+                    />
+                  </MenuItem>
+                </Select>
+              </FormControl>
+            ) : (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    color="success"
+                    checked={status === "inactive"}
+                    onChange={(e) =>
+                      setStatus(e.target.checked ? "inactive" : "active")
+                    }
+                    sx={{
+                      "&.Mui-checked": {
+                        color: "#10b981",
+                      },
+                    }}
+                  />
+                }
+                label="Show Archived"
+                sx={{
+                  backgroundColor:
+                    status === "inactive" ? "#f0fdf4" : "transparent",
+                  borderRadius: "8px",
+                  padding: "4px 8px",
+                  margin: 0,
+                }}
               />
-            }
-            label="Show Archived"
-            sx={{
-              backgroundColor:
-                status === "inactive" ? "#f0fdf4" : "transparent",
-              borderRadius: "8px",
-              padding: "4px 8px",
-              margin: 0,
-            }}
-          />
+            )}
+          </>
         )}
 
         <TextField
@@ -159,6 +164,7 @@ const TableComponent = ({
           }
           variant="outlined"
           value={search}
+          onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               setSearch(e.target.value);
@@ -166,6 +172,8 @@ const TableComponent = ({
           }}
           sx={{
             width: 280,
+            // Add marginLeft auto when status is not shown to push search to the right
+            ...(status === undefined && { marginLeft: "auto" }),
             "& .MuiOutlinedInput-root": {
               borderRadius: "12px",
               height: 48,
